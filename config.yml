@@ -1,0 +1,4 @@
+addr: ':7700'
+cover_store: './static/covers'
+ffmpeg_bin: 'ffmpeg'
+ffprobe_bin: 'ffprobe'

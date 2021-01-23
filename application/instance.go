@@ -28,6 +28,8 @@ func Run() {
 	e.Router.DELETE("/library/{id:[0-9]+}", deleteLibrary)
 	e.Router.GET("/videos", readVideoList)
 	e.Router.GET("/video/{id:[0-9]+}/stream", playVideo)
+	e.Router.GET("/files", readDirectoryHandler)
+	e.Router.GET("/task", readTaskListHandler)
 	e.Router.Static("/covers", config.AppConfig.CoversStore)
 	Logger.Info("application started")
 	e.RunAndListen(config.AppConfig.Addr)

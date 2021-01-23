@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"github.com/projectxpolaris/youvideo/database"
+	"gorm.io/gorm"
 )
 
 var (
@@ -35,10 +36,7 @@ func ScanLibraryById(id uint) error {
 	if err != nil {
 		return err
 	}
-	err = ScanLibrary(&library)
-	if err != nil {
-		return err
-	}
+	CreateSyncLibraryTask(&library)
 	return nil
 }
 
@@ -56,14 +54,19 @@ func GetLibraryList(option LibraryQueryOption) (int64, []database.Library, error
 }
 
 func RemoveLibraryById(id uint) error {
+	var videos []database.Video
 	err := database.Instance.
-		Model(&database.Video{}).
-		Unscoped().
-		Where("library_id = ?", id).
-		Delete(&database.Video{}).
-		Error
+		Model(&database.Library{Model: gorm.Model{ID: id}}).
+		Association("Videos").
+		Find(&videos)
 	if err != nil {
 		return err
+	}
+	for _, video := range videos {
+		err = DeleteVideoById(video.ID)
+		if err != nil {
+			return err
+		}
 	}
 	return database.Instance.Unscoped().Delete(&database.Library{}, id).Error
 }

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -69,6 +70,32 @@ type VideoQueryOption struct {
 	PageSize int
 }
 
+func DeleteVideoById(id uint) error {
+	var video database.Video
+	err := database.Instance.First(&video, id).Error
+	if err != nil {
+		return err
+	}
+	err = database.Instance.
+		Model(&database.Video{}).
+		Unscoped().
+		Where("id = ?", id).
+		Delete(&database.Video{}).
+		Error
+	if err != nil {
+		return err
+	}
+	if len(video.Cover) > 0 {
+		coverPath := filepath.Join(config.AppConfig.CoversStore, video.Cover)
+		if _, err = os.Stat(coverPath); err == nil {
+			err = os.Remove(coverPath)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
 func GetVideoList(option VideoQueryOption) (int64, []database.Video, error) {
 	var result []database.Video
 	var count int64

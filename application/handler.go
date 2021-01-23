@@ -4,6 +4,7 @@ import (
 	"github.com/allentom/haruka"
 	"github.com/projectxpolaris/youvideo/service"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -125,4 +126,46 @@ var playVideo haruka.RequestHandler = func(context *haruka.Context) {
 		return
 	}
 	http.ServeFile(context.Writer, context.Request, video.Path)
+}
+
+var readDirectoryHandler haruka.RequestHandler = func(context *haruka.Context) {
+	rootPath := context.GetQueryString("path")
+	if len(rootPath) == 0 {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			AbortError(context, err, http.StatusInternalServerError)
+			return
+		}
+		rootPath = homeDir
+	}
+	infos, err := service.ReadDirectory(rootPath)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	data := make([]BaseFileItemTemplate, 0)
+	for _, info := range infos {
+		template := BaseFileItemTemplate{}
+		template.Assign(info, rootPath)
+		data = append(data, template)
+	}
+	context.JSON(haruka.JSON{
+		"path":  rootPath,
+		"sep":   string(os.PathSeparator),
+		"files": data,
+	})
+}
+
+var readTaskListHandler haruka.RequestHandler = func(context *haruka.Context) {
+	tasks := service.GetTaskList()
+	data := make([]BaseTaskTemplate, 0)
+	for _, task := range tasks {
+		template := BaseTaskTemplate{}
+		template.Assign(task)
+		data = append(data, template)
+	}
+	context.JSON(haruka.JSON{
+		"count":  len(tasks),
+		"result": data,
+	})
 }

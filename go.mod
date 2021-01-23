@@ -3,6 +3,7 @@ module github.com/projectxpolaris/youvideo
 go 1.13
 
 require (
+	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/allentom/haruka v0.0.0-20210120133629-b837cdca8d46
 	github.com/allentom/transcoder v1.1.2-0.20210116154519-71fef7bc1789
 	github.com/rs/cors v1.7.0

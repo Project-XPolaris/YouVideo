@@ -169,3 +169,48 @@ var readTaskListHandler haruka.RequestHandler = func(context *haruka.Context) {
 		"result": data,
 	})
 }
+
+var deleteVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
+	rawId := context.Parameters["id"]
+	id, err := strconv.Atoi(rawId)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	err = service.DeleteVideoById(uint(id))
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
+}
+
+type MoveVideoRequest struct {
+	Path    string `json:"path"`
+	Library uint   `json:"library"`
+}
+
+var moveVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
+	rawId := context.Parameters["id"]
+	id, err := strconv.Atoi(rawId)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	var requestBody MoveVideoRequest
+	err = context.ParseJson(&requestBody)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	video, err := service.MoveVideoById(uint(id), requestBody.Library, requestBody.Path)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	template := BaseVideoTemplate{}
+	template.Assign(video)
+	context.JSON(template)
+}

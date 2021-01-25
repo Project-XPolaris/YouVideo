@@ -70,3 +70,9 @@ func RemoveLibraryById(id uint) error {
 	}
 	return database.Instance.Unscoped().Delete(&database.Library{}, id).Error
 }
+
+func GetLibraryById(id uint) (*database.Library, error) {
+	var library database.Library
+	err := database.Instance.Find(&library, id).Error
+	return &library, err
+}

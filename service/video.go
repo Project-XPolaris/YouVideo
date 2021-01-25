@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/util"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"os"
@@ -148,4 +149,36 @@ func GetVideoById(id uint) (*database.Video, error) {
 	var video database.Video
 	err := database.Instance.Find(&video, id).Error
 	return &video, err
+}
+
+func MoveVideoById(id uint, targetLibraryId uint, targetPath string) (*database.Video, error) {
+	video, err := GetVideoById(id)
+	if err != nil {
+		return nil, err
+	}
+	sourceLibrary, err := GetLibraryById(video.LibraryId)
+	if err != nil {
+		return nil, err
+	}
+	targetLibrary, err := GetLibraryById(targetLibraryId)
+	if err != nil {
+		return nil, err
+	}
+	if len(targetPath) == 0 {
+		targetPath, err = util.GetMovePath(video.Path, sourceLibrary.Path, targetLibrary.Path)
+		if err != nil {
+			return nil, err
+		}
+	}
+	err = AppFs.MkdirAll(filepath.Dir(targetPath), os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+	err = AppFs.Rename(video.Path, targetPath)
+	if err != nil {
+		return nil, err
+	}
+	video.LibraryId = targetLibraryId
+	video.Path = targetPath
+	return video, database.Instance.Save(video).Error
 }

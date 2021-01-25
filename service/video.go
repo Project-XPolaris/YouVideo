@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -51,10 +52,49 @@ func CreateVideo(path string, libraryId uint) error {
 		}).Warn("video index exist!")
 		return nil
 	}
+
 	video := &database.Video{
 		Path:      path,
 		LibraryId: libraryId,
 	}
+
+	// get meta data
+	meta, metaerr := GetVideoFileMeta(path)
+	if metaerr == nil {
+		duration, err := strconv.ParseFloat(meta.GetFormat().GetDuration(), 10)
+		if err != nil {
+			VideoLogger.Error(err)
+		} else {
+			video.Duration = duration
+		}
+
+		size, err := strconv.ParseInt(meta.GetFormat().GetSize(), 10, 64)
+		if err != nil {
+			VideoLogger.Error(err)
+		} else {
+			video.Size = size
+		}
+
+		bitrate, err := strconv.ParseInt(meta.GetFormat().GetBitRate(), 10, 64)
+		if err != nil {
+			VideoLogger.Error(err)
+		} else {
+			video.Bitrate = bitrate
+		}
+
+		// parse stream
+		for _, stream := range meta.GetStreams() {
+			if stream.GetCodecType() == "video" && stream.GetProfile() == "Main" {
+				video.MainVideoCodec = stream.GetCodecName()
+				continue
+			}
+			if stream.GetCodecType() == "audio" && len(video.MainAudioCodec) == 0 {
+				video.MainAudioCodec = stream.GetCodecName()
+			}
+
+		}
+	}
+
 	coverPath, err := GenerateVideoCover(path)
 	if err != nil {
 		logrus.Error(err)

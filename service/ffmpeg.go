@@ -60,3 +60,13 @@ func GenerateVideoCover(path string) (string, error) {
 	}
 	return outputPath, err
 }
+
+func GetVideoFileMeta(path string) (transcoder.Metadata, error) {
+	trans := NewTranscoder()
+	trans.Input(path).Input(path)
+	meta, err := trans.GetMetadata()
+	if err != nil {
+		return nil, err
+	}
+	return meta, nil
+}

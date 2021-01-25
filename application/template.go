@@ -22,11 +22,16 @@ func (t *BaseLibraryTemplate) Assign(library *database.Library) {
 }
 
 type BaseVideoTemplate struct {
-	Id        uint   `json:"id"`
-	Path      string `json:"path"`
-	Cover     string `json:"cover,omitempty"`
-	LibraryId uint   `json:"library_id"`
-	Name      string `json:"name"`
+	Id             uint    `json:"id"`
+	Path           string  `json:"path"`
+	Cover          string  `json:"cover,omitempty"`
+	LibraryId      uint    `json:"library_id"`
+	Name           string  `json:"name"`
+	Duration       float64 `json:"duration"`
+	Size           int64   `json:"size"`
+	Bitrate        int64   `json:"bitrate"`
+	MainVideoCodec string  `json:"main_video_codec"`
+	MainAudioCodec string  `json:"main_audio_codec"`
 }
 
 func (t *BaseVideoTemplate) Assign(video *database.Video) {
@@ -39,6 +44,11 @@ func (t *BaseVideoTemplate) Assign(video *database.Video) {
 	extension := filepath.Ext(baseFileName)
 	t.Name = strings.Replace(baseFileName, extension, "", 1)
 	t.LibraryId = video.LibraryId
+	t.Duration = video.Duration
+	t.Size = video.Size
+	t.Bitrate = video.Bitrate
+	t.MainAudioCodec = video.MainAudioCodec
+	t.MainVideoCodec = video.MainVideoCodec
 }
 
 type BaseFileItemTemplate struct {

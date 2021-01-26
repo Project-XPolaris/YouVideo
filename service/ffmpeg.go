@@ -46,11 +46,11 @@ func GetShotByFile(path string, output string) error {
 }
 
 func GenerateVideoCover(path string) (string, error) {
-	err := os.MkdirAll("./static/covers", os.FileMode(0775))
+	err := os.MkdirAll(config.AppConfig.CoversStore, os.FileMode(0775))
 	if err != nil {
 		return "", err
 	}
-	outputPath, err := filepath.Abs(filepath.Join("./static/covers", fmt.Sprintf("%s.jpg", xid.New().String())))
+	outputPath, err := filepath.Abs(filepath.Join(config.AppConfig.CoversStore, fmt.Sprintf("%s.jpg", xid.New().String())))
 	if err != nil {
 		return "", err
 	}

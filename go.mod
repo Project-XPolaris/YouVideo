@@ -6,6 +6,8 @@ require (
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/allentom/haruka v0.0.0-20210120133629-b837cdca8d46
 	github.com/allentom/transcoder v1.1.2-0.20210116154519-71fef7bc1789
+	github.com/jessevdk/go-flags v1.4.0
+	github.com/kardianos/service v1.2.0
 	github.com/rs/cors v1.7.0
 	github.com/rs/xid v1.2.1
 	github.com/sirupsen/logrus v1.7.0

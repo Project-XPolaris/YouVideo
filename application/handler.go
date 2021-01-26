@@ -92,8 +92,9 @@ var readVideoList haruka.RequestHandler = func(context *haruka.Context) {
 	page := context.Param["page"].(int)
 	pageSize := context.Param["pageSize"].(int)
 	count, videoList, err := service.GetVideoList(service.VideoQueryOption{
-		Page:     page,
-		PageSize: pageSize,
+		Page:      page,
+		PageSize:  pageSize,
+		WithFiles: true,
 	})
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
@@ -120,12 +121,12 @@ var playVideo haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	video, err := service.GetVideoById(uint(id))
+	file, err := service.GetFileById(uint(id))
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	http.ServeFile(context.Writer, context.Request, video.Path)
+	http.ServeFile(context.Writer, context.Request, file.Path)
 }
 
 var readDirectoryHandler haruka.RequestHandler = func(context *haruka.Context) {

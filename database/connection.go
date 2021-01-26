@@ -20,7 +20,7 @@ func Connect() error {
 		Logger.Errorln(err)
 		return err
 	}
-	Instance.AutoMigrate(&Video{}, &Library{})
+	Instance.AutoMigrate(&Video{}, &Library{}, &File{})
 	Logger.Info("database connected")
 	return nil
 }

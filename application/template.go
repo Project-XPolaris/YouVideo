@@ -6,7 +6,6 @@ import (
 	"github.com/projectxpolaris/youvideo/service"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 type BaseLibraryTemplate struct {
@@ -21,34 +20,54 @@ func (t *BaseLibraryTemplate) Assign(library *database.Library) {
 	t.DirName = filepath.Base(library.Path)
 }
 
-type BaseVideoTemplate struct {
+type BaseFileTemplate struct {
 	Id             uint    `json:"id"`
 	Path           string  `json:"path"`
 	Cover          string  `json:"cover,omitempty"`
-	LibraryId      uint    `json:"library_id"`
-	Name           string  `json:"name"`
 	Duration       float64 `json:"duration"`
 	Size           int64   `json:"size"`
 	Bitrate        int64   `json:"bitrate"`
 	MainVideoCodec string  `json:"main_video_codec"`
 	MainAudioCodec string  `json:"main_audio_codec"`
+	VideoId        uint    `json:"video_id"`
+}
+
+func (t *BaseFileTemplate) Assign(file *database.File) {
+	t.Id = file.ID
+	t.Path = file.Path
+	if len(file.Cover) > 0 {
+		t.Cover = fmt.Sprintf("/covers/%s", file.Cover)
+	}
+	t.VideoId = file.VideoId
+	t.Duration = file.Duration
+	t.Size = file.Size
+	t.Bitrate = file.Bitrate
+	t.MainVideoCodec = file.MainVideoCodec
+	t.MainAudioCodec = file.MainAudioCodec
+}
+
+type BaseVideoTemplate struct {
+	Id        uint               `json:"id"`
+	BaseDir   string             `json:"base_dir"`
+	Name      string             `json:"name"`
+	LibraryId uint               `json:"library_id"`
+	Files     []BaseFileTemplate `json:"files,omitempty"`
 }
 
 func (t *BaseVideoTemplate) Assign(video *database.Video) {
 	t.Id = video.ID
-	t.Path = video.Path
-	if len(video.Cover) > 0 {
-		t.Cover = fmt.Sprintf("/covers/%s", video.Cover)
-	}
-	baseFileName := filepath.Base(video.Path)
-	extension := filepath.Ext(baseFileName)
-	t.Name = strings.Replace(baseFileName, extension, "", 1)
+	t.BaseDir = video.BaseDir
+	t.Name = video.Name
 	t.LibraryId = video.LibraryId
-	t.Duration = video.Duration
-	t.Size = video.Size
-	t.Bitrate = video.Bitrate
-	t.MainAudioCodec = video.MainAudioCodec
-	t.MainVideoCodec = video.MainVideoCodec
+	if video.Files != nil {
+		fileTemplates := make([]BaseFileTemplate, 0)
+		for _, file := range video.Files {
+			template := BaseFileTemplate{}
+			template.Assign(&file)
+			fileTemplates = append(fileTemplates, template)
+		}
+		t.Files = fileTemplates
+	}
 }
 
 type BaseFileItemTemplate struct {

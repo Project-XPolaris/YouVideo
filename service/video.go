@@ -178,9 +178,13 @@ func GetVideoList(option VideoQueryOption) (int64, []database.Video, error) {
 	return count, result, err
 }
 
-func GetVideoById(id uint) (*database.Video, error) {
+func GetVideoById(id uint, rel ...string) (*database.Video, error) {
 	var video database.Video
-	err := database.Instance.Find(&video, id).Error
+	query := database.Instance
+	for _, relStr := range rel {
+		query = query.Preload(relStr)
+	}
+	err := query.Find(&video, id).Error
 	return &video, err
 }
 
@@ -226,4 +230,15 @@ func MoveVideoById(id uint, targetLibraryId uint, targetPath string) (*database.
 
 	video.LibraryId = targetLibraryId
 	return &video, database.Instance.Save(&video).Error
+}
+
+func NewVideoTranscodeTask(id uint, format string, codec string) error {
+	video, err := GetVideoById(id, "Files")
+	if err != nil {
+		return err
+	}
+	if len(video.Files) > 0 {
+		return NewFileTranscodeTask(video.Files[0].ID, format, codec)
+	}
+	return nil
 }

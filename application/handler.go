@@ -114,6 +114,22 @@ var readVideoList haruka.RequestHandler = func(context *haruka.Context) {
 	})
 }
 
+var getVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
+	rawId := context.Parameters["id"]
+	id, err := strconv.Atoi(rawId)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	video, err := service.GetVideoById(uint(id), "Files")
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	template := BaseVideoTemplate{}
+	template.Assign(video)
+	context.JSON(template)
+}
 var playVideo haruka.RequestHandler = func(context *haruka.Context) {
 	rawId := context.Parameters["id"]
 	id, err := strconv.Atoi(rawId)
@@ -214,4 +230,32 @@ var moveVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 	template := BaseVideoTemplate{}
 	template.Assign(video)
 	context.JSON(template)
+}
+
+type VideoTranscodeRequest struct {
+	Format string `json:"format"`
+	Codec  string `json:"codec"`
+}
+
+var transcodeHandler haruka.RequestHandler = func(context *haruka.Context) {
+	rawId := context.Parameters["id"]
+	id, err := strconv.Atoi(rawId)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	var requestBody VideoTranscodeRequest
+	err = context.ParseJson(&requestBody)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	err = service.NewVideoTranscodeTask(uint(id), requestBody.Format, requestBody.Codec)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
 }

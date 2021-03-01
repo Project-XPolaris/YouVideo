@@ -8,6 +8,20 @@ import (
 	"path/filepath"
 )
 
+type BaseListContainer struct {
+	Count    int64       `json:"count,omitempty"`
+	Page     int         `json:"page,omitempty"`
+	PageSize int         `json:"pageSize,omitempty"`
+	Result   interface{} `json:"result,omitempty"`
+}
+
+func (t *BaseListContainer) SerializeList(result interface{}, context map[string]interface{}) {
+	t.Count = context["count"].(int64)
+	t.Page = context["page"].(int)
+	t.PageSize = context["pageSize"].(int)
+	t.Result = result
+}
+
 type BaseLibraryTemplate struct {
 	Id      uint   `json:"id"`
 	Path    string `json:"path"`
@@ -100,4 +114,16 @@ func (t *BaseTaskTemplate) Assign(task *service.Task) {
 	t.Status = service.TaskStatusNameMapping[task.Status]
 	t.Type = service.TaskTypeNameMapping[task.Type]
 	t.Output = task.Output
+}
+
+type BaseTagTemplate struct {
+	Id   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
+func (t *BaseTagTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
+	tagModel := dataModel.(*database.Tag)
+	t.Id = tagModel.ID
+	t.Name = tagModel.Name
+	return nil
 }

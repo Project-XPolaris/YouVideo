@@ -2,6 +2,10 @@ package application
 
 import (
 	"github.com/allentom/haruka"
+	"github.com/allentom/haruka/blueprint"
+	"github.com/allentom/haruka/serializer"
+	"github.com/allentom/haruka/validator"
+	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/service"
 	"net/http"
 	"os"
@@ -251,6 +255,111 @@ var transcodeHandler haruka.RequestHandler = func(context *haruka.Context) {
 		return
 	}
 	err = service.NewVideoTranscodeTask(uint(id), requestBody.Format, requestBody.Codec)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
+}
+
+type CreateTagRequestBody struct {
+	Name string `json:"name"`
+}
+
+var createTagHandler haruka.RequestHandler = func(context *haruka.Context) {
+	view := blueprint.CreateModelView{
+		Context: context,
+		CreateModel: func() interface{} {
+			return &database.Tag{}
+		},
+		ResponseTemplate: &BaseTagTemplate{},
+		RequestBody:      &CreateTagRequestBody{},
+		OnError: func(err error) {
+			AbortError(context, err, http.StatusInternalServerError)
+			return
+		},
+
+		OnCreate: func(view *blueprint.CreateModelView, model interface{}) (interface{}, error) {
+			tag := model.(*database.Tag)
+			err := tag.Save()
+			return tag, err
+		},
+		GetValidators: func(v *blueprint.CreateModelView) []validator.Validator {
+			tag := v.RequestBody.(*CreateTagRequestBody)
+			return []validator.Validator{
+				&DuplicateTagValidator{Name: tag.Name},
+			}
+		},
+	}
+	view.Run()
+}
+
+var getTagListHandler haruka.RequestHandler = func(context *haruka.Context) {
+	view := blueprint.ListView{
+		Context:       context,
+		Pagination:    &blueprint.DefaultPagination{},
+		QueryBuilder:  &service.TagQueryBuilder{},
+		FilterMapping: []blueprint.FilterMapping{},
+		GetTemplate: func() serializer.TemplateSerializer {
+			return &BaseTagTemplate{}
+		},
+		GetContainer: func() serializer.ListContainerSerializer {
+			return &BaseListContainer{}
+		},
+		OnError: func(err error) {
+			AbortError(context, err, http.StatusInternalServerError)
+			return
+		},
+	}
+	view.Run()
+}
+var removeTagHandler haruka.RequestHandler = func(context *haruka.Context) {
+	view := blueprint.DeleteModelView{
+		Context: context,
+		Lookup:  "id",
+		OnError: func(err error) {
+			AbortError(context, err, http.StatusInternalServerError)
+			return
+		},
+		Model: &database.Tag{},
+	}
+	view.Run()
+}
+
+var updateTagHandler haruka.RequestHandler = func(context *haruka.Context) {
+	view := blueprint.UpdateModelView{
+		Context: context,
+		Lookup:  "id",
+		OnError: func(err error) {
+			AbortError(context, err, http.StatusInternalServerError)
+			return
+		},
+		Model:    &database.Tag{},
+		Template: &BaseTagTemplate{},
+	}
+	view.Run()
+}
+
+type AddVideoToTagRequestBody struct {
+	Ids []interface{}
+}
+
+var addVideoToTagHandler haruka.RequestHandler = func(context *haruka.Context) {
+	rawId := context.Parameters["id"]
+	id, err := strconv.Atoi(rawId)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	var requestBody AddVideoToTagRequestBody
+	err = context.ParseJson(&requestBody)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	err = service.AddVideosToTag(uint(id), requestBody.Ids...)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return

@@ -93,29 +93,29 @@ var deleteLibrary haruka.RequestHandler = func(context *haruka.Context) {
 }
 
 var readVideoList haruka.RequestHandler = func(context *haruka.Context) {
-	page := context.Param["page"].(int)
-	pageSize := context.Param["pageSize"].(int)
-	count, videoList, err := service.GetVideoList(service.VideoQueryOption{
-		Page:      page,
-		PageSize:  pageSize,
-		WithFiles: true,
-	})
-	if err != nil {
-		AbortError(context, err, http.StatusInternalServerError)
-		return
+	view := blueprint.ListView{
+		Context:      context,
+		Pagination:   &blueprint.DefaultPagination{},
+		QueryBuilder: &service.VideoQueryBuilder{},
+		FilterMapping: []blueprint.FilterMapping{
+			{
+				Lookup: "tag",
+				Method: "InTagIds",
+				Many:   true,
+			},
+		},
+		GetTemplate: func() serializer.TemplateSerializer {
+			return &BaseVideoTemplate{}
+		},
+		GetContainer: func() serializer.ListContainerSerializer {
+			return &serializer.DefaultListContainer{}
+		},
+		OnError: func(err error) {
+			AbortError(context, err, http.StatusInternalServerError)
+			return
+		},
 	}
-	data := make([]BaseVideoTemplate, 0)
-	for _, video := range videoList {
-		template := BaseVideoTemplate{}
-		template.Assign(&video)
-		data = append(data, template)
-	}
-	context.JSON(haruka.JSON{
-		"count":    count,
-		"page":     page,
-		"pageSize": pageSize,
-		"result":   data,
-	})
+	view.Run()
 }
 
 var getVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -298,10 +298,16 @@ var createTagHandler haruka.RequestHandler = func(context *haruka.Context) {
 
 var getTagListHandler haruka.RequestHandler = func(context *haruka.Context) {
 	view := blueprint.ListView{
-		Context:       context,
-		Pagination:    &blueprint.DefaultPagination{},
-		QueryBuilder:  &service.TagQueryBuilder{},
-		FilterMapping: []blueprint.FilterMapping{},
+		Context:      context,
+		Pagination:   &blueprint.DefaultPagination{},
+		QueryBuilder: &service.TagQueryBuilder{},
+		FilterMapping: []blueprint.FilterMapping{
+			{
+				Lookup: "video",
+				Method: "InVideoIds",
+				Many:   true,
+			},
+		},
 		GetTemplate: func() serializer.TemplateSerializer {
 			return &BaseTagTemplate{}
 		},
@@ -342,8 +348,8 @@ var updateTagHandler haruka.RequestHandler = func(context *haruka.Context) {
 	view.Run()
 }
 
-type AddVideoToTagRequestBody struct {
-	Ids []interface{}
+type TagVideoBatchRequestBody struct {
+	Ids []uint
 }
 
 var addVideoToTagHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -353,13 +359,36 @@ var addVideoToTagHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	var requestBody AddVideoToTagRequestBody
+	var requestBody TagVideoBatchRequestBody
 	err = context.ParseJson(&requestBody)
 	if err != nil {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
 	err = service.AddVideosToTag(uint(id), requestBody.Ids...)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
+}
+
+var removeVideoFromTagHandler haruka.RequestHandler = func(context *haruka.Context) {
+	rawId := context.Parameters["id"]
+	id, err := strconv.Atoi(rawId)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	var requestBody TagVideoBatchRequestBody
+	err = context.ParseJson(&requestBody)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	err = service.RemoveVideosFromTag(uint(id), requestBody.Ids...)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return

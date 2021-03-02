@@ -37,6 +37,7 @@ func Run() {
 	e.Router.DELETE("/tag/{id:[0-9]+}", removeTagHandler)
 	e.Router.PATCH("/tag/{id:[0-9]+}", updateTagHandler)
 	e.Router.POST("/tag/{id:[0-9]+}/videos", addVideoToTagHandler)
+	e.Router.DELETE("/tag/{id:[0-9]+}/videos", removeVideoFromTagHandler)
 	e.Router.GET("/files", readDirectoryHandler)
 	e.Router.GET("/task", readTaskListHandler)
 	e.Router.Static("/covers", config.AppConfig.CoversStore)

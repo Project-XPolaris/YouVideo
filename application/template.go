@@ -70,6 +70,12 @@ type BaseVideoTemplate struct {
 	Files     []BaseFileTemplate `json:"files,omitempty"`
 }
 
+func (t *BaseVideoTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
+	video := dataModel.(*database.Video)
+	t.Assign(video)
+	return nil
+}
+
 func (t *BaseVideoTemplate) Assign(video *database.Video) {
 	t.Id = video.ID
 	t.BaseDir = video.BaseDir

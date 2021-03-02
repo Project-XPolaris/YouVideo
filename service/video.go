@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/allentom/haruka/gormh"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/util"
 	"github.com/sirupsen/logrus"
@@ -41,6 +42,37 @@ func ScanVideo(library *database.Library) error {
 		return err
 	}
 	return err
+}
+
+type VideoQueryBuilder struct {
+	gormh.DefaultPageFilter
+	VideoTagIdFilter
+}
+
+func (v *VideoQueryBuilder) InTagIds(ids ...interface{}) {
+	if v.VideoTagIdFilter.tagIds == nil {
+		v.VideoTagIdFilter.tagIds = []interface{}{}
+	}
+	v.VideoTagIdFilter.tagIds = append(v.VideoTagIdFilter.tagIds, ids...)
+}
+func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
+	query := database.Instance
+	query = gormh.ApplyFilters(v, query)
+	models := make([]*database.Video, 0)
+	var count int64
+	err := query.Model(&database.Video{}).Limit(v.GetLimit()).Offset(v.GetOffset()).Find(&models).Count(&count).Error
+	return count, models, err
+}
+
+type VideoTagIdFilter struct {
+	tagIds []interface{}
+}
+
+func (f VideoTagIdFilter) ApplyQuery(db *gorm.DB) *gorm.DB {
+	if f.tagIds != nil && len(f.tagIds) > 0 {
+		return db.Joins("left join video_tags on video_tags.video_id = videos.id").Where("video_tags.tag_id In ?", f.tagIds)
+	}
+	return db
 }
 
 func CreateVideo(path string, libraryId uint) error {

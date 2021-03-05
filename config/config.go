@@ -5,11 +5,12 @@ import "github.com/spf13/viper"
 var AppConfig Config
 
 type Config struct {
-	Addr        string `json:"addr"`
-	CoversStore string `json:"covers_store"`
-	FfmpegBin   string `json:"ffmpeg_bin"`
-	FfprobeBin  string `json:"ffprobe_bin"`
-	YoutransURL string `json:"youtrans_url"`
+	Addr            string `json:"addr"`
+	CoversStore     string `json:"covers_store"`
+	FfmpegBin       string `json:"ffmpeg_bin"`
+	FfprobeBin      string `json:"ffprobe_bin"`
+	YoutransURL     string `json:"youtrans_url"`
+	EnableTranscode bool
 }
 
 func ReadConfig() error {
@@ -26,14 +27,16 @@ func ReadConfig() error {
 	configer.SetDefault("cover_store", "./static/covers")
 	configer.SetDefault("ffmpeg_bin", "ffmpeg")
 	configer.SetDefault("ffprobe_bin", "ffprobe")
-	configer.SetDefault("youtrans_url", "")
+	configer.SetDefault("transcode.url", "")
+	configer.SetDefault("transcode.enable", false)
 
 	AppConfig = Config{
-		Addr:        configer.GetString("addr"),
-		CoversStore: configer.GetString("cover_store"),
-		FfmpegBin:   configer.GetString("ffmpeg_bin"),
-		FfprobeBin:  configer.GetString("ffprobe_bin"),
-		YoutransURL: configer.GetString("youtrans_url"),
+		Addr:            configer.GetString("addr"),
+		CoversStore:     configer.GetString("cover_store"),
+		FfmpegBin:       configer.GetString("ffmpeg_bin"),
+		FfprobeBin:      configer.GetString("ffprobe_bin"),
+		YoutransURL:     configer.GetString("transcode.url"),
+		EnableTranscode: configer.GetBool("transcode.enable"),
 	}
 	return nil
 }

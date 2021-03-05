@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
@@ -9,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -37,6 +39,12 @@ func GetFileById(id uint) (*database.File, error) {
 	return &file, err
 }
 
+func GetFileByPath(path string) (*database.File, error) {
+	file := database.File{}
+	err := database.Instance.Where("path = ?", path).First(&file).Error
+	return &file, err
+}
+
 func NewFileTranscodeTask(id uint, format string, codec string) error {
 	file, err := GetFileById(id)
 	if err != nil {
@@ -58,4 +66,65 @@ func NewFileTranscodeTask(id uint, format string, codec string) error {
 		logrus.Info(response.Id)
 	}
 	return err
+}
+func NewVideoFile(path string) (file database.File) {
+	meta, metaerr := GetVideoFileMeta(path)
+	if metaerr == nil {
+		duration, err := strconv.ParseFloat(meta.GetFormat().GetDuration(), 10)
+		if err != nil {
+			VideoLogger.Error(err)
+		} else {
+			file.Duration = duration
+		}
+
+		size, err := strconv.ParseInt(meta.GetFormat().GetSize(), 10, 64)
+		if err != nil {
+			VideoLogger.Error(err)
+		} else {
+			file.Size = size
+		}
+
+		bitrate, err := strconv.ParseInt(meta.GetFormat().GetBitRate(), 10, 64)
+		if err != nil {
+			VideoLogger.Error(err)
+		} else {
+			file.Bitrate = bitrate
+		}
+
+		// parse stream
+		for _, stream := range meta.GetStreams() {
+			if stream.GetCodecType() == "video" && len(file.MainVideoCodec) == 0 {
+				file.MainVideoCodec = stream.GetCodecName()
+				continue
+			}
+			if stream.GetCodecType() == "audio" && len(file.MainAudioCodec) == 0 {
+				file.MainAudioCodec = stream.GetCodecName()
+			}
+		}
+	}
+	file.Path = path
+	return
+}
+func CompleteTrans(tranTask youtrans.TaskResponse) error {
+	original, err := GetFileByPath(tranTask.Input)
+	if err != nil {
+		return err
+	}
+	if original == nil {
+		return errors.New("original trans file not found")
+	}
+	newFile := NewVideoFile(tranTask.Output)
+	newFile.VideoId = original.VideoId
+
+	// generate cover
+	coverPath, err := GenerateVideoCover(newFile.Path)
+	if err != nil {
+		return err
+	}
+	newFile.Cover = filepath.Base(coverPath)
+	err = database.Instance.Create(&newFile).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }

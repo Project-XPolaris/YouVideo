@@ -23,8 +23,12 @@ github.com/allentom/haruka v0.0.0-20210120133629-b837cdca8d46 h1:zXjbmRQ1+ZRf9Q7
 github.com/allentom/haruka v0.0.0-20210120133629-b837cdca8d46/go.mod h1:CUMaE+ZhY3wsTZQ6ymOCoxT3Ylk5psGDBtBH+9i/GfE=
 github.com/allentom/haruka v0.0.0-20210227142734-a259cb719206 h1:Frh7YLd4RKVFZtMhY/SarofmcWKwv6zKNlqgJurOlbs=
 github.com/allentom/haruka v0.0.0-20210227142734-a259cb719206/go.mod h1:bGlYqqR11LoL33wZkDk73GTAcqjS42AX2kX7XbBWTRk=
+github.com/allentom/haruka v0.0.0-20210303015729-6935c2f26959 h1:LvNNNWbpMjIur4ah0X4+rxwWNpIyyStNXRQ2qqbEZaI=
+github.com/allentom/haruka v0.0.0-20210303015729-6935c2f26959/go.mod h1:bGlYqqR11LoL33wZkDk73GTAcqjS42AX2kX7XbBWTRk=
 github.com/allentom/transcoder v1.1.2-0.20210116154519-71fef7bc1789 h1:xpSBVJFG4YO/mJ2/e4/6qz7XoJ3IkYyZYjsCsJaWBCA=
 github.com/allentom/transcoder v1.1.2-0.20210116154519-71fef7bc1789/go.mod h1:n8EtRihlYzcb/YXzRDNqL2lYo3Vi7kprJ5NeU41jQGQ=
+github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f h1:5YL8PS1ARIkYAA+3kQDID5pL8jKp/DqfQaNvPnQ/Kj4=
+github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f/go.mod h1:n8EtRihlYzcb/YXzRDNqL2lYo3Vi7kprJ5NeU41jQGQ=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
 github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da/go.mod h1:Q73ZrmVTwzkszR9V5SSuryQ31EELlFMUz1kKyl939pY=
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
@@ -304,6 +308,8 @@ golang.org/x/sys v0.0.0-20210119212857-b64e53b001e4 h1:myAQVi0cGEoqQVR5POX+8RR2m
 golang.org/x/sys v0.0.0-20210119212857-b64e53b001e4/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210228012217-479acdf4ea46 h1:V066+OYJ66oTjnhm4Yrn7SXIwSCiDQJxpBxmvqb1N1c=
 golang.org/x/sys v0.0.0-20210228012217-479acdf4ea46/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20210303074136-134d130e1a04 h1:cEhElsAv9LUt9ZUUocxzWe05oFLVd+AA2nstydTeI8g=
+golang.org/x/sys v0.0.0-20210303074136-134d130e1a04/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.2/go.mod h1:bEr9sfX3Q8Zfm5fL9x+3itogRgK3+ptLWKqgva+5dAk=

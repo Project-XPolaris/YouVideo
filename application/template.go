@@ -2,8 +2,11 @@ package application
 
 import (
 	"fmt"
+	"github.com/allentom/haruka"
+	"github.com/allentom/transcoder/ffmpeg"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/service"
+	"github.com/projectxpolaris/youvideo/youtrans"
 	"os"
 	"path/filepath"
 )
@@ -122,6 +125,17 @@ func (t *BaseTaskTemplate) Assign(task *service.Task) {
 	t.Output = task.Output
 }
 
+func (t *BaseTaskTemplate) AssignWithTrans(task youtrans.TaskResponse) {
+	t.Id = task.Id
+	t.Status = task.Status
+	t.Type = "transcode"
+	t.Output = haruka.JSON{
+		"input":   task.Input,
+		"output":  task.Output,
+		"process": task.Process,
+	}
+}
+
 type BaseTagTemplate struct {
 	Id   uint   `json:"id"`
 	Name string `json:"name"`
@@ -131,5 +145,47 @@ func (t *BaseTagTemplate) Serializer(dataModel interface{}, context map[string]i
 	tagModel := dataModel.(*database.Tag)
 	t.Id = tagModel.ID
 	t.Name = tagModel.Name
+	return nil
+}
+
+type BaseCodecTemplate struct {
+	Name string   `json:"name"`
+	Desc string   `json:"desc"`
+	Type string   `json:"type"`
+	Feat []string `json:"feat"`
+}
+
+func (t *BaseCodecTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
+	model := dataModel.(ffmpeg.Codec)
+	t.Name = model.Name
+	t.Desc = model.Desc
+	if model.Flags.AudioCodec {
+		t.Type = "Audio"
+	}
+	if model.Flags.VideoCodec {
+		t.Type = "Video"
+	}
+	if model.Flags.SubtitleCodec {
+		t.Type = "Subtitle"
+	}
+	t.Feat = []string{}
+	if model.Flags.Decoding {
+		t.Feat = append(t.Feat, "decode")
+	}
+	if model.Flags.Encoding {
+		t.Feat = append(t.Feat, "encode")
+	}
+	return nil
+}
+
+type BaseFormatTemplate struct {
+	Name string `json:"name"`
+	Desc string `json:"desc"`
+}
+
+func (t *BaseFormatTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
+	model := dataModel.(ffmpeg.SupportFormat)
+	t.Name = model.Name
+	t.Desc = model.Desc
 	return nil
 }

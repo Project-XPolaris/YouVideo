@@ -11,6 +11,7 @@ import (
 )
 
 var svcConfig *srv.Config
+var Logger = logrus.WithField("scope", "main")
 
 func initService() error {
 	workPath, err := filepath.Abs(filepath.Dir(os.Args[0]))
@@ -28,6 +29,11 @@ func Program() {
 	err := config.ReadConfig()
 	if err != nil {
 		logrus.Fatal(err)
+	}
+	if config.AppConfig.EnableTranscode {
+		Logger.WithFields(logrus.Fields{
+			"url": config.AppConfig.YoutransURL,
+		}).Info("transcode enable")
 	}
 	application.Run()
 }

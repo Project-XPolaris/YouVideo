@@ -1,5 +1,6 @@
 package service
 
+import . "github.com/ahmetb/go-linq/v3"
 import (
 	"fmt"
 	"github.com/allentom/transcoder"
@@ -69,4 +70,81 @@ func GetVideoFileMeta(path string) (transcoder.Metadata, error) {
 		return nil, err
 	}
 	return meta, nil
+}
+
+type CodecsQueryBuilder struct {
+	Type   []string `hsource:"query" hname:"type"`
+	Feat   []string `hsource:"query" hname:"feat"`
+	Search string   `hsource:"query" hname:"search"`
+}
+
+func (b *CodecsQueryBuilder) Query() ([]ffmpeg.Codec, error) {
+	codec, err := ffmpeg.ReadCodecList(&ffmpeg.Config{
+		FfmpegBinPath:  config.AppConfig.FfmpegBin,
+		FfprobeBinPath: config.AppConfig.FfprobeBin,
+	})
+	query := From(codec)
+	if b.Type != nil && len(b.Type) > 0 {
+		query = query.Where(func(i interface{}) bool {
+			for _, targetType := range b.Type {
+				c := i.(ffmpeg.Codec)
+				if c.Flags.VideoCodec && targetType == "video" {
+					return true
+				}
+				if c.Flags.AudioCodec && targetType == "audio" {
+					return true
+				}
+				if c.Flags.SubtitleCodec && targetType == "subtitle" {
+					return true
+				}
+			}
+			return false
+		})
+	}
+	if b.Feat != nil && len(b.Feat) > 0 {
+		query = query.Where(func(i interface{}) bool {
+			c := i.(ffmpeg.Codec)
+			for _, feat := range b.Feat {
+				if !c.Flags.Encoding && feat == "encode" {
+					return false
+				}
+				if !c.Flags.Decoding && feat == "decode" {
+					return false
+				}
+			}
+			return true
+		})
+	}
+	if len(b.Search) > 0 {
+		query = query.Where(func(i interface{}) bool {
+			return strings.Contains(i.(ffmpeg.Codec).Name, b.Search) || strings.Contains(i.(ffmpeg.Codec).Desc, b.Search)
+		})
+	}
+	query.ToSlice(&codec)
+	if err != nil {
+		return nil, err
+	}
+	return codec, nil
+}
+
+type FormatsQueryBuilder struct {
+	Search string `hsource:"query" hname:"search"`
+}
+
+func (b *FormatsQueryBuilder) Query() ([]ffmpeg.SupportFormat, error) {
+	formats, err := ffmpeg.GetFormats(&ffmpeg.Config{
+		FfmpegBinPath:  config.AppConfig.FfmpegBin,
+		FfprobeBinPath: config.AppConfig.FfprobeBin,
+	})
+	query := From(formats)
+	if len(b.Search) > 0 {
+		query = query.Where(func(i interface{}) bool {
+			return strings.Contains(i.(ffmpeg.SupportFormat).Name, b.Search) || strings.Contains(i.(ffmpeg.SupportFormat).Desc, b.Search)
+		})
+	}
+	query.ToSlice(&formats)
+	if err != nil {
+		return nil, err
+	}
+	return formats, nil
 }

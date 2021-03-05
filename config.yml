@@ -2,4 +2,6 @@ addr: ':7700'
 cover_store: './static/covers'
 ffmpeg_bin: 'ffmpeg'
 ffprobe_bin: 'ffprobe'
-youtrans_url: 'http://localhost:6700/'
+transcode:
+  enable: true
+  url: 'http://localhost:6700'

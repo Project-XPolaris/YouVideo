@@ -38,9 +38,14 @@ func Run() {
 	e.Router.PATCH("/tag/{id:[0-9]+}", updateTagHandler)
 	e.Router.POST("/tag/{id:[0-9]+}/videos", addVideoToTagHandler)
 	e.Router.DELETE("/tag/{id:[0-9]+}/videos", removeVideoFromTagHandler)
+	e.Router.GET("/codec", getCodecsHandler)
+	e.Router.GET("/format", getFormatsHandler)
 	e.Router.GET("/files", readDirectoryHandler)
 	e.Router.GET("/task", readTaskListHandler)
 	e.Router.Static("/covers", config.AppConfig.CoversStore)
+
+	e.Router.POST("/callback/tran/complete", transCompleteCallback)
+
 	Logger.Info("application started")
 	e.RunAndListen(config.AppConfig.Addr)
 }

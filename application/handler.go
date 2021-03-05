@@ -7,6 +7,7 @@ import (
 	"github.com/allentom/haruka/validator"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/service"
+	"github.com/projectxpolaris/youvideo/youtrans"
 	"net/http"
 	"os"
 	"strconv"
@@ -185,6 +186,18 @@ var readTaskListHandler haruka.RequestHandler = func(context *haruka.Context) {
 		template.Assign(task)
 		data = append(data, template)
 	}
+
+	transTaskResponse, err := youtrans.DefaultYouTransClient.GetTaskList()
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	for _, transTask := range transTaskResponse.List {
+		template := BaseTaskTemplate{}
+		template.AssignWithTrans(transTask)
+		data = append(data, template)
+	}
+
 	context.JSON(haruka.JSON{
 		"count":  len(tasks),
 		"result": data,
@@ -389,6 +402,61 @@ var removeVideoFromTagHandler haruka.RequestHandler = func(context *haruka.Conte
 		return
 	}
 	err = service.RemoveVideosFromTag(uint(id), requestBody.Ids...)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
+}
+
+var getCodecsHandler haruka.RequestHandler = func(context *haruka.Context) {
+	queryBuilder := service.CodecsQueryBuilder{}
+	err := context.BindingInput(&queryBuilder)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	codecs, err := queryBuilder.Query()
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	result := serializer.SerializeMultipleTemplate(codecs, &BaseCodecTemplate{}, nil)
+	context.JSON(haruka.JSON{
+		"codecs": result,
+	})
+
+}
+
+var getFormatsHandler haruka.RequestHandler = func(context *haruka.Context) {
+	queryBuilder := service.FormatsQueryBuilder{}
+	err := context.BindingInput(&queryBuilder)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	formats, err := queryBuilder.Query()
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	result := serializer.SerializeMultipleTemplate(formats, &BaseFormatTemplate{}, nil)
+	context.JSON(haruka.JSON{
+		"formats": result,
+	})
+
+}
+
+var transCompleteCallback haruka.RequestHandler = func(context *haruka.Context) {
+	var requestBody youtrans.TaskResponse
+	err := context.ParseJson(&requestBody)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	err = service.CompleteTrans(requestBody)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return

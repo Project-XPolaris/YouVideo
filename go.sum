@@ -19,14 +19,8 @@ github.com/ahmetb/go-linq/v3 v3.2.0 h1:BEuMfp+b59io8g5wYzNoFe9pWPalRklhlhbiU3hYZ
 github.com/ahmetb/go-linq/v3 v3.2.0/go.mod h1:haQ3JfOeWK8HpVxMtHHEMPVgBKiYyQ+f1/kLZh/cj9U=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
-github.com/allentom/haruka v0.0.0-20210120133629-b837cdca8d46 h1:zXjbmRQ1+ZRf9Q7CgE4Akp2biFkruf2wkUSnNvvLKIY=
-github.com/allentom/haruka v0.0.0-20210120133629-b837cdca8d46/go.mod h1:CUMaE+ZhY3wsTZQ6ymOCoxT3Ylk5psGDBtBH+9i/GfE=
-github.com/allentom/haruka v0.0.0-20210227142734-a259cb719206 h1:Frh7YLd4RKVFZtMhY/SarofmcWKwv6zKNlqgJurOlbs=
-github.com/allentom/haruka v0.0.0-20210227142734-a259cb719206/go.mod h1:bGlYqqR11LoL33wZkDk73GTAcqjS42AX2kX7XbBWTRk=
 github.com/allentom/haruka v0.0.0-20210303015729-6935c2f26959 h1:LvNNNWbpMjIur4ah0X4+rxwWNpIyyStNXRQ2qqbEZaI=
 github.com/allentom/haruka v0.0.0-20210303015729-6935c2f26959/go.mod h1:bGlYqqR11LoL33wZkDk73GTAcqjS42AX2kX7XbBWTRk=
-github.com/allentom/transcoder v1.1.2-0.20210116154519-71fef7bc1789 h1:xpSBVJFG4YO/mJ2/e4/6qz7XoJ3IkYyZYjsCsJaWBCA=
-github.com/allentom/transcoder v1.1.2-0.20210116154519-71fef7bc1789/go.mod h1:n8EtRihlYzcb/YXzRDNqL2lYo3Vi7kprJ5NeU41jQGQ=
 github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f h1:5YL8PS1ARIkYAA+3kQDID5pL8jKp/DqfQaNvPnQ/Kj4=
 github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f/go.mod h1:n8EtRihlYzcb/YXzRDNqL2lYo3Vi7kprJ5NeU41jQGQ=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
@@ -58,6 +52,7 @@ github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9
 github.com/go-kit/kit v0.8.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
 github.com/go-logfmt/logfmt v0.3.0/go.mod h1:Qt1PoO58o5twSAckw1HlFXLmHsOX5/0LbT9GBnD5lWE=
 github.com/go-logfmt/logfmt v0.4.0/go.mod h1:3RMwSq7FuexP4Kalkev3ejPJsZTpXXBr9+V4qmtdjCk=
+github.com/go-playground/assert/v2 v2.0.1 h1:MsBgLAaY856+nPRTKrp3/OZK38U/wa0CcBYNjji3q3A=
 github.com/go-playground/assert/v2 v2.0.1/go.mod h1:VDjEfimB/XKnb+ZQfWdccd7VUvScMdVu0Titje2rxJ4=
 github.com/go-playground/locales v0.13.0 h1:HyWk6mgj5qFqCT5fjGBuRArbVDfE4hi8+e8ceBS/t7Q=
 github.com/go-playground/locales v0.13.0/go.mod h1:taPMhCMXrRLJO55olJkUXHZBHCxTMfnGwq/HNwmWNS8=
@@ -304,10 +299,6 @@ golang.org/x/sys v0.0.0-20190624142023-c5567b49c5d0/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20191026070338-33540a1f6037 h1:YyJpGZS1sBuBCzLAR1VEpK193GlqGZbnPFnPV/5Rsb4=
 golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20201015000850-e3ed0017c211/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20210119212857-b64e53b001e4 h1:myAQVi0cGEoqQVR5POX+8RR2mrocKqNN1hmeMqhX27k=
-golang.org/x/sys v0.0.0-20210119212857-b64e53b001e4/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20210228012217-479acdf4ea46 h1:V066+OYJ66oTjnhm4Yrn7SXIwSCiDQJxpBxmvqb1N1c=
-golang.org/x/sys v0.0.0-20210228012217-479acdf4ea46/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210303074136-134d130e1a04 h1:cEhElsAv9LUt9ZUUocxzWe05oFLVd+AA2nstydTeI8g=
 golang.org/x/sys v0.0.0-20210303074136-134d130e1a04/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
@@ -377,8 +368,6 @@ gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C
 gorm.io/driver/sqlite v1.1.4 h1:PDzwYE+sI6De2+mxAneV9Xs11+ZyKV6oxD3wDGkaNvM=
 gorm.io/driver/sqlite v1.1.4/go.mod h1:mJCeTFr7+crvS+TRnWc5Z3UvwxUN1BGBLMrf5LA9DYw=
 gorm.io/gorm v1.20.7/go.mod h1:0HFTzE/SqkGTzK6TlDPPQbAYCluiVvhzoA1+aVyzenw=
-gorm.io/gorm v1.20.11 h1:jYHQ0LLUViV85V8dM1TP9VBBkfzKTnuTXDjYObkI6yc=
-gorm.io/gorm v1.20.11/go.mod h1:0HFTzE/SqkGTzK6TlDPPQbAYCluiVvhzoA1+aVyzenw=
 gorm.io/gorm v1.20.12 h1:ebZ5KrSHzet+sqOCVdH9mTjW91L298nX3v5lVxAzSUY=
 gorm.io/gorm v1.20.12/go.mod h1:0HFTzE/SqkGTzK6TlDPPQbAYCluiVvhzoA1+aVyzenw=
 honnef.co/go/tools v0.0.0-20190102054323-c2f93a96b099/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=

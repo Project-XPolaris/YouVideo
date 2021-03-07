@@ -9,6 +9,7 @@ require (
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/kardianos/service v1.2.0
 	github.com/magefile/mage v1.11.0 // indirect
+	github.com/magiconair/properties v1.8.1
 	github.com/rs/cors v1.7.0
 	github.com/rs/xid v1.2.1
 	github.com/sirupsen/logrus v1.8.0

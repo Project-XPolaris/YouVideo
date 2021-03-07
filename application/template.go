@@ -28,6 +28,7 @@ func (t *BaseListContainer) SerializeList(result interface{}, context map[string
 type BaseLibraryTemplate struct {
 	Id      uint   `json:"id"`
 	Path    string `json:"path"`
+	Name    string `json:"name"`
 	DirName string `json:"dir_name"`
 }
 
@@ -35,6 +36,7 @@ func (t *BaseLibraryTemplate) Assign(library *database.Library) {
 	t.Id = library.ID
 	t.Path = library.Path
 	t.DirName = filepath.Base(library.Path)
+	t.Name = library.Name
 }
 
 type BaseFileTemplate struct {

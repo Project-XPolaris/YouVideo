@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/allentom/haruka/gormh"
+	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/util"
+	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"gorm.io/gorm"
@@ -13,6 +15,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var VideoLogger = logrus.New().WithFields(logrus.Fields{
@@ -29,7 +32,7 @@ func ScanVideo(library *database.Library) error {
 		}
 		for _, extension := range targetExtensions {
 			if strings.HasSuffix(info.Name(), extension) {
-				err := CreateVideo(path, library.ID)
+				err = CreateVideoFile(path, library.ID)
 				if err != nil {
 					logrus.Error(err)
 				}
@@ -47,6 +50,7 @@ func ScanVideo(library *database.Library) error {
 type VideoQueryBuilder struct {
 	gormh.DefaultPageFilter
 	VideoTagIdFilter
+	VideoLibraryIdFilter
 }
 
 func (v *VideoQueryBuilder) InTagIds(ids ...interface{}) {
@@ -55,12 +59,18 @@ func (v *VideoQueryBuilder) InTagIds(ids ...interface{}) {
 	}
 	v.VideoTagIdFilter.tagIds = append(v.VideoTagIdFilter.tagIds, ids...)
 }
+func (v *VideoQueryBuilder) InLibraryIds(ids ...interface{}) {
+	if v.VideoLibraryIdFilter.libraryIds == nil {
+		v.VideoLibraryIdFilter.libraryIds = []interface{}{}
+	}
+	v.VideoLibraryIdFilter.libraryIds = append(v.VideoLibraryIdFilter.libraryIds, ids...)
+}
 func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
 	query := database.Instance
 	query = gormh.ApplyFilters(v, query)
 	models := make([]*database.Video, 0)
 	var count int64
-	err := query.Model(&database.Video{}).Limit(v.GetLimit()).Offset(v.GetOffset()).Find(&models).Count(&count).Error
+	err := query.Model(&database.Video{}).Preload("Files").Limit(v.GetLimit()).Offset(v.GetOffset()).Find(&models).Offset(-1).Count(&count).Error
 	return count, models, err
 }
 
@@ -75,24 +85,35 @@ func (f VideoTagIdFilter) ApplyQuery(db *gorm.DB) *gorm.DB {
 	return db
 }
 
-func CreateVideo(path string, libraryId uint) error {
+type VideoLibraryIdFilter struct {
+	libraryIds []interface{}
+}
+
+func (f VideoLibraryIdFilter) ApplyQuery(db *gorm.DB) *gorm.DB {
+	if f.libraryIds != nil && len(f.libraryIds) > 0 {
+		return db.Where("library_id In ?", f.libraryIds)
+	}
+	return db
+}
+func CreateVideoFile(path string, libraryId uint) error {
 	// check if video file exist
-	var existCount int64
-	err := database.Instance.Model(&database.File{}).
-		Where("path = ?", path).
-		Count(&existCount).
-		Error
-	if err != nil {
-		return err
-	}
-	if existCount != 0 {
-		return nil
-	}
+	//var existCount int64
+	//err := database.Instance.Model(&database.File{}).
+	//	Where("path = ?", path).
+	//	Count(&existCount).
+	//	Error
+	//if err != nil {
+	//	return err
+	//}
+	//if existCount != 0 {
+	//	return nil
+	//}
 	videoExt := filepath.Ext(path)
 	videoName := strings.TrimSuffix(filepath.Base(path), videoExt)
 	baseDir := filepath.Dir(path)
+	VideoLogger.WithField("filename", videoName).Info("file hit")
 	var video database.Video
-	err = database.Instance.Model(&database.Video{}).Where("name = ?", videoName).Where("base_dir = ?", baseDir).First(&video).Error
+	err := database.Instance.Model(&database.Video{}).Where("name = ?", videoName).Where("base_dir = ?", baseDir).First(&video).Error
 	ee := !errors.Is(err, gorm.ErrRecordNotFound)
 	fmt.Println(ee)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -116,7 +137,10 @@ func CreateVideo(path string, libraryId uint) error {
 
 	}
 
-	file := database.File{}
+	file, err := GetFileByPath(path)
+	if file == nil {
+		file = &database.File{}
+	}
 	if video.Files == nil {
 		video.Files = []database.File{}
 	}
@@ -157,14 +181,58 @@ func CreateVideo(path string, libraryId uint) error {
 		}
 	}
 
-	coverPath, err := GenerateVideoCover(path)
-	if err != nil {
-		VideoLogger.Error(err)
-	} else {
-		file.Cover = filepath.Base(coverPath)
+	// check cover
+	needGenerate := true
+	targetCoverFilePaths := []string{
+		"cover.jpg",
+		"cover.png",
+		"cover.jpeg",
+		"cover.JPEG",
+		"cover.PNG",
+		fmt.Sprintf("%s.jpg", videoName),
+		fmt.Sprintf("%s.png", videoName),
+		fmt.Sprintf("%s.jpeg", videoName),
+		fmt.Sprintf("%s.JPEG", videoName),
+		fmt.Sprintf("%s.PNG", videoName),
 	}
+	t1 := time.Now()
+	for _, targetCoverFilePath := range targetCoverFilePaths {
+		coverSourcePath := filepath.Join(baseDir, targetCoverFilePath)
+		if util.CheckFileExist(coverSourcePath) {
+			VideoLogger.Info(fmt.Sprintf("use exist cover  = %s", coverSourcePath))
+			coverFileName := fmt.Sprintf("%s%s", xid.New(), filepath.Ext(coverSourcePath))
+			savePath, err := filepath.Abs(filepath.Join(config.AppConfig.CoversStore, coverFileName))
+			if err != nil {
+				VideoLogger.Error(err)
+				break
+			}
+
+			err = util.CopyFile(coverSourcePath, savePath)
+			if err != nil {
+				VideoLogger.Error(err)
+				break
+			}
+
+			os.Remove(filepath.Join(config.AppConfig.CoversStore, file.Cover))
+			file.Cover = coverFileName
+			needGenerate = false
+			break
+		}
+	}
+	t2 := time.Now()
+	diff := t2.Sub(t1)
+	fmt.Println(diff)
+	if needGenerate && len(file.Cover) == 0 {
+		coverPath, err := GenerateVideoCover(path)
+		if err != nil {
+			VideoLogger.Error(err)
+		} else {
+			file.Cover = filepath.Base(coverPath)
+		}
+	}
+
 	file.Path = path
-	video.Files = append(video.Files, file)
+	video.Files = append(video.Files, *file)
 	err = database.Instance.Save(video).Error
 	return err
 }

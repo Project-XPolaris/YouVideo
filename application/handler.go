@@ -15,6 +15,7 @@ import (
 
 type CreateLibraryRequest struct {
 	Path string `json:"path"`
+	Name string `json:"name"`
 }
 
 var createLibraryHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -24,7 +25,7 @@ var createLibraryHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	library, err := service.CreateLibrary(requestBody.Path)
+	library, err := service.CreateLibrary(requestBody.Path, requestBody.Name)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
@@ -102,6 +103,11 @@ var readVideoList haruka.RequestHandler = func(context *haruka.Context) {
 			{
 				Lookup: "tag",
 				Method: "InTagIds",
+				Many:   true,
+			},
+			{
+				Lookup: "library",
+				Method: "InLibraryIds",
 				Many:   true,
 			},
 		},

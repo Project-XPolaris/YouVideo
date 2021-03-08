@@ -2,7 +2,7 @@ package config
 
 import "github.com/spf13/viper"
 
-var AppConfig Config
+var Instance Config
 
 type Config struct {
 	Addr            string `json:"addr"`
@@ -30,7 +30,7 @@ func ReadConfig() error {
 	configer.SetDefault("transcode.url", "")
 	configer.SetDefault("transcode.enable", false)
 
-	AppConfig = Config{
+	Instance = Config{
 		Addr:            configer.GetString("addr"),
 		CoversStore:     configer.GetString("cover_store"),
 		FfmpegBin:       configer.GetString("ffmpeg_bin"),

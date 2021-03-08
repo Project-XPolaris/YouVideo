@@ -51,6 +51,9 @@ type VideoQueryBuilder struct {
 	gormh.DefaultPageFilter
 	VideoTagIdFilter
 	VideoLibraryIdFilter
+	Orders   []string `hsource:"query" hname:"order"`
+	GroupBy  []string `hsource:"query" hname:"group"`
+	BaseDirs []string `hsource:"query" hname:"dir"`
 }
 
 func (v *VideoQueryBuilder) InTagIds(ids ...interface{}) {
@@ -68,9 +71,25 @@ func (v *VideoQueryBuilder) InLibraryIds(ids ...interface{}) {
 func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
 	query := database.Instance
 	query = gormh.ApplyFilters(v, query)
+	for _, order := range v.Orders {
+		query = query.Order(order)
+	}
+	for _, group := range v.GroupBy {
+		query = query.Group(group)
+	}
+	if v.BaseDirs != nil && len(v.BaseDirs) > 0 {
+		query = query.Where("base_dir IN ?", v.BaseDirs)
+	}
 	models := make([]*database.Video, 0)
 	var count int64
-	err := query.Model(&database.Video{}).Preload("Files").Limit(v.GetLimit()).Offset(v.GetOffset()).Find(&models).Offset(-1).Count(&count).Error
+	err := query.Model(&database.Video{}).
+		Preload("Files").
+		Limit(v.GetLimit()).
+		Offset(v.GetOffset()).
+		Find(&models).
+		Offset(-1).
+		Count(&count).
+		Error
 	return count, models, err
 }
 
@@ -201,7 +220,7 @@ func CreateVideoFile(path string, libraryId uint) error {
 		if util.CheckFileExist(coverSourcePath) {
 			VideoLogger.Info(fmt.Sprintf("use exist cover  = %s", coverSourcePath))
 			coverFileName := fmt.Sprintf("%s%s", xid.New(), filepath.Ext(coverSourcePath))
-			savePath, err := filepath.Abs(filepath.Join(config.AppConfig.CoversStore, coverFileName))
+			savePath, err := filepath.Abs(filepath.Join(config.Instance.CoversStore, coverFileName))
 			if err != nil {
 				VideoLogger.Error(err)
 				break
@@ -213,7 +232,7 @@ func CreateVideoFile(path string, libraryId uint) error {
 				break
 			}
 
-			os.Remove(filepath.Join(config.AppConfig.CoversStore, file.Cover))
+			os.Remove(filepath.Join(config.Instance.CoversStore, file.Cover))
 			file.Cover = coverFileName
 			needGenerate = false
 			break

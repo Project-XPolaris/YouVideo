@@ -28,7 +28,7 @@ type TaskResponse struct {
 }
 
 func (c *YouTransClient) GetUrl(path string) string {
-	return fmt.Sprintf("%s/%s", config.AppConfig.YoutransURL, path)
+	return fmt.Sprintf("%s/%s", config.Instance.YoutransURL, path)
 }
 func (c *YouTransClient) CreateNewTask(body *CreateTaskRequestBody) (*TaskResponse, error) {
 	var responseBody TaskResponse

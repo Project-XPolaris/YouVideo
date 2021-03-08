@@ -70,6 +70,7 @@ func (t *BaseFileTemplate) Assign(file *database.File) {
 type BaseVideoTemplate struct {
 	Id        uint               `json:"id"`
 	BaseDir   string             `json:"base_dir"`
+	DirName   string             `json:"dirName"`
 	Name      string             `json:"name"`
 	LibraryId uint               `json:"library_id"`
 	Files     []BaseFileTemplate `json:"files,omitempty"`
@@ -78,6 +79,7 @@ type BaseVideoTemplate struct {
 func (t *BaseVideoTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
 	video := dataModel.(*database.Video)
 	t.Assign(video)
+	t.DirName = filepath.Base(video.BaseDir)
 	return nil
 }
 

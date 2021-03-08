@@ -16,8 +16,8 @@ import (
 
 func NewTranscoder() transcoder.Transcoder {
 	conf := &ffmpeg.Config{
-		FfmpegBinPath:  config.AppConfig.FfmpegBin,
-		FfprobeBinPath: config.AppConfig.FfprobeBin,
+		FfmpegBinPath:  config.Instance.FfmpegBin,
+		FfprobeBinPath: config.Instance.FfprobeBin,
 	}
 	trans := ffmpeg.New(conf)
 	return trans
@@ -34,7 +34,7 @@ func GetShotByFile(path string, output string) error {
 		return err
 	}
 	cmdStr := fmt.Sprintf("-ss %d -i %s -vframes 1 -q:v 2 %s", int(rawSeconds)/2, path, output)
-	cmd := exec.Command(config.AppConfig.FfmpegBin, strings.Split(cmdStr, " ")...)
+	cmd := exec.Command(config.Instance.FfmpegBin, strings.Split(cmdStr, " ")...)
 	err = cmd.Start()
 	if err != nil {
 		return err
@@ -47,11 +47,11 @@ func GetShotByFile(path string, output string) error {
 }
 
 func GenerateVideoCover(path string) (string, error) {
-	err := os.MkdirAll(config.AppConfig.CoversStore, os.FileMode(0775))
+	err := os.MkdirAll(config.Instance.CoversStore, os.FileMode(0775))
 	if err != nil {
 		return "", err
 	}
-	outputPath, err := filepath.Abs(filepath.Join(config.AppConfig.CoversStore, fmt.Sprintf("%s.jpg", xid.New().String())))
+	outputPath, err := filepath.Abs(filepath.Join(config.Instance.CoversStore, fmt.Sprintf("%s.jpg", xid.New().String())))
 	if err != nil {
 		return "", err
 	}
@@ -80,8 +80,8 @@ type CodecsQueryBuilder struct {
 
 func (b *CodecsQueryBuilder) Query() ([]ffmpeg.Codec, error) {
 	codec, err := ffmpeg.ReadCodecList(&ffmpeg.Config{
-		FfmpegBinPath:  config.AppConfig.FfmpegBin,
-		FfprobeBinPath: config.AppConfig.FfprobeBin,
+		FfmpegBinPath:  config.Instance.FfmpegBin,
+		FfprobeBinPath: config.Instance.FfprobeBin,
 	})
 	query := From(codec)
 	if b.Type != nil && len(b.Type) > 0 {
@@ -133,8 +133,8 @@ type FormatsQueryBuilder struct {
 
 func (b *FormatsQueryBuilder) Query() ([]ffmpeg.SupportFormat, error) {
 	formats, err := ffmpeg.GetFormats(&ffmpeg.Config{
-		FfmpegBinPath:  config.AppConfig.FfmpegBin,
-		FfprobeBinPath: config.AppConfig.FfprobeBin,
+		FfmpegBinPath:  config.Instance.FfmpegBin,
+		FfprobeBinPath: config.Instance.FfprobeBin,
 	})
 	query := From(formats)
 	if len(b.Search) > 0 {

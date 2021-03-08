@@ -30,9 +30,9 @@ func Program() {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	if config.AppConfig.EnableTranscode {
+	if config.Instance.EnableTranscode {
 		Logger.WithFields(logrus.Fields{
-			"url": config.AppConfig.YoutransURL,
+			"url": config.Instance.YoutransURL,
 		}).Info("transcode enable")
 	}
 	application.Run()

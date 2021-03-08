@@ -5,6 +5,7 @@ import (
 	"github.com/allentom/haruka/blueprint"
 	"github.com/allentom/haruka/serializer"
 	"github.com/allentom/haruka/validator"
+	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/service"
 	"github.com/projectxpolaris/youvideo/youtrans"
@@ -111,6 +112,9 @@ var readVideoList haruka.RequestHandler = func(context *haruka.Context) {
 				Many:   true,
 			},
 		},
+		OnApplyQuery: func(v *blueprint.ListView) {
+			context.BindingInput(v.QueryBuilder)
+		},
 		GetTemplate: func() serializer.TemplateSerializer {
 			return &BaseVideoTemplate{}
 		},
@@ -192,18 +196,18 @@ var readTaskListHandler haruka.RequestHandler = func(context *haruka.Context) {
 		template.Assign(task)
 		data = append(data, template)
 	}
-
-	transTaskResponse, err := youtrans.DefaultYouTransClient.GetTaskList()
-	if err != nil {
-		AbortError(context, err, http.StatusInternalServerError)
-		return
+	if config.Instance.EnableTranscode {
+		transTaskResponse, err := youtrans.DefaultYouTransClient.GetTaskList()
+		if err != nil {
+			AbortError(context, err, http.StatusInternalServerError)
+			return
+		}
+		for _, transTask := range transTaskResponse.List {
+			template := BaseTaskTemplate{}
+			template.AssignWithTrans(transTask)
+			data = append(data, template)
+		}
 	}
-	for _, transTask := range transTaskResponse.List {
-		template := BaseTaskTemplate{}
-		template.AssignWithTrans(transTask)
-		data = append(data, template)
-	}
-
 	context.JSON(haruka.JSON{
 		"count":  len(tasks),
 		"result": data,

@@ -42,10 +42,10 @@ func Run() {
 	e.Router.GET("/format", getFormatsHandler)
 	e.Router.GET("/files", readDirectoryHandler)
 	e.Router.GET("/task", readTaskListHandler)
-	e.Router.Static("/covers", config.AppConfig.CoversStore)
+	e.Router.Static("/covers", config.Instance.CoversStore)
 
 	e.Router.POST("/callback/tran/complete", transCompleteCallback)
 
 	Logger.Info("application started")
-	e.RunAndListen(config.AppConfig.Addr)
+	e.RunAndListen(config.Instance.Addr)
 }

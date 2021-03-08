@@ -21,7 +21,7 @@ func RemoveFileById(id uint) error {
 		return err
 	}
 	if len(file.Cover) > 0 {
-		coverPath := filepath.Join(config.AppConfig.CoversStore, file.Cover)
+		coverPath := filepath.Join(config.Instance.CoversStore, file.Cover)
 		if _, err = os.Stat(coverPath); err == nil {
 			err = os.Remove(coverPath)
 			if err != nil {

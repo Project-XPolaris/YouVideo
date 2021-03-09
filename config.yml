@@ -3,5 +3,5 @@ cover_store: './static/covers'
 ffmpeg_bin: 'ffmpeg'
 ffprobe_bin: 'ffprobe'
 transcode:
-  enable: true
+  enable: false
   url: 'http://localhost:6700'

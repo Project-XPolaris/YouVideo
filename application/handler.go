@@ -475,3 +475,25 @@ var transCompleteCallback haruka.RequestHandler = func(context *haruka.Context) 
 		"success": true,
 	})
 }
+
+type TagVideosRequestBody struct {
+	Name string `json:"name"`
+	Ids  []uint `json:"ids"`
+}
+
+var tagVideosBatchHandler haruka.RequestHandler = func(context *haruka.Context) {
+	var requestBody TagVideosRequestBody
+	err := context.ParseJson(&requestBody)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	err = service.AddOrCreateTagFromVideo(requestBody.Name, requestBody.Ids...)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
+}

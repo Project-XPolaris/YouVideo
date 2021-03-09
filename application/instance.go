@@ -38,6 +38,7 @@ func Run() {
 	e.Router.PATCH("/tag/{id:[0-9]+}", updateTagHandler)
 	e.Router.POST("/tag/{id:[0-9]+}/videos", addVideoToTagHandler)
 	e.Router.DELETE("/tag/{id:[0-9]+}/videos", removeVideoFromTagHandler)
+	e.Router.POST("/tag/videos", tagVideosBatchHandler)
 	e.Router.GET("/codec", getCodecsHandler)
 	e.Router.GET("/format", getFormatsHandler)
 	e.Router.GET("/files", readDirectoryHandler)

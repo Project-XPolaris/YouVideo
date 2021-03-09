@@ -42,7 +42,22 @@ func (t *TagQueryBuilder) ReadModels() (int64, interface{}, error) {
 	err := query.Model(&database.Tag{}).Limit(t.GetLimit()).Offset(t.GetOffset()).Find(&models).Count(&count).Error
 	return count, models, err
 }
-
+func AddOrCreateTagFromVideo(tagName string, ids ...uint) error {
+	var tag database.Tag
+	err := database.Instance.Where(&database.Tag{Name: tagName}).FirstOrCreate(&tag).Error
+	if err != nil {
+		return err
+	}
+	videos := make([]interface{}, 0)
+	for _, id := range ids {
+		videos = append(videos, &database.Video{
+			Model: gorm.Model{
+				ID: id,
+			},
+		})
+	}
+	return database.Instance.Model(&tag).Association("Videos").Append(videos...)
+}
 func AddVideosToTag(modelId uint, ids ...uint) error {
 	appendVideo := make([]database.Video, 0)
 	for _, id := range ids {

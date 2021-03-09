@@ -12,10 +12,10 @@ import (
 )
 
 type BaseListContainer struct {
-	Count    int64       `json:"count,omitempty"`
-	Page     int         `json:"page,omitempty"`
-	PageSize int         `json:"pageSize,omitempty"`
-	Result   interface{} `json:"result,omitempty"`
+	Count    int64       `json:"count"`
+	Page     int         `json:"page"`
+	PageSize int         `json:"pageSize"`
+	Result   interface{} `json:"result"`
 }
 
 func (t *BaseListContainer) SerializeList(result interface{}, context map[string]interface{}) {

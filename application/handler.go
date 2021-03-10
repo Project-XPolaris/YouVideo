@@ -337,6 +337,9 @@ var getTagListHandler haruka.RequestHandler = func(context *haruka.Context) {
 		GetContainer: func() serializer.ListContainerSerializer {
 			return &BaseListContainer{}
 		},
+		OnApplyQuery: func(v *blueprint.ListView) {
+			context.BindingInput(v.QueryBuilder)
+		},
 		OnError: func(err error) {
 			AbortError(context, err, http.StatusInternalServerError)
 			return

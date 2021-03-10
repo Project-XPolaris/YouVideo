@@ -14,6 +14,7 @@ func GetTagByName(name string) (*database.Tag, error) {
 type TagQueryBuilder struct {
 	gormh.DefaultPageFilter
 	TagVideoIdsQueryFilter
+	SearchName string `hsource:"query" hname:"search"`
 }
 
 func (t *TagQueryBuilder) InVideoIds(ids ...interface{}) {
@@ -37,6 +38,9 @@ func (f TagVideoIdsQueryFilter) ApplyQuery(db *gorm.DB) *gorm.DB {
 func (t *TagQueryBuilder) ReadModels() (int64, interface{}, error) {
 	query := database.Instance
 	query = gormh.ApplyFilters(t, query)
+	if len(t.SearchName) > 0 {
+		query = query.Where("name like ?", "%"+t.SearchName+"%")
+	}
 	models := make([]*database.Tag, 0)
 	var count int64
 	err := query.Model(&database.Tag{}).Limit(t.GetLimit()).Offset(t.GetOffset()).Find(&models).Count(&count).Error

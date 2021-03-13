@@ -480,8 +480,8 @@ var transCompleteCallback haruka.RequestHandler = func(context *haruka.Context) 
 }
 
 type TagVideosRequestBody struct {
-	Name string `json:"name"`
-	Ids  []uint `json:"ids"`
+	Name []string `json:"name"`
+	Ids  []uint   `json:"ids"`
 }
 
 var tagVideosBatchHandler haruka.RequestHandler = func(context *haruka.Context) {

@@ -44,12 +44,16 @@ func ScanLibraryById(id uint) error {
 type LibraryQueryOption struct {
 	Page     int
 	PageSize int
+	Ids      []int64 `hsource:"query" hname:"id"`
 }
 
 func GetLibraryList(option LibraryQueryOption) (int64, []database.Library, error) {
 	var result []database.Library
 	var count int64
 	queryBuilder := database.Instance.Model(&database.Library{})
+	if len(option.Ids) > 0 {
+		queryBuilder = queryBuilder.Where("id In ?", option.Ids)
+	}
 	err := queryBuilder.Limit(option.PageSize).Count(&count).Offset((option.Page - 1) * option.PageSize).Find(&result).Error
 	return count, result, err
 }

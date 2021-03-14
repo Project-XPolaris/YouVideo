@@ -39,10 +39,16 @@ var createLibraryHandler haruka.RequestHandler = func(context *haruka.Context) {
 var readLibraryList haruka.RequestHandler = func(context *haruka.Context) {
 	page := context.Param["page"].(int)
 	pageSize := context.Param["pageSize"].(int)
-	count, libraryList, err := service.GetLibraryList(service.LibraryQueryOption{
+	queryBuilder := service.LibraryQueryOption{
 		Page:     page,
 		PageSize: pageSize,
-	})
+	}
+	err := context.BindingInput(&queryBuilder)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	count, libraryList, err := service.GetLibraryList(queryBuilder)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return

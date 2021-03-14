@@ -15,6 +15,7 @@ type TagQueryBuilder struct {
 	gormh.DefaultPageFilter
 	TagVideoIdsQueryFilter
 	SearchName string `hsource:"query" hname:"search"`
+	Ids        []uint `hsource:"query" hname:"id"`
 }
 
 func (t *TagQueryBuilder) InVideoIds(ids ...interface{}) {
@@ -40,6 +41,9 @@ func (t *TagQueryBuilder) ReadModels() (int64, interface{}, error) {
 	query = gormh.ApplyFilters(t, query)
 	if len(t.SearchName) > 0 {
 		query = query.Where("name like ?", "%"+t.SearchName+"%")
+	}
+	if len(t.Ids) > 0 {
+		query = query.Where("id IN ?", t.Ids)
 	}
 	models := make([]*database.Tag, 0)
 	var count int64

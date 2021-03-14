@@ -74,7 +74,7 @@ func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
 		query = query.Order(order)
 	}
 	for _, group := range v.GroupBy {
-		query = query.Group(group)
+		query = query.Distinct(group)
 	}
 	if v.BaseDirs != nil && len(v.BaseDirs) > 0 {
 		query = query.Where("base_dir IN ?", v.BaseDirs)

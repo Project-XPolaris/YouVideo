@@ -53,6 +53,7 @@ type VideoQueryBuilder struct {
 	Orders   []string `hsource:"query" hname:"order"`
 	GroupBy  []string `hsource:"query" hname:"group"`
 	BaseDirs []string `hsource:"query" hname:"dir"`
+	Search   string   `hsource:"query" hname:"search"`
 }
 
 func (v *VideoQueryBuilder) InTagIds(ids ...interface{}) {
@@ -78,6 +79,9 @@ func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
 	}
 	if v.BaseDirs != nil && len(v.BaseDirs) > 0 {
 		query = query.Where("base_dir IN ?", v.BaseDirs)
+	}
+	if len(v.Search) > 0 {
+		query = query.Where("name like ?", "%"+v.Search+"%")
 	}
 	models := make([]*database.Video, 0)
 	var count int64

@@ -18,6 +18,10 @@ func Run() {
 	if err != nil {
 		return
 	}
+	err = database.InitDatabase()
+	if err != nil {
+		return
+	}
 	e := haruka.NewEngine()
 	e.UseCors(cors.AllowAll())
 	e.UseMiddleware(middleware.NewLoggerMiddleware())
@@ -46,7 +50,8 @@ func Run() {
 	e.Router.Static("/covers", config.Instance.CoversStore)
 
 	e.Router.POST("/callback/tran/complete", transCompleteCallback)
-
+	e.UseMiddleware(&AuthMiddleware{})
+	e.UseMiddleware(&ReadUserMiddleware{})
 	Logger.Info("application started")
 	e.RunAndListen(config.Instance.Addr)
 }

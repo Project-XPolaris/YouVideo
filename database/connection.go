@@ -15,6 +15,11 @@ func Connect() error {
 	if err != nil {
 		return err
 	}
-	Instance.AutoMigrate(&Video{}, &Library{}, &File{}, &Tag{})
+	Instance.AutoMigrate(&Video{}, &Library{}, &File{}, &Tag{}, &User{})
 	return nil
+}
+
+func InitDatabase() error {
+	var user User
+	return Instance.FirstOrCreate(&user, User{Uid: "-1"}).Error
 }

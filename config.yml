@@ -5,3 +5,6 @@ ffprobe_bin: 'ffprobe'
 transcode:
   enable: false
   url: 'http://localhost:6700'
+auth:
+  enable: true
+  url: 'http://localhost:8999'

@@ -6,6 +6,7 @@ type Tag struct {
 	gorm.Model
 	Name   string
 	Videos []*Video `gorm:"many2many:video_tags;"`
+	Users  []*User  `gorm:"many2many:tag_users;"`
 }
 
 func (t *Tag) Save() error {

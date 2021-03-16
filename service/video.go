@@ -54,6 +54,7 @@ type VideoQueryBuilder struct {
 	GroupBy  []string `hsource:"query" hname:"group"`
 	BaseDirs []string `hsource:"query" hname:"dir"`
 	Search   string   `hsource:"query" hname:"search"`
+	Uid      string
 }
 
 func (v *VideoQueryBuilder) InTagIds(ids ...interface{}) {
@@ -82,6 +83,13 @@ func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
 	}
 	if len(v.Search) > 0 {
 		query = query.Where("name like ?", "%"+v.Search+"%")
+	}
+	query = query.Joins("left join library_users on library_users.library_id = videos.library_id")
+	query = query.Joins("left join users on library_users.user_id = users.id")
+	if len(v.Uid) > 0 {
+		query = query.Where("users.uid in ?", []string{v.Uid, PublicUid})
+	} else {
+		query = query.Where("users.uid in ?", []string{PublicUid})
 	}
 	models := make([]*database.Video, 0)
 	var count int64
@@ -113,7 +121,7 @@ type VideoLibraryIdFilter struct {
 
 func (f VideoLibraryIdFilter) ApplyQuery(db *gorm.DB) *gorm.DB {
 	if f.libraryIds != nil && len(f.libraryIds) > 0 {
-		return db.Where("library_id In ?", f.libraryIds)
+		return db.Where("videos.library_id In ?", f.libraryIds)
 	}
 	return db
 }

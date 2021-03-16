@@ -6,9 +6,23 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetTagByName(name string) (*database.Tag, error) {
+func GetTagByName(name string, uid string) (*database.Tag, error) {
 	var tag database.Tag
-	return &tag, database.Instance.First(&tag, "name = ?", name).Error
+	return &tag, database.Instance.
+		Joins("left join tag_users on tag_users.tag_id = tags.id").
+		Joins("left join users on tag_users.user_id = users.id").
+		Where("users.uid in ?", []string{uid, PublicUid}).
+		First(&tag, "name = ?", name).
+		Error
+}
+func GetTagByID(id uint, uid string) (*database.Tag, error) {
+	var tag database.Tag
+	return &tag, database.Instance.
+		Joins("left join tag_users on tag_users.tag_id = tags.id").
+		Joins("left join users on tag_users.user_id = users.id").
+		Where("users.uid in ?", []string{uid, PublicUid}).
+		First(&tag, "tags.id = ?", id).
+		Error
 }
 
 type TagQueryBuilder struct {
@@ -16,6 +30,7 @@ type TagQueryBuilder struct {
 	TagVideoIdsQueryFilter
 	SearchName string `hsource:"query" hname:"search"`
 	Ids        []uint `hsource:"query" hname:"id"`
+	Uid        string
 }
 
 func (t *TagQueryBuilder) InVideoIds(ids ...interface{}) {
@@ -45,6 +60,9 @@ func (t *TagQueryBuilder) ReadModels() (int64, interface{}, error) {
 	if len(t.Ids) > 0 {
 		query = query.Where("id IN ?", t.Ids)
 	}
+	query = query.Joins("left join tag_users on tag_users.tag_id = tags.id").
+		Joins("left join users on tag_users.user_id = users.id").
+		Where("users.uid in ?", []string{t.Uid, PublicUid})
 	models := make([]*database.Tag, 0)
 	var count int64
 	err := query.Model(&database.Tag{}).Limit(t.GetLimit()).Offset(t.GetOffset()).Find(&models).Count(&count).Error
@@ -102,4 +120,19 @@ func RemoveVideosFromTag(modelId uint, ids ...uint) error {
 		return err
 	}
 	return nil
+}
+
+func CreateTag(name string, uid string) (*database.Tag, error) {
+	user, err := GetUserById(uid)
+	if err != nil {
+		return nil, err
+	}
+	tag := &database.Tag{
+		Name: name,
+		Users: []*database.User{
+			user,
+		},
+	}
+	err = database.Instance.Create(&tag).Error
+	return tag, err
 }

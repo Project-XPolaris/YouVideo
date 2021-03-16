@@ -8,10 +8,8 @@ const (
 )
 
 func GetUserById(uid string) (*database.User, error) {
-	user := database.User{
-		Uid: uid,
-	}
-	err := database.Instance.Find(&user).Error
+	var user database.User
+	err := database.Instance.Where(map[string]string{"uid": uid}).FirstOrCreate(&user).Error
 	if err != nil {
 		return nil, err
 	}

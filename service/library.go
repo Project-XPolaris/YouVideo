@@ -8,6 +8,7 @@ import (
 
 var (
 	LibraryExistedError = errors.New("library existed")
+	LibraryOwnerError   = errors.New("library not accessible")
 )
 
 func CreateLibrary(path string, name string, uid string) (*database.Library, error) {
@@ -37,9 +38,19 @@ func ScanLibrary(library *database.Library) error {
 	return ScanVideo(library)
 }
 
-func ScanLibraryById(id uint) error {
+func ScanLibraryById(id uint, uid string) error {
 	var library database.Library
-	err := database.Instance.Find(&library, id).Error
+	err := database.Instance.Preload("Users").Find(&library, id).Error
+	hasPrem := false
+	for _, owner := range library.Users {
+		if owner.Uid == PublicUid || owner.Uid == uid {
+			hasPrem = true
+			break
+		}
+	}
+	if !hasPrem {
+		return LibraryOwnerError
+	}
 	if err != nil {
 		return err
 	}

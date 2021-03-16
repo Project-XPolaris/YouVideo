@@ -79,7 +79,7 @@ var scanLibrary haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	err = service.ScanLibraryById(uint(id))
+	err = service.ScanLibraryById(uint(id), context.Param["uid"].(string))
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
@@ -125,6 +125,8 @@ var readVideoList haruka.RequestHandler = func(context *haruka.Context) {
 		},
 		OnApplyQuery: func(v *blueprint.ListView) {
 			context.BindingInput(v.QueryBuilder)
+			v.QueryBuilder.(*service.VideoQueryBuilder).Uid = context.Param["uid"].(string)
+
 		},
 		GetTemplate: func() serializer.TemplateSerializer {
 			return &BaseVideoTemplate{}
@@ -299,7 +301,8 @@ var transcodeHandler haruka.RequestHandler = func(context *haruka.Context) {
 }
 
 type CreateTagRequestBody struct {
-	Name string `json:"name"`
+	Name    string `json:"name"`
+	Private bool   `json:"private"`
 }
 
 var createTagHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -316,14 +319,22 @@ var createTagHandler haruka.RequestHandler = func(context *haruka.Context) {
 		},
 
 		OnCreate: func(view *blueprint.CreateModelView, model interface{}) (interface{}, error) {
-			tag := model.(*database.Tag)
-			err := tag.Save()
+			body := view.RequestBody.(*CreateTagRequestBody)
+			uid := service.PublicUid
+			if body.Private {
+				uid = context.Param["uid"].(string)
+			}
+			tag, err := service.CreateTag(body.Name, uid)
 			return tag, err
 		},
 		GetValidators: func(v *blueprint.CreateModelView) []validator.Validator {
 			tag := v.RequestBody.(*CreateTagRequestBody)
+			uid := service.PublicUid
+			if tag.Private {
+				uid = context.Param["uid"].(string)
+			}
 			return []validator.Validator{
-				&DuplicateTagValidator{Name: tag.Name},
+				&DuplicateTagValidator{Name: tag.Name, Uid: uid},
 			}
 		},
 	}
@@ -349,6 +360,7 @@ var getTagListHandler haruka.RequestHandler = func(context *haruka.Context) {
 			return &BaseListContainer{}
 		},
 		OnApplyQuery: func(v *blueprint.ListView) {
+			v.QueryBuilder.(*service.TagQueryBuilder).Uid = context.Param["uid"].(string)
 			context.BindingInput(v.QueryBuilder)
 		},
 		OnError: func(err error) {
@@ -381,6 +393,13 @@ var updateTagHandler haruka.RequestHandler = func(context *haruka.Context) {
 		},
 		Model:    &database.Tag{},
 		Template: &BaseTagTemplate{},
+		GetValidators: func(v *blueprint.UpdateModelView) []validator.Validator {
+			permissionValidator := TagOwnerPermission{}
+			context.BindingInput(&permissionValidator)
+			return []validator.Validator{
+				&permissionValidator,
+			}
+		},
 	}
 	view.Run()
 }

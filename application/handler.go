@@ -15,8 +15,9 @@ import (
 )
 
 type CreateLibraryRequest struct {
-	Path string `json:"path"`
-	Name string `json:"name"`
+	Path    string `json:"path"`
+	Name    string `json:"name"`
+	Private bool   `json:"private"`
 }
 
 var createLibraryHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -26,7 +27,11 @@ var createLibraryHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	library, err := service.CreateLibrary(requestBody.Path, requestBody.Name)
+	uid := context.Param["uid"].(string)
+	if !requestBody.Private {
+		uid = service.PublicUid
+	}
+	library, err := service.CreateLibrary(requestBody.Path, requestBody.Name, uid)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return

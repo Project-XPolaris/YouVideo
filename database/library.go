@@ -7,5 +7,5 @@ type Library struct {
 	Path   string
 	Name   string
 	Videos []Video `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	Users  []*Tag  `gorm:"many2many:library_users;"`
+	Users  []*User `gorm:"many2many:library_users;"`
 }

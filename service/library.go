@@ -10,7 +10,7 @@ var (
 	LibraryExistedError = errors.New("library existed")
 )
 
-func CreateLibrary(path string, name string) (*database.Library, error) {
+func CreateLibrary(path string, name string, uid string) (*database.Library, error) {
 	var recordCount int64
 	err := database.Instance.Model(&database.Library{}).Where("path = ?", path).Count(&recordCount).Error
 	if err != nil {
@@ -19,9 +19,15 @@ func CreateLibrary(path string, name string) (*database.Library, error) {
 	if recordCount > 0 {
 		return nil, LibraryExistedError
 	}
+	user, err := GetUserById(uid)
+	if err != nil {
+		return nil, err
+	}
+
 	library := &database.Library{
-		Path: path,
-		Name: name,
+		Path:  path,
+		Name:  name,
+		Users: []*database.User{user},
 	}
 	err = database.Instance.Create(library).Error
 	return library, err

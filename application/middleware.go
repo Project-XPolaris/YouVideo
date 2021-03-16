@@ -40,6 +40,9 @@ func (a *AuthMiddleware) OnRequest(ctx *haruka.Context) {
 			ctx.Param["uid"] = service.PublicUid
 			ctx.Param["username"] = service.PublicUsername
 		}
+	} else {
+		ctx.Param["uid"] = service.PublicUid
+		ctx.Param["username"] = service.PublicUsername
 	}
 }
 

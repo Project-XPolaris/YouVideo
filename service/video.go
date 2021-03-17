@@ -21,6 +21,32 @@ var VideoLogger = logrus.New().WithFields(logrus.Fields{
 	"scope": "Service.Video",
 })
 
+func CheckLibrary(libraryId uint) error {
+	library, err := GetLibraryById(libraryId, "Videos.Files")
+	if err != nil {
+		return err
+	}
+	for _, video := range library.Videos {
+		removeCount := 0
+		for _, file := range video.Files {
+			if !util.CheckFileExist(file.Path) {
+				err = RemoveFileById(file.ID)
+				if err != nil {
+					return err
+				}
+				removeCount++
+			}
+		}
+		if removeCount == len(video.Files) {
+			err = DeleteVideoById(video.ID)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+	return nil
+}
 func ScanVideo(library *database.Library) error {
 	targetExtensions := []string{
 		"mp4", "mkv",
@@ -54,7 +80,7 @@ type VideoQueryBuilder struct {
 	GroupBy  []string `hsource:"query" hname:"group"`
 	BaseDirs []string `hsource:"query" hname:"dir"`
 	Search   string   `hsource:"query" hname:"search"`
-	Uid      string
+	Uid      string   `hsource:"param" hname:"uid"`
 }
 
 func (v *VideoQueryBuilder) InTagIds(ids ...interface{}) {
@@ -295,13 +321,16 @@ func GetVideoList(option VideoQueryOption) (int64, []database.Video, error) {
 	return count, result, err
 }
 
-func GetVideoById(id uint, rel ...string) (*database.Video, error) {
+func GetVideoById(id uint, uid string, rel ...string) (*database.Video, error) {
 	var video database.Video
 	query := database.Instance
 	for _, relStr := range rel {
 		query = query.Preload(relStr)
 	}
-	err := query.Find(&video, id).Error
+	query = query.Joins("left join library_users on library_users.library_id = videos.library_id").
+		Joins("left join users on users.id = library_users.user_id").
+		Where("users.uid in ?", []string{PublicUid, uid})
+	err := query.First(&video, id).Error
 	return &video, err
 }
 
@@ -343,9 +372,12 @@ func MoveVideoById(id uint, targetLibraryId uint, targetPath string) (*database.
 
 		file.Path = targetPath
 		database.Instance.Save(&file)
+
+		video.BaseDir = filepath.Dir(targetPath)
 	}
 
 	video.LibraryId = targetLibraryId
+
 	return &video, database.Instance.Save(&video).Error
 }
 
@@ -358,4 +390,15 @@ func NewVideoTranscodeTask(id uint, format string, codec string) error {
 		return NewFileTranscodeTask(video.Files[0].ID, format, codec)
 	}
 	return nil
+}
+
+func CheckVideoAccessible(id uint, uid string) bool {
+	var videoCount int64
+	database.Instance.
+		Model(&database.Video{}).
+		Joins("left join library_users on library_users.library_id = videos.library_id").
+		Joins("left join users on library_users.user_id = users.id").
+		Where("videos.id = ?", id).
+		Where("users.uid in ?", []string{PublicUid, uid}).Count(&videoCount)
+	return videoCount > 0
 }

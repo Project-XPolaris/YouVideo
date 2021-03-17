@@ -68,10 +68,18 @@ func (t *TagQueryBuilder) ReadModels() (int64, interface{}, error) {
 	err := query.Model(&database.Tag{}).Limit(t.GetLimit()).Offset(t.GetOffset()).Find(&models).Count(&count).Error
 	return count, models, err
 }
-func AddOrCreateTagFromVideo(tagName []string, ids ...uint) error {
+func AddOrCreateTagFromVideo(tagName []string, uid string, ids ...uint) error {
 	for _, name := range tagName {
 		var tag database.Tag
 		err := database.Instance.Where(&database.Tag{Name: name}).FirstOrCreate(&tag).Error
+		if err != nil {
+			return err
+		}
+		user, err := GetUserById(uid)
+		if err != nil {
+			return err
+		}
+		err = database.Instance.Model(&tag).Association("Users").Append(user)
 		if err != nil {
 			return err
 		}

@@ -8,8 +8,6 @@ require (
 	github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/kardianos/service v1.2.0
-	github.com/magefile/mage v1.11.0 // indirect
-	github.com/magiconair/properties v1.8.1
 	github.com/rs/cors v1.7.0
 	github.com/rs/xid v1.2.1
 	github.com/sirupsen/logrus v1.8.1
@@ -18,4 +16,8 @@ require (
 	golang.org/x/sys v0.0.0-20210316092937-0b90fd5c4c48 // indirect
 	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.20.12
+)
+
+replace (
+	github.com/allentom/haruka => C:\Users\Takay\Desktop\haruka2
 )

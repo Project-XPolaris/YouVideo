@@ -79,6 +79,12 @@ var scanLibrary haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
+	permission := LibraryAccessibleValidator{}
+	context.BindingInput(&permission)
+	if err = validator.RunValidators(&permission); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
 	err = service.ScanLibraryById(uint(id), context.Param["uid"].(string))
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
@@ -93,6 +99,12 @@ var deleteLibrary haruka.RequestHandler = func(context *haruka.Context) {
 	rawId := context.Parameters["id"]
 	id, err := strconv.Atoi(rawId)
 	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	permission := LibraryAccessibleValidator{}
+	context.BindingInput(&permission)
+	if err = validator.RunValidators(&permission); err != nil {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
@@ -125,8 +137,6 @@ var readVideoList haruka.RequestHandler = func(context *haruka.Context) {
 		},
 		OnApplyQuery: func(v *blueprint.ListView) {
 			context.BindingInput(v.QueryBuilder)
-			v.QueryBuilder.(*service.VideoQueryBuilder).Uid = context.Param["uid"].(string)
-
 		},
 		GetTemplate: func() serializer.TemplateSerializer {
 			return &BaseVideoTemplate{}
@@ -149,7 +159,13 @@ var getVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	video, err := service.GetVideoById(uint(id), "Files")
+	videoPermissionValidator := VideoPermissionValidator{}
+	context.BindingInput(&videoPermissionValidator)
+	if err = validator.RunValidators(&videoPermissionValidator); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	video, err := service.GetVideoById(uint(id), context.Param["uid"].(string), "Files")
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
@@ -162,6 +178,12 @@ var playVideo haruka.RequestHandler = func(context *haruka.Context) {
 	rawId := context.Parameters["id"]
 	id, err := strconv.Atoi(rawId)
 	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	filePermissionValidator := FilePermissionValidator{}
+	context.BindingInput(&filePermissionValidator)
+	if err = validator.RunValidators(&filePermissionValidator); err != nil {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
@@ -234,6 +256,12 @@ var deleteVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
+	permission := VideoPermissionValidator{}
+	context.BindingInput(&permission)
+	if err = validator.RunValidators(&permission); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
 	err = service.DeleteVideoById(uint(id))
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
@@ -262,6 +290,15 @@ var moveVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
+	movePermissionChecker := MoveLibraryPermissionValidator{
+		SourceVideoId: uint(id),
+		LibraryId:     requestBody.Library,
+		Uid:           context.Param["uid"].(string),
+	}
+	if err = validator.RunValidators(&movePermissionChecker); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
 	video, err := service.MoveVideoById(uint(id), requestBody.Library, requestBody.Path)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
@@ -287,6 +324,12 @@ var transcodeHandler haruka.RequestHandler = func(context *haruka.Context) {
 	var requestBody VideoTranscodeRequest
 	err = context.ParseJson(&requestBody)
 	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	permission := VideoPermissionValidator{}
+	context.BindingInput(&permission)
+	if err = validator.RunValidators(&permission); err != nil {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
@@ -378,6 +421,13 @@ var removeTagHandler haruka.RequestHandler = func(context *haruka.Context) {
 			AbortError(context, err, http.StatusInternalServerError)
 			return
 		},
+		GetValidators: func(v *blueprint.DeleteModelView) []validator.Validator {
+			permissionValidator := TagOwnerPermission{}
+			context.BindingInput(&permissionValidator)
+			return []validator.Validator{
+				&permissionValidator,
+			}
+		},
 		Model: &database.Tag{},
 	}
 	view.Run()
@@ -396,8 +446,13 @@ var updateTagHandler haruka.RequestHandler = func(context *haruka.Context) {
 		GetValidators: func(v *blueprint.UpdateModelView) []validator.Validator {
 			permissionValidator := TagOwnerPermission{}
 			context.BindingInput(&permissionValidator)
+			duplicateTagValidator := DuplicateTagValidator{
+				Name: v.RequestBody["name"].(string),
+				Uid:  context.Param["uid"].(string),
+			}
 			return []validator.Validator{
 				&permissionValidator,
+				&duplicateTagValidator,
 			}
 		},
 	}
@@ -421,6 +476,12 @@ var addVideoToTagHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
+	permissionValidator := TagOwnerPermission{}
+	context.BindingInput(&permissionValidator)
+	if err = validator.RunValidators(&permissionValidator); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
 	err = service.AddVideosToTag(uint(id), requestBody.Ids...)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
@@ -441,6 +502,12 @@ var removeVideoFromTagHandler haruka.RequestHandler = func(context *haruka.Conte
 	var requestBody TagVideoBatchRequestBody
 	err = context.ParseJson(&requestBody)
 	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	permissionValidator := TagOwnerPermission{}
+	context.BindingInput(&permissionValidator)
+	if err = validator.RunValidators(&permissionValidator); err != nil {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
@@ -521,7 +588,18 @@ var tagVideosBatchHandler haruka.RequestHandler = func(context *haruka.Context) 
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	err = service.AddOrCreateTagFromVideo(requestBody.Name, requestBody.Ids...)
+	for _, tagName := range requestBody.Name {
+		duplicateTagValidator := DuplicateTagValidator{
+			Name: tagName,
+			Uid:  context.Param["uid"].(string),
+		}
+		err = validator.RunValidators(&duplicateTagValidator)
+		if err != nil {
+			AbortError(context, err, http.StatusBadRequest)
+			return
+		}
+	}
+	err = service.AddOrCreateTagFromVideo(requestBody.Name, context.Param["uid"].(string), requestBody.Ids...)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return

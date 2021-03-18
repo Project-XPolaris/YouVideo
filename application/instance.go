@@ -48,7 +48,7 @@ func Run() {
 	e.Router.GET("/files", readDirectoryHandler)
 	e.Router.GET("/task", readTaskListHandler)
 	e.Router.Static("/covers", config.Instance.CoversStore)
-
+	e.Router.GET("/info", serviceInfoHandler)
 	e.Router.POST("/callback/tran/complete", transCompleteCallback)
 	e.UseMiddleware(&AuthMiddleware{})
 	e.UseMiddleware(&ReadUserMiddleware{})

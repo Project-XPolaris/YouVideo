@@ -1,6 +1,7 @@
 package application
 
 import (
+	"fmt"
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/blueprint"
 	"github.com/allentom/haruka/serializer"
@@ -606,5 +607,14 @@ var tagVideosBatchHandler haruka.RequestHandler = func(context *haruka.Context) 
 	}
 	context.JSON(haruka.JSON{
 		"success": true,
+	})
+}
+
+var serviceInfoHandler haruka.RequestHandler = func(context *haruka.Context) {
+	context.JSON(haruka.JSON{
+		"name":        "YouVideo serivce",
+		"authEnable":  config.Instance.EnableAuth,
+		"authUrl":     fmt.Sprintf("%s/%s", config.Instance.AuthURL, "user/auth"),
+		"transEnable": config.Instance.EnableTranscode,
 	})
 }

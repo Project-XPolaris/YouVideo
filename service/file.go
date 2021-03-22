@@ -128,3 +128,27 @@ func CompleteTrans(tranTask youtrans.TaskResponse) error {
 	}
 	return nil
 }
+
+func DeleteFile(id uint) error {
+	var file database.File
+	err := database.Instance.First(&file, id).Error
+	if err != nil {
+		return err
+	}
+	var video database.Video
+	err = database.Instance.Preload("Files").First(&video, file.VideoId).Error
+	if err != nil {
+		return err
+	}
+	err = RemoveFileById(id)
+	if err != nil {
+		return err
+	}
+	if len(video.Files) == 1 {
+		err = database.Instance.Unscoped().Delete(&database.Video{}, video.ID).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

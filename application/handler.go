@@ -618,3 +618,26 @@ var serviceInfoHandler haruka.RequestHandler = func(context *haruka.Context) {
 		"transEnable": config.Instance.EnableTranscode,
 	})
 }
+
+var removeFileHandler haruka.RequestHandler = func(context *haruka.Context) {
+	rawId := context.Parameters["id"]
+	id, err := strconv.Atoi(rawId)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	permissionValidator := FilePermissionValidator{}
+	context.BindingInput(&permissionValidator)
+	if err = validator.RunValidators(&permissionValidator); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	err = service.DeleteFile(uint(id))
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
+}

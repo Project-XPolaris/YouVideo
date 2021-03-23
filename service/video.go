@@ -341,15 +341,12 @@ func GetVideoList(option VideoQueryOption) (int64, []database.Video, error) {
 	return count, result, err
 }
 
-func GetVideoById(id uint, uid string, rel ...string) (*database.Video, error) {
+func GetVideoById(id uint, rel ...string) (*database.Video, error) {
 	var video database.Video
 	query := database.Instance
 	for _, relStr := range rel {
 		query = query.Preload(relStr)
 	}
-	query = query.Joins("left join library_users on library_users.library_id = videos.library_id").
-		Joins("left join users on users.id = library_users.user_id").
-		Where("users.uid in ?", []string{PublicUid, uid})
 	err := query.First(&video, id).Error
 	return &video, err
 }
@@ -404,8 +401,8 @@ func MoveVideoById(id uint, targetLibraryId uint, targetPath string) (*database.
 	return &video, database.Instance.Save(&video).Error
 }
 
-func NewVideoTranscodeTask(id uint, uid string, format string, codec string) error {
-	video, err := GetVideoById(id, uid, "Files")
+func NewVideoTranscodeTask(id uint, format string, codec string) error {
+	video, err := GetVideoById(id, "Files")
 	if err != nil {
 		return err
 	}

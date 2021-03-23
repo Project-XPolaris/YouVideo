@@ -79,6 +79,10 @@ var renameFileHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
+	if err = validator.RunValidators(&permissionValidator); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
 	var requestBody RenameFileRequestBody
 	err = context.ParseJson(&requestBody)
 	if err != nil {

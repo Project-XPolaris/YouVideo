@@ -130,3 +130,12 @@ func CheckLibraryUidOwner(id uint, uid string) bool {
 		Count(&count)
 	return count != 0
 }
+
+func CheckLibraryPathExist(path string) bool {
+	var count int64
+	database.Instance.
+		Model(&database.Library{}).
+		Where("path = ?", path).
+		Count(&count)
+	return count != 0
+}

@@ -253,6 +253,21 @@ func CreateVideoFile(path string, libraryId uint) error {
 		}
 	}
 
+	// check file subtitles file
+	subtitlesFiles := []string{
+		fmt.Sprintf("%s.srt", videoName),
+		fmt.Sprintf("%s.ass", videoName),
+		fmt.Sprintf("%s.ssa", videoName),
+	}
+	subtitlesFilePath := ""
+	for _, subtitlesFile := range subtitlesFiles {
+		subtitlesSourcePath := filepath.Join(baseDir, subtitlesFile)
+		if util.CheckFileExist(subtitlesSourcePath) {
+			subtitlesFilePath = subtitlesSourcePath
+			break
+		}
+	}
+	file.Subtitles = subtitlesFilePath
 	if file.VideoId == 0 {
 		err = database.Instance.Model(&database.Video{}).Where("name = ?", videoName).Where("base_dir = ?", baseDir).First(&video).Error
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -275,14 +290,25 @@ func CreateVideoFile(path string, libraryId uint) error {
 		}
 		file.VideoId = video.ID
 	}
-
 	err = database.Instance.Save(file).Error
 	return err
 }
 
 func DeleteVideoById(id uint) error {
 	var video database.Video
+	// remove files
 	err := database.Instance.Preload("Files").First(&video, id).Error
+	if err != nil {
+		return err
+	}
+	for _, file := range video.Files {
+		err = RemoveFileById(file.ID)
+		if err != nil {
+			return err
+		}
+	}
+	// clean tag rel
+	err = database.Instance.Model(&video).Association("Tags").Clear()
 	if err != nil {
 		return err
 	}
@@ -294,12 +320,6 @@ func DeleteVideoById(id uint) error {
 		Error
 	if err != nil {
 		return err
-	}
-	for _, file := range video.Files {
-		err = RemoveFileById(file.ID)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
@@ -365,14 +385,17 @@ func MoveVideoById(id uint, targetLibraryId uint, targetPath string) (*database.
 		if err != nil {
 			return nil, err
 		}
+		// move file
 		err = AppFs.Rename(file.Path, targetPath)
 		if err != nil {
 			return nil, err
 		}
-
 		file.Path = targetPath
+		// move subtitles
+		if len(file.Subtitles) > 0 {
+			err = AppFs.Rename(file.Subtitles, filepath.Join(filepath.Dir(targetPath), filepath.Base(file.Subtitles)))
+		}
 		database.Instance.Save(&file)
-
 		video.BaseDir = filepath.Dir(targetPath)
 	}
 

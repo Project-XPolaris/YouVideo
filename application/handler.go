@@ -569,17 +569,17 @@ var tagVideosBatchHandler haruka.RequestHandler = func(context *haruka.Context) 
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	for _, tagName := range requestBody.Name {
-		duplicateTagValidator := DuplicateTagValidator{
-			Name: tagName,
-			Uid:  context.Param["uid"].(string),
-		}
-		err = validator.RunValidators(&duplicateTagValidator)
-		if err != nil {
-			AbortError(context, err, http.StatusBadRequest)
-			return
-		}
-	}
+	//for _, tagName := range requestBody.Name {
+	//	duplicateTagValidator := DuplicateTagValidator{
+	//		Name: tagName,
+	//		Uid:  context.Param["uid"].(string),
+	//	}
+	//	err = validator.RunValidators(&duplicateTagValidator)
+	//	if err != nil {
+	//		AbortError(context, err, http.StatusBadRequest)
+	//		return
+	//	}
+	//}
 	err = service.AddOrCreateTagFromVideo(requestBody.Name, context.Param["uid"].(string), requestBody.Ids...)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)

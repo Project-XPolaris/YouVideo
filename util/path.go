@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -19,4 +20,10 @@ func CheckFileExist(path string) bool {
 		return true
 	}
 	return false
+}
+
+func ChangeFileNameWithoutExt(filename string, newName string) string {
+	baseName := filepath.Base(filename)
+	ext := filepath.Ext(baseName)
+	return fmt.Sprintf("%s%s", newName, ext)
 }

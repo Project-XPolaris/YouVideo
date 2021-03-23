@@ -14,7 +14,19 @@ func (t *Tag) Save() error {
 }
 
 func (t *Tag) DeleteById(id uint) error {
-	return Instance.Unscoped().Delete(&Tag{}, id).Error
+	err := Instance.Model(t).Association("Users").Clear()
+	if err != nil {
+		return err
+	}
+	err = Instance.Model(t).Association("Videos").Clear()
+	if err != nil {
+		return err
+	}
+	err = Instance.Unscoped().Delete(&Tag{}, id).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (t *Tag) UpdateById(id uint, values map[string]interface{}) (interface{}, error) {

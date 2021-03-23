@@ -50,6 +50,7 @@ type BaseFileTemplate struct {
 	MainAudioCodec string  `json:"main_audio_codec"`
 	VideoId        uint    `json:"video_id"`
 	Name           string  `json:"name"`
+	Subtitles      string  `json:"subtitles"`
 }
 
 func (t *BaseFileTemplate) Assign(file *database.File) {
@@ -65,6 +66,7 @@ func (t *BaseFileTemplate) Assign(file *database.File) {
 	t.MainVideoCodec = file.MainVideoCodec
 	t.MainAudioCodec = file.MainAudioCodec
 	t.Name = filepath.Base(file.Path)
+	t.Subtitles = file.Subtitles
 }
 
 type BaseVideoTemplate struct {

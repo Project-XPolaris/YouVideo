@@ -100,6 +100,12 @@ func RemoveLibraryById(id uint) error {
 			return err
 		}
 	}
+	err = database.Instance.
+		Model(&database.Library{Model: gorm.Model{ID: id}}).
+		Association("Users").Clear()
+	if err != nil {
+		return err
+	}
 	return database.Instance.Unscoped().Delete(&database.Library{}, id).Error
 }
 

@@ -12,4 +12,5 @@ type File struct {
 	Bitrate        int64
 	MainVideoCodec string
 	MainAudioCodec string
+	Subtitles      string
 }

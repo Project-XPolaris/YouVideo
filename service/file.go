@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/util"
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -29,6 +31,9 @@ func RemoveFileById(id uint) error {
 				return err
 			}
 		}
+	}
+	if len(file.Subtitles) > 0 {
+		os.Remove(file.Subtitles)
 	}
 	err = database.Instance.Unscoped().Where("id = ?", id).Delete(&database.File{}).Error
 	return err
@@ -118,11 +123,25 @@ func CompleteTrans(tranTask youtrans.TaskResponse) error {
 	newFile.VideoId = original.VideoId
 
 	// generate cover
-	coverPath, err := GenerateVideoCover(newFile.Path)
-	if err != nil {
-		return err
+	if len(original.Cover) > 0 {
+		coverFileName := fmt.Sprintf("%s%s", xid.New(), filepath.Ext(original.Cover))
+		err = util.CopyFile(path.Join(config.Instance.CoversStore, original.Cover), path.Join(config.Instance.CoversStore, coverFileName))
+		if err != nil {
+			return err
+		}
+		newFile.Cover = filepath.Base(coverFileName)
 	}
-	newFile.Cover = filepath.Base(coverPath)
+
+	if len(original.Subtitles) > 0 {
+		subName := strings.ReplaceAll(filepath.Base(tranTask.Output), filepath.Ext(tranTask.Output), "")
+		subFilename := util.ChangeFileNameWithoutExt(original.Subtitles, subName)
+		subPath := filepath.Join(filepath.Dir(original.Subtitles), subFilename)
+		err = util.CopyFile(original.Subtitles, subPath)
+		if err != nil {
+			return err
+		}
+		newFile.Subtitles = subPath
+	}
 	err = database.Instance.Create(&newFile).Error
 	if err != nil {
 		return err
@@ -173,6 +192,13 @@ func RenameFile(id uint, name string) error {
 	err = AppFs.Rename(file.Path, newFilePath)
 	if err != nil {
 		return err
+	}
+	if len(file.Subtitles) > 0 {
+		subFileExt := filepath.Ext(file.Subtitles)
+		err = AppFs.Rename(file.Subtitles, filepath.Join(fileDir, fmt.Sprintf("%s%s", name, subFileExt)))
+		if err != nil {
+			return err
+		}
 	}
 	file.Path = newFilePath
 	err = database.Instance.Save(&file).Error

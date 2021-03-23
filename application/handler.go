@@ -175,26 +175,6 @@ var getVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 	template.Assign(video)
 	context.JSON(template)
 }
-var playVideo haruka.RequestHandler = func(context *haruka.Context) {
-	rawId := context.Parameters["id"]
-	id, err := strconv.Atoi(rawId)
-	if err != nil {
-		AbortError(context, err, http.StatusBadRequest)
-		return
-	}
-	filePermissionValidator := FilePermissionValidator{}
-	context.BindingInput(&filePermissionValidator)
-	if err = validator.RunValidators(&filePermissionValidator); err != nil {
-		AbortError(context, err, http.StatusBadRequest)
-		return
-	}
-	file, err := service.GetFileById(uint(id))
-	if err != nil {
-		AbortError(context, err, http.StatusInternalServerError)
-		return
-	}
-	http.ServeFile(context.Writer, context.Request, file.Path)
-}
 
 var readDirectoryHandler haruka.RequestHandler = func(context *haruka.Context) {
 	rootPath := context.GetQueryString("path")
@@ -334,7 +314,7 @@ var transcodeHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	err = service.NewVideoTranscodeTask(uint(id), requestBody.Format, requestBody.Codec)
+	err = service.NewVideoTranscodeTask(uint(id), context.Param["uid"].(string), requestBody.Format, requestBody.Codec)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
@@ -616,28 +596,5 @@ var serviceInfoHandler haruka.RequestHandler = func(context *haruka.Context) {
 		"authEnable":  config.Instance.EnableAuth,
 		"authUrl":     fmt.Sprintf("%s/%s", config.Instance.AuthURL, "user/auth"),
 		"transEnable": config.Instance.EnableTranscode,
-	})
-}
-
-var removeFileHandler haruka.RequestHandler = func(context *haruka.Context) {
-	rawId := context.Parameters["id"]
-	id, err := strconv.Atoi(rawId)
-	if err != nil {
-		AbortError(context, err, http.StatusBadRequest)
-		return
-	}
-	permissionValidator := FilePermissionValidator{}
-	context.BindingInput(&permissionValidator)
-	if err = validator.RunValidators(&permissionValidator); err != nil {
-		AbortError(context, err, http.StatusBadRequest)
-		return
-	}
-	err = service.DeleteFile(uint(id))
-	if err != nil {
-		AbortError(context, err, http.StatusInternalServerError)
-		return
-	}
-	context.JSON(haruka.JSON{
-		"success": true,
 	})
 }

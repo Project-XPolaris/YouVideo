@@ -381,8 +381,8 @@ func MoveVideoById(id uint, targetLibraryId uint, targetPath string) (*database.
 	return &video, database.Instance.Save(&video).Error
 }
 
-func NewVideoTranscodeTask(id uint, format string, codec string) error {
-	video, err := GetVideoById(id, "Files")
+func NewVideoTranscodeTask(id uint, uid string, format string, codec string) error {
+	video, err := GetVideoById(id, uid, "Files")
 	if err != nil {
 		return err
 	}

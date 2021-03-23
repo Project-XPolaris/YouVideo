@@ -50,6 +50,7 @@ func Run() {
 	e.Router.Static("/covers", config.Instance.CoversStore)
 	e.Router.GET("/info", serviceInfoHandler)
 	e.Router.DELETE("/file/{id:[0-9]+}", removeFileHandler)
+	e.Router.POST("/file/{id:[0-9]+}/rename", renameFileHandler)
 	e.Router.POST("/callback/tran/complete", transCompleteCallback)
 	e.UseMiddleware(&AuthMiddleware{})
 	e.UseMiddleware(&ReadUserMiddleware{})

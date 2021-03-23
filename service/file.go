@@ -8,6 +8,7 @@ import (
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -149,6 +150,34 @@ func DeleteFile(id uint) error {
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func RenameFile(id uint, name string) error {
+	var file database.File
+	err := database.Instance.First(&file, id).Preload("Video").Error
+	if err != nil {
+		return err
+	}
+	exist, err := afero.Exists(AppFs, file.Path)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		return nil
+	}
+	fileDir := filepath.Dir(file.Path)
+	fileExt := filepath.Ext(file.Path)
+	newFilePath := filepath.Join(fileDir, fmt.Sprintf("%s%s", name, fileExt))
+	err = AppFs.Rename(file.Path, newFilePath)
+	if err != nil {
+		return err
+	}
+	file.Path = newFilePath
+	err = database.Instance.Save(&file).Error
+	if err != nil {
+		return err
 	}
 	return nil
 }

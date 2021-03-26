@@ -12,7 +12,7 @@ func (v *FilePermissionValidator) Check() (string, bool) {
 	if err != nil {
 		return "file not exist or not accessible", false
 	}
-	video, err := service.GetVideoById(file.VideoId, v.Uid)
+	video, err := service.GetVideoById(file.VideoId)
 	if err != nil || video.ID == 0 {
 		return "file not exist or not accessible", false
 	}

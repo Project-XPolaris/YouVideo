@@ -21,6 +21,8 @@ github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuy
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/allentom/haruka v0.0.0-20210316154137-83abac0aec0b h1:cMrYuP08G3h0SuHpmg3+FNpwlN9z7r69RUbRtnfbvXs=
 github.com/allentom/haruka v0.0.0-20210316154137-83abac0aec0b/go.mod h1:bGlYqqR11LoL33wZkDk73GTAcqjS42AX2kX7XbBWTRk=
+github.com/allentom/haruka v0.0.0-20210318094355-e84d0a169cfa h1:awMui7S0jmc77tSRwwLWcQeMoPaH/WdUpb6DHlKG/s4=
+github.com/allentom/haruka v0.0.0-20210318094355-e84d0a169cfa/go.mod h1:bGlYqqR11LoL33wZkDk73GTAcqjS42AX2kX7XbBWTRk=
 github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f h1:5YL8PS1ARIkYAA+3kQDID5pL8jKp/DqfQaNvPnQ/Kj4=
 github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f/go.mod h1:n8EtRihlYzcb/YXzRDNqL2lYo3Vi7kprJ5NeU41jQGQ=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
@@ -297,6 +299,8 @@ golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20201015000850-e3ed0017c211/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210316092937-0b90fd5c4c48 h1:70qalHWW1n9yoI8B8zEQxFJO/D6NUWIX8SNmJO+rvNw=
 golang.org/x/sys v0.0.0-20210316092937-0b90fd5c4c48/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20210324051608-47abb6519492 h1:Paq34FxTluEPvVyayQqMPgHm+vTOrIifmcYxFBx9TLg=
+golang.org/x/sys v0.0.0-20210324051608-47abb6519492/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.2/go.mod h1:bEr9sfX3Q8Zfm5fL9x+3itogRgK3+ptLWKqgva+5dAk=

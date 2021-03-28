@@ -26,6 +26,9 @@ func (a *AuthMiddleware) OnRequest(ctx *haruka.Context) {
 		}
 	}
 	rawString := ctx.Request.Header.Get("Authorization")
+	if len(rawString) == 0 {
+		rawString = ctx.GetQueryString("token")
+	}
 	if len(rawString) > 0 {
 		rawString = strings.Replace(rawString, "Bearer ", "", 1)
 		response, err := auth.DefaultAuthClient.CheckAuth(rawString)

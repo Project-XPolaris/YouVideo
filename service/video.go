@@ -99,7 +99,7 @@ func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
 	query := database.Instance
 	query = gormh.ApplyFilters(v, query)
 	for _, order := range v.Orders {
-		query = query.Order(order)
+		query = query.Order(fmt.Sprintf("videos.%s", order))
 	}
 	for _, group := range v.GroupBy {
 		query = query.Distinct(group)

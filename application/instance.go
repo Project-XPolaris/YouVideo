@@ -34,6 +34,7 @@ func Run() {
 	e.Router.DELETE("/video/{id:[0-9]+}", deleteVideoHandler)
 	e.Router.GET("/video/{id:[0-9]+}", getVideoHandler)
 	e.Router.GET("/video/file/{id:[0-9]+}/stream", playVideo)
+	e.Router.GET("/video/file/{id:[0-9]+}/subtitles", videoSubtitle)
 	e.Router.POST("/video/{id:[0-9]+}/move", moveVideoHandler)
 	e.Router.POST("/video/{id:[0-9]+}/trans", transcodeHandler)
 	e.Router.POST("/tag", createTagHandler)

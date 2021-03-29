@@ -46,11 +46,11 @@ type BaseFileTemplate struct {
 	Duration       float64 `json:"duration"`
 	Size           int64   `json:"size"`
 	Bitrate        int64   `json:"bitrate"`
-	MainVideoCodec string  `json:"main_video_codec"`
-	MainAudioCodec string  `json:"main_audio_codec"`
+	MainVideoCodec string  `json:"main_video_codec，omitempty"`
+	MainAudioCodec string  `json:"main_audio_codec,omitempty"`
 	VideoId        uint    `json:"video_id"`
 	Name           string  `json:"name"`
-	Subtitles      string  `json:"subtitles"`
+	Subtitles      string  `json:"subtitles,omitempty"`
 }
 
 func (t *BaseFileTemplate) Assign(file *database.File) {

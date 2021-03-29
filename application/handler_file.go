@@ -35,6 +35,31 @@ var playVideo haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	http.ServeFile(context.Writer, context.Request, file.Path)
 }
+
+var videoSubtitle haruka.RequestHandler = func(context *haruka.Context) {
+	var fileObjectInput FileObjectInput
+	err := context.BindingInput(&fileObjectInput)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	filePermissionValidator := FilePermissionValidator{}
+	err = context.BindingInput(&filePermissionValidator)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	if err = validator.RunValidators(&filePermissionValidator); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	file, err := service.GetFileById(fileObjectInput.Id)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	http.ServeFile(context.Writer, context.Request, file.Subtitles)
+}
 var removeFileHandler haruka.RequestHandler = func(context *haruka.Context) {
 	var fileObjectInput FileObjectInput
 	err := context.BindingInput(&fileObjectInput)

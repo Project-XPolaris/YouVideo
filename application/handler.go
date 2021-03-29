@@ -3,11 +3,12 @@ package application
 import (
 	"fmt"
 	"github.com/allentom/haruka"
-	"github.com/allentom/haruka/serializer"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/service"
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 )
 
@@ -66,41 +67,15 @@ var readTaskListHandler haruka.RequestHandler = func(context *haruka.Context) {
 }
 
 var getCodecsHandler haruka.RequestHandler = func(context *haruka.Context) {
-	queryBuilder := service.CodecsQueryBuilder{}
-	err := context.BindingInput(&queryBuilder)
-	if err != nil {
-		AbortError(context, err, http.StatusBadRequest)
-		return
-	}
-	codecs, err := queryBuilder.Query()
-	if err != nil {
-		AbortError(context, err, http.StatusInternalServerError)
-		return
-	}
-	result := serializer.SerializeMultipleTemplate(codecs, &BaseCodecTemplate{}, nil)
-	context.JSON(haruka.JSON{
-		"codecs": result,
-	})
-
+	proxyUrl, _ := url.Parse(config.Instance.YoutransURL)
+	proxy := httputil.NewSingleHostReverseProxy(proxyUrl)
+	proxy.ServeHTTP(context.Writer, context.Request)
 }
 
 var getFormatsHandler haruka.RequestHandler = func(context *haruka.Context) {
-	queryBuilder := service.FormatsQueryBuilder{}
-	err := context.BindingInput(&queryBuilder)
-	if err != nil {
-		AbortError(context, err, http.StatusBadRequest)
-		return
-	}
-	formats, err := queryBuilder.Query()
-	if err != nil {
-		AbortError(context, err, http.StatusInternalServerError)
-		return
-	}
-	result := serializer.SerializeMultipleTemplate(formats, &BaseFormatTemplate{}, nil)
-	context.JSON(haruka.JSON{
-		"formats": result,
-	})
-
+	proxyUrl, _ := url.Parse(config.Instance.YoutransURL)
+	proxy := httputil.NewSingleHostReverseProxy(proxyUrl)
+	proxy.ServeHTTP(context.Writer, context.Request)
 }
 
 var transCompleteCallback haruka.RequestHandler = func(context *haruka.Context) {

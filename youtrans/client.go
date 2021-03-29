@@ -65,9 +65,23 @@ type TaskListResponse struct {
 	List []TaskResponse `json:"list"`
 }
 
+type InfoResponse struct {
+	Success bool   `json:"success"`
+	Name    string `json:"name"`
+}
+
 func (c *YouTransClient) GetTaskList() (*TaskListResponse, error) {
 	var responseBody TaskListResponse
 	err := c.makeGETRequest("/tasks", &responseBody)
+	if err != nil {
+		return nil, err
+	}
+	return &responseBody, err
+}
+
+func (c *YouTransClient) GetInfo() (*InfoResponse, error) {
+	var responseBody InfoResponse
+	err := c.makeGETRequest("/info", &responseBody)
 	if err != nil {
 		return nil, err
 	}

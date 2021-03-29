@@ -5,6 +5,7 @@ import (
 	srv "github.com/kardianos/service"
 	"github.com/projectxpolaris/youvideo/application"
 	"github.com/projectxpolaris/youvideo/config"
+	"github.com/projectxpolaris/youvideo/youtrans"
 	"github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
@@ -31,9 +32,15 @@ func Program() {
 		logrus.Fatal(err)
 	}
 	if config.Instance.EnableTranscode {
-		Logger.WithFields(logrus.Fields{
+		transLog := Logger.WithFields(logrus.Fields{
 			"url": config.Instance.YoutransURL,
-		}).Info("transcode enable")
+		})
+		transLog.Info("check transcode [checking]")
+		_, err = youtrans.DefaultYouTransClient.GetInfo()
+		if err != nil {
+			transLog.Fatal(err)
+		}
+		transLog.Info("check transcode [pass]")
 	}
 	application.Run()
 }

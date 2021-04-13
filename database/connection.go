@@ -15,7 +15,7 @@ func Connect() error {
 	if err != nil {
 		return err
 	}
-	Instance.AutoMigrate(&Video{}, &Library{}, &File{}, &Tag{}, &User{})
+	Instance.AutoMigrate(&Video{}, &Library{}, &File{}, &Tag{}, &User{}, &History{})
 	return nil
 }
 

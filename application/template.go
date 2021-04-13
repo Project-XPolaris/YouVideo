@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 )
 
+const formatTime = "2006-01-02 15:04:05"
+
 type BaseListContainer struct {
 	Count    int64       `json:"count"`
 	Page     int         `json:"page"`
@@ -193,5 +195,24 @@ func (t *BaseFormatTemplate) Serializer(dataModel interface{}, context map[strin
 	model := dataModel.(ffmpeg.SupportFormat)
 	t.Name = model.Name
 	t.Desc = model.Desc
+	return nil
+}
+
+type BaseHistoryTemplate struct {
+	VideoId string `json:"video_id,omitempty"`
+	Name    string `json:"name,omitempty"`
+	Cover   string `json:"cover,omitempty"`
+	Time    string `json:"time,omitempty"`
+}
+
+func (t *BaseHistoryTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
+	model := dataModel.(*database.History)
+	if model.Video != nil {
+		t.Name = model.Video.Name
+		if model.Video.Files != nil && len(model.Video.Files) > 0 {
+			t.Cover = fmt.Sprintf("/covers/%s", model.Video.Files[0].Cover)
+		}
+	}
+	t.Time = model.UpdatedAt.Format(formatTime)
 	return nil
 }

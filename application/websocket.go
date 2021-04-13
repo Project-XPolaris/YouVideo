@@ -60,7 +60,6 @@ var upgrader = websocket.Upgrader{
 	},
 }
 var notificationSocketHandler haruka.RequestHandler = func(context *haruka.Context) {
-
 	c, err := upgrader.Upgrade(context.Writer, context.Request, nil)
 	if err != nil {
 		WebsocketLogger.Error(err)

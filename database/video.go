@@ -9,4 +9,5 @@ type Video struct {
 	LibraryId uint
 	BaseDir   string
 	Tags      []*Tag `gorm:"many2many:video_tags;"`
+	History   []*History
 }

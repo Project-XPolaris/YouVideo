@@ -199,7 +199,7 @@ func (t *BaseFormatTemplate) Serializer(dataModel interface{}, context map[strin
 }
 
 type BaseHistoryTemplate struct {
-	VideoId string `json:"video_id,omitempty"`
+	VideoId uint   `json:"video_id,omitempty"`
 	Name    string `json:"name,omitempty"`
 	Cover   string `json:"cover,omitempty"`
 	Time    string `json:"time,omitempty"`
@@ -214,5 +214,6 @@ func (t *BaseHistoryTemplate) Serializer(dataModel interface{}, context map[stri
 		}
 	}
 	t.Time = model.UpdatedAt.Format(formatTime)
+	t.VideoId = model.Video.ID
 	return nil
 }

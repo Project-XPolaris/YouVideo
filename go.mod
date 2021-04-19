@@ -14,6 +14,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/afero v1.5.1
 	github.com/spf13/viper v1.7.1
+	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/sys v0.0.0-20210324051608-47abb6519492 // indirect
 	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.20.12

@@ -14,11 +14,15 @@ func (t *Tag) Save() error {
 }
 
 func (t *Tag) DeleteById(id uint) error {
-	err := Instance.Model(t).Association("Users").Clear()
+	err := Instance.Model(&Tag{Model: gorm.Model{
+		ID: id,
+	}}).Association("Users").Clear()
 	if err != nil {
 		return err
 	}
-	err = Instance.Model(t).Association("Videos").Clear()
+	err = Instance.Model(&Tag{Model: gorm.Model{
+		ID: id,
+	}}).Association("Videos").Clear()
 	if err != nil {
 		return err
 	}

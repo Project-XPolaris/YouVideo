@@ -169,7 +169,7 @@ func RunApp() {
 						},
 					},
 				},
-				Description: "YouMusic service controller",
+				Description: "YouVideo service controller",
 			},
 			{
 				Name:  "run",

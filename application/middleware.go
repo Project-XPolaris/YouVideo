@@ -5,7 +5,6 @@ import (
 	"github.com/projectxpolaris/youvideo/auth"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/service"
-	"github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -32,11 +31,7 @@ func (a *AuthMiddleware) OnRequest(ctx *haruka.Context) {
 	if len(rawString) > 0 {
 		rawString = strings.Replace(rawString, "Bearer ", "", 1)
 		response, err := auth.DefaultAuthClient.CheckAuth(rawString)
-		if err == nil {
-			logrus.WithFields(logrus.Fields{
-				"uid":  response.Uid,
-				"user": response.Username,
-			}).Info("user auth")
+		if err == nil && response.Success {
 			ctx.Param["uid"] = response.Uid
 			ctx.Param["username"] = response.Username
 		} else {

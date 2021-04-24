@@ -1,42 +1,14 @@
 package auth
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
+	"github.com/go-resty/resty/v2"
 	"github.com/projectxpolaris/youvideo/config"
-	"net/http"
 )
 
 var DefaultAuthClient = AuthClient{}
 
 type AuthClient struct {
-}
-
-func (c *AuthClient) GetUrl(path string) string {
-	return fmt.Sprintf("%s/%s", config.Instance.AuthURL, path)
-}
-
-func (c *AuthClient) makePOSTRequest(url string, data interface{}, responseBody interface{}) error {
-	rawData, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-	client := http.Client{}
-	request, err := http.NewRequest("POST", c.GetUrl(url), bytes.NewBuffer(rawData))
-	if err != nil {
-		return err
-	}
-	request.Header.Set("Content-Type", "application/json")
-	response, err := client.Do(request)
-	err = json.NewDecoder(response.Body).Decode(&responseBody)
-	return err
-}
-
-func (c *AuthClient) makeGETRequest(url string, responseBody interface{}) error {
-	response, err := http.Get(c.GetUrl(url))
-	err = json.NewDecoder(response.Body).Decode(&responseBody)
-	return err
 }
 
 type AuthResponse struct {
@@ -47,7 +19,8 @@ type AuthResponse struct {
 
 func (c *AuthClient) CheckAuth(token string) (*AuthResponse, error) {
 	var responseBody AuthResponse
-	err := c.makeGETRequest(fmt.Sprintf("%s?token=%s", "/user/auth", token), &responseBody)
+	client := resty.New()
+	_, err := client.R().SetQueryParam("token", token).SetResult(&responseBody).Get(fmt.Sprintf("%s/%s", config.Instance.AuthURL, "user/auth"))
 	if err != nil {
 		return nil, err
 	}

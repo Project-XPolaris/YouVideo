@@ -18,7 +18,7 @@ func CreateHistory(videoId uint, uid string) error {
 		return err
 	}
 	history := database.History{UserID: user.ID, VideoID: videoId}
-	err = database.Instance.First(&history).Error
+	err = database.Instance.Model(&database.History{}).Where("user_id = ?", user.ID).Where("video_id = ?", videoId).First(&history).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
@@ -53,6 +53,6 @@ func GetHistoryList(option HistoryQueryOption) (int64, []*database.History, erro
 		Preload("User").Preload("Video").Preload("Video.Files").
 		Joins("left join users on users.id = histories.user_id").
 		Where("users.uid = ?", option.Uid)
-	err := queryBuilder.Limit(option.PageSize).Count(&count).Offset((option.Page - 1) * option.PageSize).Find(&result).Error
+	err := queryBuilder.Limit(option.PageSize).Count(&count).Offset((option.Page - 1) * option.PageSize).Order("histories.updated_at DESC").Find(&result).Error
 	return count, result, err
 }

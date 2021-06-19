@@ -6,6 +6,7 @@ import (
 	"github.com/allentom/transcoder/ffmpeg"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/service"
+	"github.com/projectxpolaris/youvideo/youplus"
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"os"
 	"path/filepath"
@@ -117,6 +118,11 @@ func (t *BaseFileItemTemplate) Assign(info os.FileInfo, rootPath string) {
 	}
 	t.Name = info.Name()
 	t.Path = filepath.Join(rootPath, info.Name())
+}
+func (t *BaseFileItemTemplate) AssignWithYouPlusItem(item youplus.ReadDirItem) {
+	t.Type = item.Type
+	t.Path = item.Path
+	t.Name = filepath.Base(item.Path)
 }
 
 type BaseTaskTemplate struct {

@@ -17,6 +17,7 @@ func (a *AuthMiddleware) OnRequest(ctx *haruka.Context) {
 	if !config.Instance.EnableAuth {
 		ctx.Param["uid"] = service.PublicUid
 		ctx.Param["username"] = service.PublicUsername
+		ctx.Param["token"] = ""
 		return
 	}
 	for _, targetPath := range noAuthPath {
@@ -28,6 +29,7 @@ func (a *AuthMiddleware) OnRequest(ctx *haruka.Context) {
 	if len(rawString) == 0 {
 		rawString = ctx.GetQueryString("token")
 	}
+	ctx.Param["token"] = rawString
 	if len(rawString) > 0 {
 		rawString = strings.Replace(rawString, "Bearer ", "", 1)
 		response, err := auth.DefaultAuthClient.CheckAuth(rawString)

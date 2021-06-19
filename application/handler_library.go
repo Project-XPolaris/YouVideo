@@ -3,7 +3,9 @@ package application
 import (
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/validator"
+	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/service"
+	"github.com/projectxpolaris/youvideo/youplus"
 	"net/http"
 	"strconv"
 )
@@ -25,14 +27,24 @@ var createLibraryHandler haruka.RequestHandler = func(context *haruka.Context) {
 	if !requestBody.Private {
 		uid = service.PublicUid
 	}
+	libraryPath := requestBody.Path
+	if config.Instance.YouPlusPath {
+		realPath, err := youplus.DefaultClient.GetRealPath(requestBody.Path, context.Param["token"].(string))
+		if err != nil {
+			AbortError(context, err, http.StatusBadRequest)
+			return
+		}
+		libraryPath = realPath
+	}
 	if err = validator.RunValidators(
-		&DuplicateLibraryPathValidator{Path: requestBody.Path},
-		&LibraryPathAccessibleValidator{Path: requestBody.Path},
+		&DuplicateLibraryPathValidator{Path: libraryPath},
+		&LibraryPathAccessibleValidator{Path: libraryPath},
 	); err != nil {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	library, err := service.CreateLibrary(requestBody.Path, requestBody.Name, uid)
+
+	library, err := service.CreateLibrary(libraryPath, requestBody.Name, uid)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return

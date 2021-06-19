@@ -4,6 +4,7 @@ import (
 	srv "github.com/kardianos/service"
 	"github.com/projectxpolaris/youvideo/application"
 	"github.com/projectxpolaris/youvideo/config"
+	"github.com/projectxpolaris/youvideo/youplus"
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -35,7 +36,8 @@ func Program() {
 	}
 	if config.Instance.EnableTranscode {
 		transLog := Logger.WithFields(logrus.Fields{
-			"url": config.Instance.YoutransURL,
+			"scope": "YouTrans",
+			"url":   config.Instance.YoutransURL,
 		})
 		transLog.Info("check transcode [checking]")
 		_, err = youtrans.DefaultYouTransClient.GetInfo()
@@ -43,6 +45,19 @@ func Program() {
 			transLog.Fatal(err)
 		}
 		transLog.Info("check transcode [pass]")
+	}
+	// youplus enable
+	if config.Instance.YouPlusPath {
+		youplusLog := Logger.WithFields(logrus.Fields{
+			"scope": "YouPlus",
+			"url":   config.Instance.YouPlusUrl,
+		})
+		youplusLog.Info("check youplus service [checking]")
+		err = youplus.InitClient()
+		if err != nil {
+			youplusLog.Fatal(err)
+		}
+		youplusLog.Info("check youplus service [pass]")
 	}
 	application.Run()
 }

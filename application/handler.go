@@ -5,6 +5,7 @@ import (
 	"github.com/allentom/haruka"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/service"
+	"github.com/projectxpolaris/youvideo/youplus"
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"net/http"
 	"net/http/httputil"
@@ -14,30 +15,51 @@ import (
 
 var readDirectoryHandler haruka.RequestHandler = func(context *haruka.Context) {
 	rootPath := context.GetQueryString("path")
-	if len(rootPath) == 0 {
-		homeDir, err := os.UserHomeDir()
+	if config.Instance.YouPlusPath {
+		token := context.Param["token"].(string)
+		items, err := youplus.DefaultClient.ReadDir(rootPath, token)
 		if err != nil {
 			AbortError(context, err, http.StatusInternalServerError)
 			return
 		}
-		rootPath = homeDir
-	}
-	infos, err := service.ReadDirectory(rootPath)
-	if err != nil {
-		AbortError(context, err, http.StatusInternalServerError)
+		data := make([]BaseFileItemTemplate, 0)
+		for _, item := range items {
+			template := BaseFileItemTemplate{}
+			template.AssignWithYouPlusItem(item)
+			data = append(data, template)
+		}
+		context.JSON(haruka.JSON{
+			"path":  rootPath,
+			"sep":   "/",
+			"files": data,
+		})
 		return
+	} else {
+		if len(rootPath) == 0 {
+			homeDir, err := os.UserHomeDir()
+			if err != nil {
+				AbortError(context, err, http.StatusInternalServerError)
+				return
+			}
+			rootPath = homeDir
+		}
+		infos, err := service.ReadDirectory(rootPath)
+		if err != nil {
+			AbortError(context, err, http.StatusInternalServerError)
+			return
+		}
+		data := make([]BaseFileItemTemplate, 0)
+		for _, info := range infos {
+			template := BaseFileItemTemplate{}
+			template.Assign(info, rootPath)
+			data = append(data, template)
+		}
+		context.JSON(haruka.JSON{
+			"path":  rootPath,
+			"sep":   string(os.PathSeparator),
+			"files": data,
+		})
 	}
-	data := make([]BaseFileItemTemplate, 0)
-	for _, info := range infos {
-		template := BaseFileItemTemplate{}
-		template.Assign(info, rootPath)
-		data = append(data, template)
-	}
-	context.JSON(haruka.JSON{
-		"path":  rootPath,
-		"sep":   string(os.PathSeparator),
-		"files": data,
-	})
 }
 
 var readTaskListHandler haruka.RequestHandler = func(context *haruka.Context) {

@@ -13,6 +13,8 @@ type Config struct {
 	EnableTranscode bool
 	AuthURL         string `json:"auth_url"`
 	EnableAuth      bool   `json:"enable_auth"`
+	YouPlusPath     bool
+	YouPlusUrl      string
 }
 
 func ReadConfig() error {
@@ -34,6 +36,7 @@ func ReadConfig() error {
 	// auth
 	configer.SetDefault("auth.enable", false)
 	configer.SetDefault("auth.url", "")
+	configer.SetDefault("youplus.enablepath", "")
 
 	Instance = Config{
 		Addr:            configer.GetString("addr"),
@@ -44,6 +47,8 @@ func ReadConfig() error {
 		EnableTranscode: configer.GetBool("transcode.enable"),
 		EnableAuth:      configer.GetBool("auth.enable"),
 		AuthURL:         configer.GetString("auth.url"),
+		YouPlusPath:     configer.GetBool("youplus.enablepath"),
+		YouPlusUrl:      configer.GetString("youplus.url"),
 	}
 	return nil
 }

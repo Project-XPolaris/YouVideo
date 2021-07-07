@@ -47,7 +47,7 @@ func Program() {
 		transLog.Info("check transcode [pass]")
 	}
 	// youplus enable
-	if config.Instance.YouPlusPath {
+	if config.Instance.YouPlusPath || config.Instance.EnableAuth {
 		youplusLog := Logger.WithFields(logrus.Fields{
 			"scope": "YouPlus",
 			"url":   config.Instance.YouPlusUrl,

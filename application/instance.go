@@ -54,6 +54,8 @@ func Run() {
 	e.Router.POST("/file/{id:[0-9]+}/rename", renameFileHandler)
 	e.Router.POST("/callback/tran/complete", transCompleteCallback)
 	e.Router.GET("/history", getHistoryListHandler)
+	e.Router.GET("/user/auth", youPlusTokenHandler)
+	e.Router.POST("/user/auth", youPlusLoginHandler)
 	e.Router.AddHandler("/notification", notificationSocketHandler)
 	e.UseMiddleware(&AuthMiddleware{})
 	e.UseMiddleware(&ReadUserMiddleware{})

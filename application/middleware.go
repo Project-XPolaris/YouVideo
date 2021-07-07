@@ -2,9 +2,9 @@ package application
 
 import (
 	"github.com/allentom/haruka"
-	"github.com/projectxpolaris/youvideo/auth"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/service"
+	"github.com/projectxpolaris/youvideo/youplus"
 	"strings"
 )
 
@@ -32,7 +32,7 @@ func (a *AuthMiddleware) OnRequest(ctx *haruka.Context) {
 	ctx.Param["token"] = rawString
 	if len(rawString) > 0 {
 		rawString = strings.Replace(rawString, "Bearer ", "", 1)
-		response, err := auth.DefaultAuthClient.CheckAuth(rawString)
+		response, err := youplus.DefaultClient.CheckAuth(rawString)
 		if err == nil && response.Success {
 			ctx.Param["uid"] = response.Uid
 			ctx.Param["username"] = response.Username

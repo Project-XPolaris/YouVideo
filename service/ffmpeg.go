@@ -33,13 +33,18 @@ func GetShotByFile(path string, output string) error {
 	if err != nil {
 		return err
 	}
-	cmdStr := fmt.Sprintf("-ss %d -i %s -vframes 1 -q:v 2 %s", int(rawSeconds)/2, path, output)
-	cmd := exec.Command(config.Instance.FfmpegBin, strings.Split(cmdStr, " ")...)
-	err = cmd.Start()
-	if err != nil {
-		return err
-	}
-	err = cmd.Wait()
+	cmd := exec.Command(config.Instance.FfmpegBin, "-ss",
+		fmt.Sprintf("%d", int(rawSeconds)/2),
+		"-i",
+		path,
+		"-vframes",
+		"1",
+		"-q:v",
+		"2",
+		output,
+	)
+	out, err := cmd.Output()
+	fmt.Println(string(out))
 	if err != nil {
 		return err
 	}

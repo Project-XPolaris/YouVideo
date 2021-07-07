@@ -11,8 +11,7 @@ type Config struct {
 	FfprobeBin      string `json:"ffprobe_bin"`
 	YoutransURL     string `json:"youtrans_url"`
 	EnableTranscode bool
-	AuthURL         string `json:"auth_url"`
-	EnableAuth      bool   `json:"enable_auth"`
+	EnableAuth      bool `json:"enable_auth"`
 	YouPlusPath     bool
 	YouPlusUrl      string
 }
@@ -34,9 +33,9 @@ func ReadConfig() error {
 	configer.SetDefault("transcode.url", "")
 	configer.SetDefault("transcode.enable", false)
 	// auth
-	configer.SetDefault("auth.enable", false)
-	configer.SetDefault("auth.url", "")
-	configer.SetDefault("youplus.enablepath", "")
+	configer.SetDefault("youplus.auth", false)
+	configer.SetDefault("youplus.enablepath", false)
+	configer.SetDefault("youplus.url", "")
 
 	Instance = Config{
 		Addr:            configer.GetString("addr"),
@@ -45,8 +44,7 @@ func ReadConfig() error {
 		FfprobeBin:      configer.GetString("ffprobe_bin"),
 		YoutransURL:     configer.GetString("transcode.url"),
 		EnableTranscode: configer.GetBool("transcode.enable"),
-		EnableAuth:      configer.GetBool("auth.enable"),
-		AuthURL:         configer.GetString("auth.url"),
+		EnableAuth:      configer.GetBool("youplus.auth"),
 		YouPlusPath:     configer.GetBool("youplus.enablepath"),
 		YouPlusUrl:      configer.GetString("youplus.url"),
 	}

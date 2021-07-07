@@ -119,9 +119,41 @@ var transCompleteCallback haruka.RequestHandler = func(context *haruka.Context) 
 
 var serviceInfoHandler haruka.RequestHandler = func(context *haruka.Context) {
 	context.JSON(haruka.JSON{
-		"name":        "YouVideo serivce",
+		"name":        "YouVideo service",
 		"authEnable":  config.Instance.EnableAuth,
-		"authUrl":     fmt.Sprintf("%s/%s", config.Instance.AuthURL, "user/auth"),
+		"authUrl":     fmt.Sprintf("%s/%s", config.Instance.YouPlusUrl, "user/auth"),
 		"transEnable": config.Instance.EnableTranscode,
+	})
+}
+
+type UserAuthRequestBody struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+var youPlusLoginHandler haruka.RequestHandler = func(context *haruka.Context) {
+	var requestBody UserAuthRequestBody
+	err := context.ParseJson(&requestBody)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	resp, err := youplus.DefaultClient.FetchUserAuth(requestBody.Username, requestBody.Password)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	context.JSON(resp)
+}
+
+var youPlusTokenHandler haruka.RequestHandler = func(context *haruka.Context) {
+	token := context.GetQueryString("token")
+	resp, err := youplus.DefaultClient.CheckAuth(token)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": resp.Success,
 	})
 }

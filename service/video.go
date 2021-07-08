@@ -7,7 +7,6 @@ import (
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/util"
-	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"gorm.io/gorm"
@@ -47,29 +46,26 @@ func CheckLibrary(libraryId uint) error {
 	}
 	return nil
 }
-func ScanVideo(library *database.Library) error {
+func ScanVideo(library *database.Library) ([]string, error) {
 	targetExtensions := []string{
 		"mp4", "mkv",
 	}
+	target := make([]string, 0)
 	err := afero.Walk(AppFs, library.Path, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
 		for _, extension := range targetExtensions {
 			if strings.HasSuffix(info.Name(), extension) {
-				err = CreateVideoFile(path, library.ID)
-				if err != nil {
-					logrus.Error(err)
-				}
-				break
+				target = append(target, path)
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return err
+	return target, err
 }
 
 type VideoQueryBuilder struct {
@@ -153,7 +149,6 @@ func (f VideoLibraryIdFilter) ApplyQuery(db *gorm.DB) *gorm.DB {
 }
 func CreateVideoFile(path string, libraryId uint) error {
 	// check if video file exist
-	var video database.Video
 	file, err := GetFileByPath(path)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
@@ -162,50 +157,53 @@ func CreateVideoFile(path string, libraryId uint) error {
 	fileExt := filepath.Ext(path)
 	videoName := strings.TrimSuffix(filepath.Base(path), fileExt)
 	baseDir := filepath.Dir(path)
-	VideoLogger.WithField("filename", videoName).Info("file hit")
-
 	if file == nil {
 		file = &database.File{}
 	}
 
 	file.Path = path
-
+	checkSum, err := util.MD5Checksum(path)
+	if err != nil {
+		return err
+	}
 	// get meta data
-	meta, metaerr := GetVideoFileMeta(path)
-	if metaerr == nil {
-		duration, err := strconv.ParseFloat(meta.GetFormat().GetDuration(), 10)
-		if err != nil {
-			VideoLogger.Error(err)
-		} else {
-			file.Duration = duration
-		}
-
-		size, err := strconv.ParseInt(meta.GetFormat().GetSize(), 10, 64)
-		if err != nil {
-			VideoLogger.Error(err)
-		} else {
-			file.Size = size
-		}
-
-		bitrate, err := strconv.ParseInt(meta.GetFormat().GetBitRate(), 10, 64)
-		if err != nil {
-			VideoLogger.Error(err)
-		} else {
-			file.Bitrate = bitrate
-		}
-
-		// parse stream
-		for _, stream := range meta.GetStreams() {
-			if stream.GetCodecType() == "video" && len(file.MainVideoCodec) == 0 {
-				file.MainVideoCodec = stream.GetCodecName()
-				continue
+	if checkSum != file.Checksum {
+		meta, metaerr := GetVideoFileMeta(path)
+		if metaerr == nil {
+			duration, err := strconv.ParseFloat(meta.GetFormat().GetDuration(), 10)
+			if err != nil {
+				VideoLogger.Error(err)
+			} else {
+				file.Duration = duration
 			}
-			if stream.GetCodecType() == "audio" && len(file.MainAudioCodec) == 0 {
-				file.MainAudioCodec = stream.GetCodecName()
+
+			size, err := strconv.ParseInt(meta.GetFormat().GetSize(), 10, 64)
+			if err != nil {
+				VideoLogger.Error(err)
+			} else {
+				file.Size = size
+			}
+
+			bitrate, err := strconv.ParseInt(meta.GetFormat().GetBitRate(), 10, 64)
+			if err != nil {
+				VideoLogger.Error(err)
+			} else {
+				file.Bitrate = bitrate
+			}
+
+			// parse stream
+			for _, stream := range meta.GetStreams() {
+				if stream.GetCodecType() == "video" && len(file.MainVideoCodec) == 0 {
+					file.MainVideoCodec = stream.GetCodecName()
+					continue
+				}
+				if stream.GetCodecType() == "audio" && len(file.MainAudioCodec) == 0 {
+					file.MainAudioCodec = stream.GetCodecName()
+				}
 			}
 		}
 	}
-
+	file.Checksum = checkSum
 	// check cover
 	needGenerate := true
 	targetCoverFilePaths := []string{
@@ -223,33 +221,23 @@ func CreateVideoFile(path string, libraryId uint) error {
 	for _, targetCoverFilePath := range targetCoverFilePaths {
 		coverSourcePath := filepath.Join(baseDir, targetCoverFilePath)
 		if util.CheckFileExist(coverSourcePath) {
-			VideoLogger.Info(fmt.Sprintf("use exist cover  = %s", coverSourcePath))
-			coverFileName := fmt.Sprintf("%s%s", xid.New(), filepath.Ext(coverSourcePath))
-			savePath, err := filepath.Abs(filepath.Join(config.Instance.CoversStore, coverFileName))
-			if err != nil {
-				VideoLogger.Error(err)
-				break
+			if file.AutoGenCover {
+				os.Remove(filepath.Join(config.Instance.CoversStore, file.Cover))
 			}
-
-			err = util.CopyFile(coverSourcePath, savePath)
-			if err != nil {
-				VideoLogger.Error(err)
-				break
-			}
-
-			os.Remove(filepath.Join(config.Instance.CoversStore, file.Cover))
-			file.Cover = coverFileName
+			file.Cover = coverSourcePath
+			file.AutoGenCover = false
 			needGenerate = false
 			break
 		}
 	}
 
-	if needGenerate && len(file.Cover) == 0 {
+	if (needGenerate && !file.AutoGenCover) || (needGenerate && len(file.Cover) == 0) {
 		coverPath, err := GenerateVideoCover(path)
 		if err != nil {
 			VideoLogger.Error(err)
 		} else {
-			file.Cover = filepath.Base(coverPath)
+			file.AutoGenCover = true
+			file.Cover = filepath.Join(config.Instance.CoversStore, filepath.Base(coverPath))
 		}
 	}
 
@@ -268,28 +256,27 @@ func CreateVideoFile(path string, libraryId uint) error {
 		}
 	}
 	file.Subtitles = subtitlesFilePath
-	if file.VideoId == 0 {
-		err = database.Instance.Model(&database.Video{}).Where("name = ?", videoName).Where("base_dir = ?", baseDir).First(&video).Error
-		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	var video database.Video
+	err = database.Instance.Model(&database.Video{}).Where("name = ?", videoName).Where("base_dir = ?", baseDir).First(&video).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	// create if not found
+	if video.ID == 0 {
+		video = database.Video{
+			Name:      videoName,
+			LibraryId: libraryId,
+			BaseDir:   baseDir,
+		}
+		VideoLogger.WithFields(logrus.Fields{
+			"name": videoName,
+		}).Warn("video not exist,try to create")
+		err = database.Instance.Create(&video).Error
+		if err != nil {
 			return err
 		}
-		// create if not found
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			video = database.Video{
-				Name:      videoName,
-				LibraryId: libraryId,
-				BaseDir:   baseDir,
-			}
-			VideoLogger.WithFields(logrus.Fields{
-				"name": videoName,
-			}).Warn("video not exist,try to create")
-			err = database.Instance.Create(&video).Error
-			if err != nil {
-				return err
-			}
-		}
-		file.VideoId = video.ID
 	}
+	file.VideoId = video.ID
 	err = database.Instance.Save(file).Error
 	return err
 }

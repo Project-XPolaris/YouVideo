@@ -34,14 +34,6 @@ func CreateLibrary(path string, name string, uid string) (*database.Library, err
 	return library, err
 }
 
-func ScanLibrary(library *database.Library) error {
-	err := CheckLibrary(library.ID)
-	if err != nil {
-		return err
-	}
-	return ScanVideo(library)
-}
-
 func ScanLibraryById(id uint, uid string) error {
 	var library database.Library
 	err := database.Instance.Preload("Users").Find(&library, id).Error

@@ -124,3 +124,27 @@ var renameFileHandler haruka.RequestHandler = func(context *haruka.Context) {
 		"success": true,
 	})
 }
+
+var fileCoverHandler haruka.RequestHandler = func(context *haruka.Context) {
+	id, err := context.GetPathParameterAsInt("id")
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	filePermissionValidator := FilePermissionValidator{}
+	err = context.BindingInput(&filePermissionValidator)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	if err = validator.RunValidators(&filePermissionValidator); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	file, err := service.GetFileById(uint(id))
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	http.ServeFile(context.Writer, context.Request, file.Cover)
+}

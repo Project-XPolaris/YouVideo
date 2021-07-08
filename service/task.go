@@ -5,6 +5,7 @@ import (
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
+	"path/filepath"
 	"sync"
 )
 
@@ -49,9 +50,20 @@ type TaskPool struct {
 	Tasks []*Task
 }
 
+func (t *Task) SetError(err error) {
+	TaskLogger.Error(err)
+	if err != nil {
+		t.Status = TaskStatusError
+	}
+}
+
 type ScanTaskOutput struct {
-	Id   uint   `json:"id"`
-	Path string `json:"path"`
+	Id          uint   `json:"id"`
+	Path        string `json:"path"`
+	Total       int64  `json:"total"`
+	Current     int64  `json:"current"`
+	CurrentPath string `json:"currentPath"`
+	CurrentName string `json:"currentName"`
 }
 
 func (p *TaskPool) RemoveTaskById(id string) {
@@ -65,7 +77,7 @@ func (p *TaskPool) RemoveTaskById(id string) {
 }
 func CreateSyncLibraryTask(library *database.Library) *Task {
 	for _, task := range DefaultTaskPool.Tasks {
-		if task.Output.(ScanTaskOutput).Id == library.ID {
+		if task.Output.(*ScanTaskOutput).Id == library.ID {
 			if task.Status == TaskStatusRunning {
 				return task
 			}
@@ -74,14 +86,15 @@ func CreateSyncLibraryTask(library *database.Library) *Task {
 		}
 	}
 	id := xid.New().String()
+	output := &ScanTaskOutput{
+		Id:   library.ID,
+		Path: library.Path,
+	}
 	task := &Task{
 		Id:     id,
 		Type:   TaskTypeScanLibrary,
 		Status: TaskStatusRunning,
-		Output: ScanTaskOutput{
-			Id:   library.ID,
-			Path: library.Path,
-		},
+		Output: output,
 	}
 	logger := TaskLogger.WithFields(logrus.Fields{
 		"id":        id,
@@ -90,15 +103,27 @@ func CreateSyncLibraryTask(library *database.Library) *Task {
 	})
 	go func() {
 		logger.Info("task start")
-		err := ScanLibrary(library)
-		DefaultTaskPool.Lock()
+		err := CheckLibrary(library.ID)
 		if err != nil {
-			logger.Error(err)
-			task.Status = TaskStatusError
+			task.SetError(err)
+			return
+		}
+		pathList, err := ScanVideo(library)
+		if err != nil {
+			task.SetError(err)
+			return
+		}
+		output.Total = int64(len(pathList))
+		for idx, path := range pathList {
+			output.Current = int64(idx + 1)
+			output.CurrentPath = path
+			output.CurrentName = filepath.Base(path)
+			err = CreateVideoFile(path, library.ID)
+			if err != nil {
+				logger.Error(err)
+			}
 		}
 		task.Status = TaskStatusDone
-		DefaultTaskPool.Unlock()
-
 	}()
 	DefaultTaskPool.Lock()
 	DefaultTaskPool.Tasks = append(DefaultTaskPool.Tasks, task)

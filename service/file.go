@@ -24,16 +24,20 @@ func RemoveFileById(id uint) error {
 		return err
 	}
 	if len(file.Cover) > 0 {
-		coverPath := filepath.Join(config.Instance.CoversStore, file.Cover)
-		if _, err = os.Stat(coverPath); err == nil {
-			err = os.Remove(coverPath)
-			if err != nil {
-				return err
+		var coverRefCount int64
+		err = database.Instance.Model(&database.File{}).Where("cover = ?", file.Cover).Count(&coverRefCount).Error
+		if err != nil {
+			return err
+		}
+		if coverRefCount == 1 {
+			coverPath := filepath.Join(config.Instance.CoversStore, file.Cover)
+			if _, err = os.Stat(coverPath); err == nil {
+				err = os.Remove(coverPath)
+				if err != nil {
+					return err
+				}
 			}
 		}
-	}
-	if len(file.Subtitles) > 0 {
-		os.Remove(file.Subtitles)
 	}
 	err = database.Instance.Unscoped().Where("id = ?", id).Delete(&database.File{}).Error
 	return err

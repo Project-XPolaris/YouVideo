@@ -60,7 +60,7 @@ func (t *BaseFileTemplate) Assign(file *database.File) {
 	t.Id = file.ID
 	t.Path = file.Path
 	if len(file.Cover) > 0 {
-		t.Cover = fmt.Sprintf("/covers/%s", file.Cover)
+		t.Cover = fmt.Sprintf("/video/file/%d/cover", file.ID)
 	}
 	t.VideoId = file.VideoId
 	t.Duration = file.Duration

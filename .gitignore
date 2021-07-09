@@ -2,3 +2,4 @@
 *.db
 *.sqlite
 static/
+local_*_test.go

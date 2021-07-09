@@ -12,7 +12,6 @@ import (
 	"gorm.io/gorm"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
@@ -153,7 +152,6 @@ func CreateVideoFile(path string, libraryId uint) error {
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
-
 	fileExt := filepath.Ext(path)
 	videoName := strings.TrimSuffix(filepath.Base(path), fileExt)
 	baseDir := filepath.Dir(path)
@@ -162,48 +160,6 @@ func CreateVideoFile(path string, libraryId uint) error {
 	}
 
 	file.Path = path
-	checkSum, err := util.MD5Checksum(path)
-	if err != nil {
-		return err
-	}
-	// get meta data
-	if checkSum != file.Checksum {
-		meta, metaerr := GetVideoFileMeta(path)
-		if metaerr == nil {
-			duration, err := strconv.ParseFloat(meta.GetFormat().GetDuration(), 10)
-			if err != nil {
-				VideoLogger.Error(err)
-			} else {
-				file.Duration = duration
-			}
-
-			size, err := strconv.ParseInt(meta.GetFormat().GetSize(), 10, 64)
-			if err != nil {
-				VideoLogger.Error(err)
-			} else {
-				file.Size = size
-			}
-
-			bitrate, err := strconv.ParseInt(meta.GetFormat().GetBitRate(), 10, 64)
-			if err != nil {
-				VideoLogger.Error(err)
-			} else {
-				file.Bitrate = bitrate
-			}
-
-			// parse stream
-			for _, stream := range meta.GetStreams() {
-				if stream.GetCodecType() == "video" && len(file.MainVideoCodec) == 0 {
-					file.MainVideoCodec = stream.GetCodecName()
-					continue
-				}
-				if stream.GetCodecType() == "audio" && len(file.MainAudioCodec) == 0 {
-					file.MainAudioCodec = stream.GetCodecName()
-				}
-			}
-		}
-	}
-	file.Checksum = checkSum
 	// check cover
 	needGenerate := true
 	targetCoverFilePaths := []string{
@@ -230,17 +186,6 @@ func CreateVideoFile(path string, libraryId uint) error {
 			break
 		}
 	}
-
-	if (needGenerate && !file.AutoGenCover) || (needGenerate && len(file.Cover) == 0) {
-		coverPath, err := GenerateVideoCover(path)
-		if err != nil {
-			VideoLogger.Error(err)
-		} else {
-			file.AutoGenCover = true
-			file.Cover = filepath.Join(config.Instance.CoversStore, filepath.Base(coverPath))
-		}
-	}
-
 	// check file subtitles file
 	subtitlesFiles := []string{
 		fmt.Sprintf("%s.srt", videoName),
@@ -278,6 +223,17 @@ func CreateVideoFile(path string, libraryId uint) error {
 	}
 	file.VideoId = video.ID
 	err = database.Instance.Save(file).Error
+
+	// analyze video meta
+	DefaultVideoMetaAnalyzer.In <- file
+
+	if (needGenerate && !file.AutoGenCover) || (needGenerate && len(file.Cover) == 0) {
+		DefaultVideoCoverGenerator.In <- file
+	}
+	err = database.Instance.Save(file).Error
+	if err != nil {
+		return err
+	}
 	return err
 }
 

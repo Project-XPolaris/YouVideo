@@ -2,4 +2,5 @@
 *.db
 *.sqlite
 static/
+pack-output/
 local_*_test.go

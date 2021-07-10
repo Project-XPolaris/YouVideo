@@ -1,0 +1,11 @@
+addr: ':7700'
+cover_store: './static/covers'
+ffmpeg_bin: 'ffmpeg'
+ffprobe_bin: 'ffprobe'
+transcode:
+  enable: false
+  url: 'http://localhost:6700'
+youplus:
+  auth: false
+  enablepath: false
+  url: 'http://localhost:8999'

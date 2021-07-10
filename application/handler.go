@@ -119,6 +119,7 @@ var transCompleteCallback haruka.RequestHandler = func(context *haruka.Context) 
 
 var serviceInfoHandler haruka.RequestHandler = func(context *haruka.Context) {
 	context.JSON(haruka.JSON{
+		"success":     true,
 		"name":        "YouVideo service",
 		"authEnable":  config.Instance.EnableAuth,
 		"authUrl":     fmt.Sprintf("%s/%s", config.Instance.YouPlusUrl, "user/auth"),

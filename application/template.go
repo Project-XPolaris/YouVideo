@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/allentom/haruka"
 	"github.com/allentom/transcoder/ffmpeg"
-	"github.com/project-xpolaris/youplustoolkit"
+	"github.com/project-xpolaris/youplustoolkit/youplus"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/service"
 	"github.com/projectxpolaris/youvideo/youtrans"
@@ -119,7 +119,7 @@ func (t *BaseFileItemTemplate) Assign(info os.FileInfo, rootPath string) {
 	t.Name = info.Name()
 	t.Path = filepath.Join(rootPath, info.Name())
 }
-func (t *BaseFileItemTemplate) AssignWithYouPlusItem(item youplustoolkit.ReadDirItem) {
+func (t *BaseFileItemTemplate) AssignWithYouPlusItem(item youplus.ReadDirItem) {
 	t.Type = item.Type
 	t.Path = item.Path
 	t.Name = filepath.Base(item.Path)

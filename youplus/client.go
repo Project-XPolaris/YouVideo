@@ -2,14 +2,14 @@ package youplus
 
 import (
 	"errors"
-	"github.com/project-xpolaris/youplustoolkit"
+	plustoolkit "github.com/project-xpolaris/youplustoolkit/youplus"
 	"github.com/projectxpolaris/youvideo/config"
 )
 
-var DefaultClient *youplustoolkit.Client
+var DefaultClient *plustoolkit.Client
 
 func InitClient() error {
-	DefaultClient = youplustoolkit.NewClient()
+	DefaultClient = plustoolkit.NewClient()
 	DefaultClient.Init(config.Instance.YouPlusUrl)
 	info, err := DefaultClient.GetInfo()
 	if err != nil {

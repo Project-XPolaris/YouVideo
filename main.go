@@ -36,10 +36,11 @@ func Program() {
 	if err != nil {
 		Logger.Fatal(err)
 	}
+	youlog.Init()
 	if config.Instance.YouLogEnable {
-		err = youlog.Init()
+		err = youlog.DefaultClient.Connect()
 		if err != nil {
-			Logger.Error(err)
+			Logger.Fatal(err)
 		}
 	}
 	logScope := youlog.DefaultClient.NewScope("booting")

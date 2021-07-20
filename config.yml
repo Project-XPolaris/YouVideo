@@ -11,5 +11,5 @@ auth:
   enable: true
   url: 'http://localhost:8999'
 youlog:
-  enable: true
+  enable: false
   rpc_addr: "localhost:50052"

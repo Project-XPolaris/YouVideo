@@ -1,0 +1,7 @@
+{
+    "app_name": "YouVideo Service",
+    "auto_start": false,
+    "type":"Service",
+    "service_name":"YouVideoService.service",
+    "icon":"icon.png"
+  }

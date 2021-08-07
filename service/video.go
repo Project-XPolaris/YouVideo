@@ -76,6 +76,7 @@ type VideoQueryBuilder struct {
 	BaseDirs []string `hsource:"query" hname:"dir"`
 	Search   string   `hsource:"query" hname:"search"`
 	Uid      string   `hsource:"param" hname:"uid"`
+	Random   string   `hsource:"query" hname:"random"`
 }
 
 func (v *VideoQueryBuilder) InTagIds(ids ...interface{}) {
@@ -93,9 +94,14 @@ func (v *VideoQueryBuilder) InLibraryIds(ids ...interface{}) {
 func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
 	query := database.Instance
 	query = gormh.ApplyFilters(v, query)
-	for _, order := range v.Orders {
-		query = query.Order(fmt.Sprintf("videos.%s", order))
+	if len(v.Random) > 0 {
+		query = query.Order("random()")
+	} else {
+		for _, order := range v.Orders {
+			query = query.Order(fmt.Sprintf("videos.%s", order))
+		}
 	}
+
 	for _, group := range v.GroupBy {
 		query = query.Distinct(group)
 	}

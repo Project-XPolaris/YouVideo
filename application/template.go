@@ -216,7 +216,7 @@ func (t *BaseHistoryTemplate) Serializer(dataModel interface{}, context map[stri
 	if model.Video != nil {
 		t.Name = model.Video.Name
 		if model.Video.Files != nil && len(model.Video.Files) > 0 {
-			t.Cover = fmt.Sprintf("/covers/%s", model.Video.Files[0].Cover)
+			t.Cover = fmt.Sprintf("/video/file/%d/cover", model.Video.Files[0].ID)
 		}
 	}
 	t.Time = model.UpdatedAt.Format(formatTime)

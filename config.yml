@@ -1,4 +1,6 @@
 addr: ':7700'
+application: "YouVideo Core Service"
+instance: "main"
 cover_store: './static/covers'
 ffmpeg_bin: 'ffmpeg'
 ffprobe_bin: 'ffprobe'
@@ -8,3 +10,6 @@ transcode:
 auth:
   enable: true
   url: 'http://localhost:8999'
+youlog:
+  enable: false
+  rpc_addr: "localhost:50052"

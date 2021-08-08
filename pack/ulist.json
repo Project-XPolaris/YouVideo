@@ -1,0 +1,6 @@
+{
+    "installType":"service",
+    "name":"youvideocore",
+    "installScript":["sh","install.sh"],
+    "uninstallScript":["sh","uninstall.sh"]
+  }

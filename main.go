@@ -2,8 +2,10 @@ package main
 
 import (
 	srv "github.com/kardianos/service"
+	logtoolkit "github.com/project-xpolaris/youplustoolkit/youlog"
 	"github.com/projectxpolaris/youvideo/application"
 	"github.com/projectxpolaris/youvideo/config"
+	"github.com/projectxpolaris/youvideo/youlog"
 	"github.com/projectxpolaris/youvideo/youplus"
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"github.com/sirupsen/logrus"
@@ -32,33 +34,43 @@ func initService() error {
 func Program() {
 	err := config.ReadConfig()
 	if err != nil {
-		logrus.Fatal(err)
+		Logger.Fatal(err)
 	}
+	youlog.Init()
+	if config.Instance.YouLogEnable {
+		err = youlog.DefaultClient.Connect()
+		if err != nil {
+			Logger.Fatal(err)
+		}
+	}
+	logScope := youlog.DefaultClient.NewScope("booting")
+	logScope.Info("booting application")
 	if config.Instance.EnableTranscode {
-		transLog := Logger.WithFields(logrus.Fields{
-			"scope": "YouTrans",
-			"url":   config.Instance.YoutransURL,
-		})
-		transLog.Info("check transcode [checking]")
+		logScope.Info("check transcode [checking]")
 		_, err = youtrans.DefaultYouTransClient.GetInfo()
 		if err != nil {
-			transLog.Fatal(err)
+			logScope.WithFields(logtoolkit.Fields{
+				"url": config.Instance.YoutransURL,
+			}).Fatal(err.Error())
 		}
-		transLog.Info("check transcode [pass]")
+		logScope.WithFields(logtoolkit.Fields{
+			"url": config.Instance.YoutransURL,
+		}).Info("check transcode [pass]")
 	}
 	// youplus enable
 	if config.Instance.YouPlusPath || config.Instance.EnableAuth {
-		youplusLog := Logger.WithFields(logrus.Fields{
-			"scope": "YouPlus",
-			"url":   config.Instance.YouPlusUrl,
-		})
-		youplusLog.Info("check youplus service [checking]")
+		logScope.Info("check youplus [checking]")
 		err = youplus.InitClient()
 		if err != nil {
-			youplusLog.Fatal(err)
+			logScope.WithFields(logtoolkit.Fields{
+				"url": config.Instance.YouPlusUrl,
+			}).Fatal(err.Error())
 		}
-		youplusLog.Info("check youplus service [pass]")
+		logScope.WithFields(logtoolkit.Fields{
+			"url": config.Instance.YoutransURL,
+		}).Info("check youplus service [pass]")
 	}
+	logScope.Info("booting success")
 	application.Run()
 }
 

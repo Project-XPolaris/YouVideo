@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	srv "github.com/kardianos/service"
 	logtoolkit "github.com/project-xpolaris/youplustoolkit/youlog"
+	entry "github.com/project-xpolaris/youplustoolkit/youplus/entity"
 	"github.com/projectxpolaris/youvideo/application"
 	"github.com/projectxpolaris/youvideo/config"
+	"github.com/projectxpolaris/youvideo/util"
 	"github.com/projectxpolaris/youvideo/youlog"
 	"github.com/projectxpolaris/youvideo/youplus"
 	"github.com/projectxpolaris/youvideo/youtrans"
@@ -69,6 +73,53 @@ func Program() {
 		logScope.WithFields(logtoolkit.Fields{
 			"url": config.Instance.YoutransURL,
 		}).Info("check youplus service [pass]")
+	}
+	// youplus rpc enable
+	if len(config.Instance.YouPlusRPCAddr) > 0 {
+		logScope.Info("check youplus rpc [checking]")
+		err = youplus.LoadYouPlusRPCClient()
+		if err != nil {
+			logScope.WithFields(logtoolkit.Fields{
+				"url": config.Instance.YouPlusRPCAddr,
+			}).Fatal(err.Error())
+		}
+
+		logScope.WithFields(logtoolkit.Fields{
+			"url": config.Instance.YouPlusRPCAddr,
+		}).Info("check youplus rpc service [pass]")
+
+	}
+	// youplus entity
+	if config.Instance.Entity.Enable {
+		logScope.Info("register entity")
+		youplus.InitEntity()
+
+		err := youplus.DefaultEntry.Register()
+		if err != nil {
+			logScope.Fatal(err.Error())
+		}
+
+		addrs, err := util.GetHostIpList()
+		urls := make([]string, 0)
+		for _, addr := range addrs {
+			urls = append(urls, fmt.Sprintf("http://%s%s", addr, config.Instance.Addr))
+		}
+		if err != nil {
+			logScope.Fatal(err.Error())
+		}
+		err = youplus.DefaultEntry.UpdateExport(entry.EntityExport{Urls: urls, Extra: map[string]interface{}{}})
+		if err != nil {
+			logScope.Fatal(err.Error())
+		}
+
+		err = youplus.DefaultEntry.StartHeartbeat(context.Background())
+		if err != nil {
+			logScope.Fatal(err.Error())
+		}
+		logScope.WithFields(logtoolkit.Fields{
+			"url": config.Instance.YouPlusRPCAddr,
+		}).Info("success register entity")
+
 	}
 	logScope.Info("booting success")
 	application.Run()

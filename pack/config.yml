@@ -1,4 +1,6 @@
 addr: ':7700'
+application: "YouVideo Core Service"
+instance: "main"
 cover_store: './static/covers'
 ffmpeg_bin: 'ffmpeg'
 ffprobe_bin: 'ffprobe'
@@ -9,3 +11,11 @@ youplus:
   auth: false
   enablepath: false
   url: 'http://localhost:8999'
+  rpc: 'localhost:50055'
+  entity:
+    enable: false
+    name: "youvideocore"
+    version: 1
+youlog:
+  enable: false
+  rpc_addr: "localhost:50052"

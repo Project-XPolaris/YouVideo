@@ -4,6 +4,11 @@ import "github.com/spf13/viper"
 
 var Instance Config
 
+type EntityConfig struct {
+	Enable  bool
+	Name    string
+	Version int64
+}
 type Config struct {
 	Addr            string `json:"addr"`
 	Application     string
@@ -16,7 +21,9 @@ type Config struct {
 	EnableAuth      bool `json:"enable_auth"`
 	YouPlusPath     bool
 	YouPlusUrl      string
+	YouPlusRPCAddr  string
 	YouLogEnable    bool
+	Entity          EntityConfig
 	YouLogAddress   string
 }
 
@@ -42,6 +49,7 @@ func ReadConfig() error {
 	configer.SetDefault("youplus.auth", false)
 	configer.SetDefault("youplus.enablepath", false)
 	configer.SetDefault("youplus.url", "")
+	configer.SetDefault("youplus.rpc", "")
 	configer.SetDefault("youlog.enable", false)
 	configer.SetDefault("youlog.rpc_addr", "")
 
@@ -57,8 +65,14 @@ func ReadConfig() error {
 		EnableAuth:      configer.GetBool("youplus.auth"),
 		YouPlusPath:     configer.GetBool("youplus.enablepath"),
 		YouPlusUrl:      configer.GetString("youplus.url"),
-		YouLogEnable:    configer.GetBool("youlog.enable"),
-		YouLogAddress:   configer.GetString("youlog.rpc_addr"),
+		YouPlusRPCAddr:  configer.GetString("youplus.rpc"),
+		Entity: EntityConfig{
+			Enable:  configer.GetBool("youplus.entity.enable"),
+			Name:    configer.GetString("youplus.entity.name"),
+			Version: configer.GetInt64("youplus.entity.version"),
+		},
+		YouLogEnable:  configer.GetBool("youlog.enable"),
+		YouLogAddress: configer.GetString("youlog.rpc_addr"),
 	}
 	return nil
 }

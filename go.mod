@@ -8,9 +8,9 @@ require (
 	github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f
 	github.com/gorilla/websocket v1.4.2
 	github.com/kardianos/service v1.2.0
-	github.com/project-xpolaris/youplustoolkit v0.0.0-20210723014647-c1d1d0f523ad
+	github.com/project-xpolaris/youplustoolkit v0.0.0-20210812095445-b93c4b27c63e
 	github.com/rs/cors v1.7.0
-	github.com/rs/xid v1.2.1
+	github.com/rs/xid v1.3.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/afero v1.5.1
 	github.com/spf13/viper v1.7.1

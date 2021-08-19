@@ -21,3 +21,7 @@ require (
 	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.20.12
 )
+
+replace (
+	github.com/project-xpolaris/youplustoolkit => C:\\Users\\aren\\Desktop\\youplustoolkit
+)

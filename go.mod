@@ -8,7 +8,7 @@ require (
 	github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f
 	github.com/gorilla/websocket v1.4.2
 	github.com/kardianos/service v1.2.0
-	github.com/project-xpolaris/youplustoolkit v0.0.0-20210812095445-b93c4b27c63e
+	github.com/project-xpolaris/youplustoolkit v0.0.0-20210819072854-fca2c927b193
 	github.com/rs/cors v1.7.0
 	github.com/rs/xid v1.3.0
 	github.com/sirupsen/logrus v1.8.1
@@ -20,8 +20,4 @@ require (
 	google.golang.org/genproto v0.0.0-20210722135532-667f2b7c528f // indirect
 	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.20.12
-)
-
-replace (
-	github.com/project-xpolaris/youplustoolkit => C:\\Users\\aren\\Desktop\\youplustoolkit
 )

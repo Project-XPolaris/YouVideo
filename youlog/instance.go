@@ -8,5 +8,5 @@ import (
 var DefaultClient *logtoolkit.LogClient = &logtoolkit.LogClient{}
 
 func Init() {
-	DefaultClient.Init(config.Instance.Addr, config.Instance.Application, config.Instance.Instance)
+	DefaultClient.Init(config.Instance.YouLogAddress, config.Instance.Application, config.Instance.Instance)
 }

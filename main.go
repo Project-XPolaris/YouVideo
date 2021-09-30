@@ -17,6 +17,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 var svcConfig *srv.Config
@@ -42,7 +43,8 @@ func Program() {
 	}
 	youlog.Init()
 	if config.Instance.YouLogEnable {
-		err = youlog.DefaultClient.Connect()
+		connCtx, _ := context.WithTimeout(context.Background(), 3*time.Second)
+		err = youlog.DefaultClient.Connect(connCtx)
 		if err != nil {
 			Logger.Fatal(err)
 		}

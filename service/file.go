@@ -23,16 +23,15 @@ func RemoveFileById(id uint) error {
 	if err != nil {
 		return err
 	}
-	if len(file.Cover) > 0 {
+	if len(file.Cover) > 0 && file.AutoGenCover {
 		var coverRefCount int64
 		err = database.Instance.Model(&database.File{}).Where("cover = ?", file.Cover).Count(&coverRefCount).Error
 		if err != nil {
 			return err
 		}
 		if coverRefCount == 1 {
-			coverPath := filepath.Join(config.Instance.CoversStore, file.Cover)
-			if _, err = os.Stat(coverPath); err == nil {
-				err = os.Remove(coverPath)
+			if util.CheckFileExist(file.Cover) {
+				err = os.Remove(file.Cover)
 				if err != nil {
 					return err
 				}

@@ -71,12 +71,13 @@ type VideoQueryBuilder struct {
 	gormh.DefaultPageFilter
 	VideoTagIdFilter
 	VideoLibraryIdFilter
-	Orders   []string `hsource:"query" hname:"order"`
-	GroupBy  []string `hsource:"query" hname:"group"`
-	BaseDirs []string `hsource:"query" hname:"dir"`
-	Search   string   `hsource:"query" hname:"search"`
-	Uid      string   `hsource:"param" hname:"uid"`
-	Random   string   `hsource:"query" hname:"random"`
+	Orders           []string `hsource:"query" hname:"order"`
+	GroupBy          []string `hsource:"query" hname:"group"`
+	BaseDirs         []string `hsource:"query" hname:"dir"`
+	Search           string   `hsource:"query" hname:"search"`
+	Uid              string   `hsource:"param" hname:"uid"`
+	Random           string   `hsource:"query" hname:"random"`
+	DirectoryVideoId uint     `hsource:"query" hname:"directoryVideo"`
 }
 
 func (v *VideoQueryBuilder) InTagIds(ids ...interface{}) {
@@ -117,6 +118,14 @@ func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
 		query = query.Where("users.uid in ?", []string{v.Uid, PublicUid})
 	} else {
 		query = query.Where("users.uid in ?", []string{PublicUid})
+	}
+	if v.DirectoryVideoId > 0 {
+		var video database.Video
+		err := database.Instance.Where("id = ?", v.DirectoryVideoId).Find(&video).Error
+		if err != nil {
+			return 0, nil, err
+		}
+		query = query.Where("base_dir = ?", video.BaseDir)
 	}
 	models := make([]*database.Video, 0)
 	var count int64

@@ -34,26 +34,6 @@ func CreateLibrary(path string, name string, uid string) (*database.Library, err
 	return library, err
 }
 
-func ScanLibraryById(id uint, uid string) error {
-	var library database.Library
-	err := database.Instance.Preload("Users").Find(&library, id).Error
-	hasPrem := false
-	for _, owner := range library.Users {
-		if owner.Uid == PublicUid || owner.Uid == uid {
-			hasPrem = true
-			break
-		}
-	}
-	if !hasPrem {
-		return LibraryOwnerError
-	}
-	if err != nil {
-		return err
-	}
-	CreateSyncLibraryTask(&library)
-	return nil
-}
-
 type LibraryQueryOption struct {
 	Page     int
 	PageSize int

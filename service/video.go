@@ -240,7 +240,9 @@ func CreateVideoFile(path string, libraryId uint) error {
 	err = database.Instance.Save(file).Error
 
 	// analyze video meta
-	DefaultVideoMetaAnalyzer.In <- file
+	DefaultVideoMetaAnalyzer.In <- VideoMetaAnalyzerInput{
+		File: file,
+	}
 
 	if (needGenerate && !file.AutoGenCover) || (needGenerate && len(file.Cover) == 0) {
 		DefaultVideoCoverGenerator.In <- file

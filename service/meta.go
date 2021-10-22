@@ -11,7 +11,7 @@ var DefaultVideoMetaAnalyzer *VideoMetaAnalyzer
 
 func init() {
 	DefaultVideoMetaAnalyzer = &VideoMetaAnalyzer{
-		In: make(chan *database.File, 100000),
+		In: make(chan VideoMetaAnalyzerInput, 100000),
 		Logger: logrus.WithFields(logrus.Fields{
 			"scope": "DefaultVideoMetaAnalyzer",
 		}),
@@ -19,14 +19,21 @@ func init() {
 	go DefaultVideoMetaAnalyzer.Run()
 }
 
+type VideoMetaAnalyzerInput struct {
+	File    *database.File
+	OnDone  chan struct{}
+	OnError chan error
+}
 type VideoMetaAnalyzer struct {
-	In     chan *database.File
+	In     chan VideoMetaAnalyzerInput
 	Logger *logrus.Entry
 }
 
 func (a *VideoMetaAnalyzer) Run() {
+
 	for true {
-		file := <-a.In
+		input := <-a.In
+		file := input.File
 		fileLogger := a.Logger.WithFields(logrus.Fields{
 			"path": file.Path,
 			"file": filepath.Base(file.Path),
@@ -34,6 +41,9 @@ func (a *VideoMetaAnalyzer) Run() {
 		// get meta data
 		meta, err := GetVideoFileMeta(file.Path)
 		if err != nil {
+			if input.OnError != nil {
+				input.OnError <- err
+			}
 			fileLogger.Error(err)
 			return
 		}
@@ -43,7 +53,6 @@ func (a *VideoMetaAnalyzer) Run() {
 		} else {
 			file.Duration = duration
 		}
-
 		size, err := strconv.ParseInt(meta.GetFormat().GetSize(), 10, 64)
 		if err != nil {
 			fileLogger.Error(err)
@@ -71,7 +80,13 @@ func (a *VideoMetaAnalyzer) Run() {
 
 		err = database.Instance.Save(file).Error
 		if err != nil {
+			if input.OnError != nil {
+				input.OnError <- err
+			}
 			fileLogger.Error(err)
+		}
+		if input.OnDone != nil {
+			close(input.OnDone)
 		}
 	}
 }

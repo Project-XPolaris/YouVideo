@@ -11,6 +11,7 @@ type Signal struct {
 
 const (
 	TaskTypeScanLibrary = iota + 1
+	TaskTypeMeta
 )
 const (
 	TaskStatusRunning = iota + 1
@@ -24,6 +25,7 @@ var TaskLogger = logrus.New().WithFields(logrus.Fields{
 
 var TaskTypeNameMapping map[int]string = map[int]string{
 	TaskTypeScanLibrary: "ScanLibrary",
+	TaskTypeMeta:        "Meta",
 }
 
 var TaskStatusNameMapping map[int]string = map[int]string{
@@ -41,6 +43,7 @@ type Task struct {
 	Status   int
 	DoneChan chan Signal
 	Output   interface{}
+	Uid      string
 }
 type TaskPool struct {
 	sync.Mutex

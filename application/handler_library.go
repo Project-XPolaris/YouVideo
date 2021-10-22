@@ -92,13 +92,96 @@ var scanLibrary haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
+	username := context.Param["username"].(string)
 	permission := LibraryAccessibleValidator{}
 	context.BindingInput(&permission)
 	if err = validator.RunValidators(&permission); err != nil {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	err = service.ScanLibraryById(uint(id), context.Param["uid"].(string))
+	task, err := service.CreateSyncLibraryTask(service.CreateScanTaskOption{
+		LibraryId: uint(id),
+		Uid:       context.Param["uid"].(string),
+		OnFileComplete: func(task *service.Task) {
+			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+				"event": EventSyncTaskFileComplete,
+				"task":  NewTaskTemplate(task),
+			}, username)
+		},
+		OnFileError: func(task *service.Task, err error) {
+			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+				"event": EventSyncTaskFileError,
+				"error": err,
+				"task":  NewTaskTemplate(task),
+			}, username)
+		},
+		OnError: func(task *service.Task, err error) {
+			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+				"event": EventSyncTaskError,
+				"error": err,
+				"task":  NewTaskTemplate(task),
+			}, username)
+		},
+		OnComplete: func(task *service.Task) {
+			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+				"event": EventSyncTaskComplete,
+				"task":  NewTaskTemplate(task),
+			}, username)
+		},
+	})
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
+		"task":    NewTaskTemplate(task),
+	})
+}
+var readMetaTask haruka.RequestHandler = func(context *haruka.Context) {
+	rawId := context.Parameters["id"]
+	uid := context.Param["uid"].(string)
+	username := context.Param["username"].(string)
+	id, err := strconv.Atoi(rawId)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	permission := LibraryAccessibleValidator{}
+	context.BindingInput(&permission)
+	if err = validator.RunValidators(&permission); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	_, err = service.CreateGenerateVideoMetaTask(service.CreateGenerateMetaOption{
+		LibraryId: uint(id),
+		Uid:       uid,
+		OnFileComplete: func(task *service.Task) {
+			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+				"event": EventMetaTaskFileComplete,
+				"task":  NewTaskTemplate(task),
+			}, username)
+		},
+		OnVideoComplete: func(task *service.Task) {
+			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+				"event": EventMetaTaskVideoComplete,
+				"task":  NewTaskTemplate(task),
+			}, username)
+		},
+		OnComplete: func(task *service.Task) {
+			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+				"event": EventMetaTaskComplete,
+				"task":  NewTaskTemplate(task),
+			}, username)
+		},
+		OnFileError: func(task *service.Task, err error) {
+			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+				"event": EventMetaTaskFileError,
+				"error": err,
+				"task":  NewTaskTemplate(task),
+			}, username)
+		},
+	})
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
@@ -107,7 +190,6 @@ var scanLibrary haruka.RequestHandler = func(context *haruka.Context) {
 		"success": true,
 	})
 }
-
 var deleteLibrary haruka.RequestHandler = func(context *haruka.Context) {
 	rawId := context.Parameters["id"]
 	id, err := strconv.Atoi(rawId)

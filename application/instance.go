@@ -29,6 +29,7 @@ func Run() {
 	e.Router.POST("/library", createLibraryHandler)
 	e.Router.GET("/library", readLibraryList)
 	e.Router.POST("/library/{id:[0-9]+}/scan", scanLibrary)
+	e.Router.POST("/library/{id:[0-9]+}/meta", readMetaTask)
 	e.Router.DELETE("/library/{id:[0-9]+}", deleteLibrary)
 	e.Router.GET("/videos", readVideoList)
 	e.Router.DELETE("/video/{id:[0-9]+}", deleteVideoHandler)

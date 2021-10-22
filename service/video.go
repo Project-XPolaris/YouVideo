@@ -161,7 +161,7 @@ func (f VideoLibraryIdFilter) ApplyQuery(db *gorm.DB) *gorm.DB {
 	}
 	return db
 }
-func CreateVideoFile(path string, libraryId uint) error {
+func CreateVideoFile(path string, libraryId uint, videoType string) error {
 	// check if video file exist
 	file, err := GetFileByPath(path)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -227,6 +227,7 @@ func CreateVideoFile(path string, libraryId uint) error {
 			Name:      videoName,
 			LibraryId: libraryId,
 			BaseDir:   baseDir,
+			Type:      videoType,
 		}
 		VideoLogger.WithFields(logrus.Fields{
 			"name": videoName,

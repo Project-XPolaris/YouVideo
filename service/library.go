@@ -11,7 +11,7 @@ var (
 	LibraryOwnerError   = errors.New("library not accessible")
 )
 
-func CreateLibrary(path string, name string, uid string) (*database.Library, error) {
+func CreateLibrary(path string, name string, uid string, defaultVideoType string) (*database.Library, error) {
 	var recordCount int64
 	err := database.Instance.Model(&database.Library{}).Where("path = ?", path).Count(&recordCount).Error
 	if err != nil {
@@ -24,11 +24,14 @@ func CreateLibrary(path string, name string, uid string) (*database.Library, err
 	if err != nil {
 		return nil, err
 	}
-
+	if len(defaultVideoType) == 0 {
+		defaultVideoType = "video"
+	}
 	library := &database.Library{
-		Path:  path,
-		Name:  name,
-		Users: []*database.User{user},
+		Path:             path,
+		Name:             name,
+		Users:            []*database.User{user},
+		DefaultVideoType: defaultVideoType,
 	}
 	err = database.Instance.Create(library).Error
 	return library, err

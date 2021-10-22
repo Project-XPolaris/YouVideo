@@ -78,6 +78,7 @@ type BaseVideoTemplate struct {
 	DirName   string             `json:"dirName"`
 	Name      string             `json:"name"`
 	LibraryId uint               `json:"library_id"`
+	Type      string             `json:"type"`
 	Files     []BaseFileTemplate `json:"files,omitempty"`
 }
 
@@ -93,6 +94,7 @@ func (t *BaseVideoTemplate) Assign(video *database.Video) {
 	t.BaseDir = video.BaseDir
 	t.Name = video.Name
 	t.LibraryId = video.LibraryId
+	t.Type = video.Type
 	if video.Files != nil {
 		fileTemplates := make([]BaseFileTemplate, 0)
 		for _, file := range video.Files {

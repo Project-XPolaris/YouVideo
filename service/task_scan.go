@@ -80,7 +80,7 @@ func CreateSyncLibraryTask(option CreateScanTaskOption) (*Task, error) {
 			output.Current = int64(idx + 1)
 			output.CurrentPath = path
 			output.CurrentName = filepath.Base(path)
-			err = CreateVideoFile(path, library.ID)
+			err = CreateVideoFile(path, library.ID, library.DefaultVideoType)
 			if err != nil {
 				if option.OnFileError != nil {
 					option.OnFileError(task, err)

@@ -32,7 +32,7 @@ func (a *AuthMiddleware) OnRequest(ctx *haruka.Context) {
 	ctx.Param["token"] = rawString
 	if len(rawString) > 0 {
 		rawString = strings.Replace(rawString, "Bearer ", "", 1)
-		response, err := youplus.DefaultClient.CheckAuth(rawString)
+		response, err := youplus.DefaultYouPlusPlugin.Client.CheckAuth(rawString)
 		if err == nil && response.Success {
 			ctx.Param["uid"] = response.Uid
 			ctx.Param["username"] = response.Username

@@ -30,7 +30,7 @@ var createLibraryHandler haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	libraryPath := requestBody.Path
 	if config.Instance.YouPlusPath {
-		realPath, err := youplus.DefaultClient.GetRealPath(requestBody.Path, context.Param["token"].(string))
+		realPath, err := youplus.DefaultYouPlusPlugin.Client.GetRealPath(requestBody.Path, context.Param["token"].(string))
 		if err != nil {
 			AbortError(context, err, http.StatusBadRequest)
 			return

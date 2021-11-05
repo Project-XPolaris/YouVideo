@@ -1,6 +1,16 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"github.com/allentom/harukap/config"
+)
+
+var DefaultConfigProvider *config.Provider
+
+func InitConfigProvider(OnLoaded func(provider *config.Provider)) error {
+	var err error
+	DefaultConfigProvider, err = config.NewProvider(OnLoaded)
+	return err
+}
 
 var Instance Config
 
@@ -10,9 +20,6 @@ type EntityConfig struct {
 	Version int64
 }
 type Config struct {
-	Addr            string `json:"addr"`
-	Application     string
-	Instance        string
 	CoversStore     string `json:"covers_store"`
 	FfmpegBin       string `json:"ffmpeg_bin"`
 	FfprobeBin      string `json:"ffprobe_bin"`
@@ -27,16 +34,8 @@ type Config struct {
 	YouLogAddress   string
 }
 
-func ReadConfig() error {
-	configer := viper.New()
-	configer.AddConfigPath("./")
-	configer.AddConfigPath("../")
-	configer.SetConfigType("yaml")
-	configer.SetConfigName("config")
-	err := configer.ReadInConfig()
-	if err != nil {
-		return err
-	}
+func ReadConfig(provider *config.Provider) {
+	configer := provider.Manager
 	configer.SetDefault("addr", ":7600")
 	configer.SetDefault("application", "YouVideo Core Service")
 	configer.SetDefault("instance", "main")
@@ -54,9 +53,6 @@ func ReadConfig() error {
 	configer.SetDefault("youlog.rpc_addr", "")
 
 	Instance = Config{
-		Addr:            configer.GetString("addr"),
-		Application:     configer.GetString("application"),
-		Instance:        configer.GetString("instance"),
 		CoversStore:     configer.GetString("cover_store"),
 		FfmpegBin:       configer.GetString("ffmpeg_bin"),
 		FfprobeBin:      configer.GetString("ffprobe_bin"),
@@ -64,15 +60,5 @@ func ReadConfig() error {
 		EnableTranscode: configer.GetBool("transcode.enable"),
 		EnableAuth:      configer.GetBool("youplus.auth"),
 		YouPlusPath:     configer.GetBool("youplus.enablepath"),
-		YouPlusUrl:      configer.GetString("youplus.url"),
-		YouPlusRPCAddr:  configer.GetString("youplus.rpc"),
-		Entity: EntityConfig{
-			Enable:  configer.GetBool("youplus.entity.enable"),
-			Name:    configer.GetString("youplus.entity.name"),
-			Version: configer.GetInt64("youplus.entity.version"),
-		},
-		YouLogEnable:  configer.GetBool("youlog.enable"),
-		YouLogAddress: configer.GetString("youlog.rpc_addr"),
 	}
-	return nil
 }

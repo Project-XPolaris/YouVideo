@@ -17,7 +17,7 @@ var readDirectoryHandler haruka.RequestHandler = func(context *haruka.Context) {
 	rootPath := context.GetQueryString("path")
 	if config.Instance.YouPlusPath {
 		token := context.Param["token"].(string)
-		items, err := youplus.DefaultClient.ReadDir(rootPath, token)
+		items, err := youplus.DefaultYouPlusPlugin.Client.ReadDir(rootPath, token)
 		if err != nil {
 			AbortError(context, err, http.StatusInternalServerError)
 			return
@@ -139,7 +139,7 @@ var youPlusLoginHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	resp, err := youplus.DefaultClient.FetchUserAuth(requestBody.Username, requestBody.Password)
+	resp, err := youplus.DefaultYouPlusPlugin.Client.FetchUserAuth(requestBody.Username, requestBody.Password)
 	if err != nil {
 		AbortError(context, err, http.StatusBadRequest)
 		return
@@ -149,7 +149,7 @@ var youPlusLoginHandler haruka.RequestHandler = func(context *haruka.Context) {
 
 var youPlusTokenHandler haruka.RequestHandler = func(context *haruka.Context) {
 	token := context.GetQueryString("token")
-	resp, err := youplus.DefaultClient.CheckAuth(token)
+	resp, err := youplus.DefaultYouPlusPlugin.Client.CheckAuth(token)
 	if err != nil {
 		AbortError(context, err, http.StatusBadRequest)
 		return

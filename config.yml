@@ -4,12 +4,28 @@ instance: "main"
 cover_store: './static/covers'
 ffmpeg_bin: 'ffmpeg'
 ffprobe_bin: 'ffprobe'
+datasource: "sqlite"
+service:
+  name: "YouVideoCoreService"
+  display: "YouVideo Core Service"
+sqlite:
+  path: './database.db'
 transcode:
   enable: false
   url: 'http://localhost:6700'
-auth:
-  enable: true
+youplus:
+  auth: false
+  enablepath: false
   url: 'http://localhost:8999'
-youlog:
-  enable: false
-  rpc_addr: "localhost:50052"
+  rpc: 'localhost:50055'
+  entity:
+    enable: false
+    name: "youvideocore"
+    version: 1
+log:
+  youlog:
+    application: "YouVideo Core Service"
+    instance: "main"
+    addr: "localhost:50052"
+    retry: 3000
+    remote: true

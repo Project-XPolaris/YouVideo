@@ -6,7 +6,7 @@ import (
 )
 
 func AbortError(ctx *haruka.Context, err error, status int) {
-	youlog.DefaultClient.Error(err.Error())
+	youlog.DefaultYouLogPlugin.Logger.Error(err.Error())
 	ctx.JSONWithStatus(haruka.JSON{
 		"success": false,
 		"err":     err.Error(),

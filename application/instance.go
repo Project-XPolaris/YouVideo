@@ -4,7 +4,6 @@ import (
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/middleware"
 	"github.com/projectxpolaris/youvideo/config"
-	"github.com/projectxpolaris/youvideo/database"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
 )
@@ -13,15 +12,7 @@ var Logger = log.New().WithFields(log.Fields{
 	"scope": "Application",
 })
 
-func Run() {
-	err := database.Connect()
-	if err != nil {
-		return
-	}
-	err = database.InitDatabase()
-	if err != nil {
-		return
-	}
+func GetEngine() *haruka.Engine {
 	e := haruka.NewEngine()
 	e.UseCors(cors.AllowAll())
 	e.UseMiddleware(middleware.NewLoggerMiddleware())
@@ -61,6 +52,5 @@ func Run() {
 	e.Router.AddHandler("/notification", notificationSocketHandler)
 	e.UseMiddleware(&AuthMiddleware{})
 	e.UseMiddleware(&ReadUserMiddleware{})
-	Logger.Info("application started")
-	e.RunAndListen(config.Instance.Addr)
+	return e
 }

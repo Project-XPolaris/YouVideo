@@ -6,9 +6,11 @@ import (
 
 var DefaultConfigProvider *config.Provider
 
-func InitConfigProvider(OnLoaded func(provider *config.Provider)) error {
+func InitConfigProvider() error {
 	var err error
-	DefaultConfigProvider, err = config.NewProvider(OnLoaded)
+	DefaultConfigProvider, err = config.NewProvider(func(provider *config.Provider) {
+		ReadConfig(provider)
+	})
 	return err
 }
 

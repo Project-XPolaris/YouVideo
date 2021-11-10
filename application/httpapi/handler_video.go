@@ -1,4 +1,4 @@
-package application
+package httpapi
 
 import (
 	"github.com/allentom/haruka"

@@ -39,6 +39,8 @@ func GetShotByFile(path string, output string) error {
 		path,
 		"-vframes",
 		"1",
+		"-vf",
+		"scale=320:320:force_original_aspect_ratio=decrease",
 		"-q:v",
 		"2",
 		output,

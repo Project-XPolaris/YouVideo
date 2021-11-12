@@ -8,6 +8,7 @@ require (
 	github.com/allentom/harukap v0.0.0-20211110064134-614df980a8b8
 	github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f
 	github.com/gorilla/websocket v1.4.2
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/project-xpolaris/youplustoolkit v0.0.0-20210928022726-be7b4477bc88
 	github.com/rs/cors v1.8.0
 	github.com/rs/xid v1.3.0

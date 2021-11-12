@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/allentom/haruka/gormh"
-	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/util"
 	"github.com/sirupsen/logrus"
@@ -78,6 +77,7 @@ type VideoQueryBuilder struct {
 	Uid              string   `hsource:"param" hname:"uid"`
 	Random           string   `hsource:"query" hname:"random"`
 	DirectoryVideoId uint     `hsource:"query" hname:"directoryVideo"`
+	DirectoryView    uint     `hsource:"query" hname:"directoryView"`
 }
 
 func (v *VideoQueryBuilder) InTagIds(ids ...interface{}) {
@@ -104,7 +104,7 @@ func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
 	}
 
 	for _, group := range v.GroupBy {
-		query = query.Distinct(group)
+		query = query.Group(group)
 	}
 	if v.BaseDirs != nil && len(v.BaseDirs) > 0 {
 		query = query.Where("base_dir IN ?", v.BaseDirs)
@@ -175,32 +175,6 @@ func CreateVideoFile(path string, libraryId uint, videoType string) error {
 	}
 
 	file.Path = path
-	// check cover
-	needGenerate := true
-	targetCoverFilePaths := []string{
-		"cover.jpg",
-		"cover.png",
-		"cover.jpeg",
-		"cover.JPEG",
-		"cover.PNG",
-		fmt.Sprintf("%s.jpg", videoName),
-		fmt.Sprintf("%s.png", videoName),
-		fmt.Sprintf("%s.jpeg", videoName),
-		fmt.Sprintf("%s.JPEG", videoName),
-		fmt.Sprintf("%s.PNG", videoName),
-	}
-	for _, targetCoverFilePath := range targetCoverFilePaths {
-		coverSourcePath := filepath.Join(baseDir, targetCoverFilePath)
-		if util.CheckFileExist(coverSourcePath) {
-			if file.AutoGenCover {
-				os.Remove(filepath.Join(config.Instance.CoversStore, file.Cover))
-			}
-			file.Cover = coverSourcePath
-			file.AutoGenCover = false
-			needGenerate = false
-			break
-		}
-	}
 	// check file subtitles file
 	subtitlesFiles := []string{
 		fmt.Sprintf("%s.srt", videoName),
@@ -244,10 +218,7 @@ func CreateVideoFile(path string, libraryId uint, videoType string) error {
 	DefaultVideoMetaAnalyzer.In <- VideoMetaAnalyzerInput{
 		File: file,
 	}
-
-	if (needGenerate && !file.AutoGenCover) || (needGenerate && len(file.Cover) == 0) {
-		DefaultVideoCoverGenerator.In <- file
-	}
+	DefaultVideoCoverGenerator.In <- file
 	err = database.Instance.Save(file).Error
 	if err != nil {
 		return err

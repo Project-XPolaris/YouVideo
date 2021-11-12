@@ -3,8 +3,10 @@ package httpapi
 import (
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/validator"
+	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/service"
 	"net/http"
+	"path/filepath"
 )
 
 type FileObjectInput struct {
@@ -146,5 +148,5 @@ var fileCoverHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	http.ServeFile(context.Writer, context.Request, file.Cover)
+	http.ServeFile(context.Writer, context.Request, filepath.Join(config.Instance.CoversStore, file.Cover))
 }

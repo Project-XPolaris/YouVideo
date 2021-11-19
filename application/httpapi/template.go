@@ -3,6 +3,7 @@ package httpapi
 import (
 	"fmt"
 	"github.com/allentom/haruka"
+	"github.com/allentom/haruka/serializer"
 	"github.com/allentom/transcoder/ffmpeg"
 	"github.com/project-xpolaris/youplustoolkit/youplus"
 	"github.com/projectxpolaris/youvideo/database"
@@ -223,5 +224,20 @@ func (t *BaseHistoryTemplate) Serializer(dataModel interface{}, context map[stri
 	}
 	t.Time = model.UpdatedAt.Format(formatTime)
 	t.VideoId = model.Video.ID
+	return nil
+}
+
+type BaseFolderTemplate struct {
+	Id     uint        `json:"id"`
+	Name   string      `json:"name"`
+	Videos interface{} `json:"videos"`
+}
+
+func (t *BaseFolderTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
+	model := dataModel.(*database.Folder)
+	t.Id = model.ID
+	t.Name = filepath.Base(model.Path)
+	data := serializer.SerializeMultipleTemplate(model.Videos, &BaseVideoTemplate{}, map[string]interface{}{})
+	t.Videos = data
 	return nil
 }

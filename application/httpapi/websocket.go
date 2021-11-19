@@ -22,6 +22,8 @@ var (
 	EventSyncTaskError         = "SyncTaskError"
 	EventSyncTaskFileComplete  = "SyncTaskFileComplete"
 	EventSyncTaskFileError     = "SyncTaskFileError"
+	EventRemoveTaskError       = "RemoveTaskError"
+	EventRemoveTaskComplete    = "RemoveTaskComplete"
 )
 
 type NotificationConnection struct {

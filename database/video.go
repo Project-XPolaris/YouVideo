@@ -11,4 +11,5 @@ type Video struct {
 	Tags      []*Tag `gorm:"many2many:video_tags;"`
 	Type      string `gorm:"default:video"`
 	History   []*History
+	FolderID  uint
 }

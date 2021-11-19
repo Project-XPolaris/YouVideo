@@ -76,6 +76,7 @@ type VideoQueryBuilder struct {
 	Search           string   `hsource:"query" hname:"search"`
 	Uid              string   `hsource:"param" hname:"uid"`
 	Random           string   `hsource:"query" hname:"random"`
+	FolderId         uint     `hsource:"query" hname:"folder"`
 	DirectoryVideoId uint     `hsource:"query" hname:"directoryVideo"`
 	DirectoryView    uint     `hsource:"query" hname:"directoryView"`
 }
@@ -126,6 +127,9 @@ func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
 			return 0, nil, err
 		}
 		query = query.Where("base_dir = ?", video.BaseDir)
+	}
+	if v.FolderId > 0 {
+		query = query.Where("folder_id = ?", v.FolderId)
 	}
 	models := make([]*database.Video, 0)
 	var count int64
@@ -190,6 +194,14 @@ func CreateVideoFile(path string, libraryId uint, videoType string) error {
 		}
 	}
 	file.Subtitles = subtitlesFilePath
+
+	// save folder
+	var folder database.Folder
+	err = database.Instance.FirstOrCreate(&folder, database.Folder{Path: baseDir, LibraryId: libraryId}).Error
+	if err != nil {
+		return err
+	}
+
 	var video database.Video
 	err = database.Instance.Model(&database.Video{}).Where("name = ?", videoName).Where("base_dir = ?", baseDir).First(&video).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -202,6 +214,7 @@ func CreateVideoFile(path string, libraryId uint, videoType string) error {
 			LibraryId: libraryId,
 			BaseDir:   baseDir,
 			Type:      videoType,
+			FolderID:  folder.ID,
 		}
 		VideoLogger.WithFields(logrus.Fields{
 			"name": videoName,
@@ -211,9 +224,18 @@ func CreateVideoFile(path string, libraryId uint, videoType string) error {
 			return err
 		}
 	}
+	if video.FolderID != folder.ID {
+		video.FolderID = folder.ID
+		err = database.Instance.Save(video).Error
+		if err != nil {
+			return err
+		}
+	}
 	file.VideoId = video.ID
 	err = database.Instance.Save(file).Error
-
+	if err != nil {
+		return err
+	}
 	// analyze video meta
 	DefaultVideoMetaAnalyzer.In <- VideoMetaAnalyzerInput{
 		File: file,
@@ -303,7 +325,6 @@ func MoveVideoById(id uint, targetLibraryId uint, targetPath string) (*database.
 
 	// move files
 	for _, file := range video.Files {
-
 		if len(targetPath) == 0 {
 			targetPath, err = util.GetMovePath(file.Path, sourceLibrary.Path, targetLibrary.Path)
 			if err != nil {

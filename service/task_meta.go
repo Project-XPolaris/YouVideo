@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
@@ -29,9 +30,13 @@ func CreateGenerateVideoMetaTask(option CreateGenerateMetaOption) (*Task, error)
 			if task.Status == TaskStatusRunning {
 				return task, nil
 			}
+			// recreate task
 			DefaultTaskPool.RemoveTaskById(task.Id)
 			break
 		}
+	}
+	if !DefaultLibraryLockManager.TryToLock(option.LibraryId) {
+		return nil, errors.New("library is busy")
 	}
 	output := &GenerateVideoMetaTaskOutput{
 		Id: option.LibraryId,
@@ -46,6 +51,7 @@ func CreateGenerateVideoMetaTask(option CreateGenerateMetaOption) (*Task, error)
 	var library database.Library
 	err := database.Instance.Where("id = ?", option.LibraryId).Preload("Videos").Preload("Videos.Files").Find(&library).Error
 	if err != nil {
+		DefaultLibraryLockManager.UnlockLibrary(option.LibraryId)
 		return nil, err
 	}
 	output.Library = library
@@ -84,6 +90,7 @@ func CreateGenerateVideoMetaTask(option CreateGenerateMetaOption) (*Task, error)
 			option.OnComplete(task)
 		}
 		task.Status = TaskStatusDone
+		DefaultLibraryLockManager.UnlockLibrary(library.ID)
 	}()
 	DefaultTaskPool.Lock()
 	DefaultTaskPool.Tasks = append(DefaultTaskPool.Tasks, task)

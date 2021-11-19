@@ -9,4 +9,5 @@ type Library struct {
 	DefaultVideoType string  `gorm:"default:video"`
 	Videos           []Video `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Users            []*User `gorm:"many2many:library_users;"`
+	Folders          []*Folder
 }

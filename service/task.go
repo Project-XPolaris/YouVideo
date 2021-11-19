@@ -12,6 +12,7 @@ type Signal struct {
 const (
 	TaskTypeScanLibrary = iota + 1
 	TaskTypeMeta
+	TaskTypeRemove
 )
 const (
 	TaskStatusRunning = iota + 1
@@ -26,6 +27,7 @@ var TaskLogger = logrus.New().WithFields(logrus.Fields{
 var TaskTypeNameMapping map[int]string = map[int]string{
 	TaskTypeScanLibrary: "ScanLibrary",
 	TaskTypeMeta:        "Meta",
+	TaskTypeRemove:      "RemoveLibrary",
 }
 
 var TaskStatusNameMapping map[int]string = map[int]string{

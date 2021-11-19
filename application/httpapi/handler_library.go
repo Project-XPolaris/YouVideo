@@ -3,6 +3,7 @@ package httpapi
 import (
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/validator"
+	"github.com/projectxpolaris/youvideo/commons"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/service"
 	"github.com/projectxpolaris/youvideo/youplus"
@@ -97,7 +98,11 @@ var scanLibrary haruka.RequestHandler = func(context *haruka.Context) {
 	permission := LibraryAccessibleValidator{}
 	context.BindingInput(&permission)
 	if err = validator.RunValidators(&permission); err != nil {
-		AbortError(context, err, http.StatusBadRequest)
+		AbortError(context, &commons.APIError{
+			Err:  err,
+			Code: commons.CodeValidatorError,
+			Desc: err.Error(),
+		}, http.StatusBadRequest)
 		return
 	}
 	task, err := service.CreateSyncLibraryTask(service.CreateScanTaskOption{
@@ -126,6 +131,50 @@ var scanLibrary haruka.RequestHandler = func(context *haruka.Context) {
 		OnComplete: func(task *service.Task) {
 			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
 				"event": EventSyncTaskComplete,
+				"task":  NewTaskTemplate(task),
+			}, username)
+		},
+	})
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
+		"task":    NewTaskTemplate(task),
+	})
+}
+var newRemoveLibraryTask haruka.RequestHandler = func(context *haruka.Context) {
+	rawId := context.Parameters["id"]
+	id, err := strconv.Atoi(rawId)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	username := context.Param["username"].(string)
+	permission := LibraryAccessibleValidator{}
+	context.BindingInput(&permission)
+	if err = validator.RunValidators(&permission); err != nil {
+		AbortError(context, &commons.APIError{
+			Err:  err,
+			Code: commons.CodeValidatorError,
+			Desc: err.Error(),
+		}, http.StatusBadRequest)
+		return
+	}
+	task, err := service.CreateRemoveLibraryTask(service.RemoveLibraryOption{
+		LibraryId: uint(id),
+		Uid:       context.Param["uid"].(string),
+		OnError: func(task *service.Task, err error) {
+			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+				"event": EventRemoveTaskError,
+				"error": err,
+				"task":  NewTaskTemplate(task),
+			}, username)
+		},
+		OnComplete: func(task *service.Task) {
+			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+				"event": EventRemoveTaskComplete,
 				"task":  NewTaskTemplate(task),
 			}, username)
 		},

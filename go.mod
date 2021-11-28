@@ -3,10 +3,12 @@ module github.com/projectxpolaris/youvideo
 go 1.13
 
 require (
+	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/allentom/haruka v0.0.0-20211105095347-07d9bf2b815d
 	github.com/allentom/harukap v0.0.0-20211110064134-614df980a8b8
 	github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f
+	github.com/cyruzin/golang-tmdb v1.4.1 // indirect
 	github.com/gorilla/websocket v1.4.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/project-xpolaris/youplustoolkit v0.0.0-20210928022726-be7b4477bc88

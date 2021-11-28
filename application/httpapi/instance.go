@@ -30,6 +30,7 @@ func GetEngine() *haruka.Engine {
 	e.Router.GET("/video/file/{id:[0-9]+}/subtitles", videoSubtitle)
 	e.Router.POST("/video/{id:[0-9]+}/move", moveVideoHandler)
 	e.Router.POST("/video/{id:[0-9]+}/trans", transcodeHandler)
+	e.Router.POST("/video/match", matchVideoInformationHandler)
 	e.Router.POST("/tag", createTagHandler)
 	e.Router.GET("/tag", getTagListHandler)
 	e.Router.DELETE("/tag/{id:[0-9]+}", removeTagHandler)

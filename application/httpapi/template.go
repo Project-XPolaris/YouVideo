@@ -14,6 +14,7 @@ import (
 )
 
 const formatTime = "2006-01-02 15:04:05"
+const formatDate = "2006-01-02"
 
 type BaseListContainer struct {
 	Count    int64       `json:"count"`
@@ -74,13 +75,14 @@ func (t *BaseFileTemplate) Assign(file *database.File) {
 }
 
 type BaseVideoTemplate struct {
-	Id        uint               `json:"id"`
-	BaseDir   string             `json:"base_dir"`
-	DirName   string             `json:"dirName"`
-	Name      string             `json:"name"`
-	LibraryId uint               `json:"library_id"`
-	Type      string             `json:"type"`
-	Files     []BaseFileTemplate `json:"files,omitempty"`
+	Id               uint                     `json:"id"`
+	BaseDir          string                   `json:"base_dir"`
+	DirName          string                   `json:"dirName"`
+	Name             string                   `json:"name"`
+	LibraryId        uint                     `json:"library_id"`
+	Type             string                   `json:"type"`
+	Files            []BaseFileTemplate       `json:"files,omitempty"`
+	MovieInformation MovieInformationTemplate `json:"movieInformation"`
 }
 
 func (t *BaseVideoTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
@@ -104,6 +106,11 @@ func (t *BaseVideoTemplate) Assign(video *database.Video) {
 			fileTemplates = append(fileTemplates, template)
 		}
 		t.Files = fileTemplates
+	}
+	if video.MovieInformation != nil {
+		template := MovieInformationTemplate{}
+		template.Assign(video.MovieInformation)
+		t.MovieInformation = template
 	}
 }
 
@@ -240,4 +247,37 @@ func (t *BaseFolderTemplate) Serializer(dataModel interface{}, context map[strin
 	data := serializer.SerializeMultipleTemplate(model.Videos, &BaseVideoTemplate{}, map[string]interface{}{})
 	t.Videos = data
 	return nil
+}
+
+type MovieInformationTemplate struct {
+	Title   string                `json:"title"`
+	Cover   string                `json:"cover"`
+	Release string                `json:"release"`
+	Credits []MovieCreditTemplate `json:"credits"`
+}
+
+func (t *MovieInformationTemplate) Assign(info *database.MovieInformation) {
+	t.Title = info.Title
+	t.Release = info.Release.Format(formatDate)
+	t.Cover = info.Cover
+	if info.Credits != nil {
+		t.Credits = []MovieCreditTemplate{}
+		for _, credit := range info.Credits {
+			template := MovieCreditTemplate{}
+			template.Assign(&credit)
+			t.Credits = append(t.Credits, template)
+		}
+	}
+}
+
+type MovieCreditTemplate struct {
+	Name      string `json:"name"`
+	Pic       string `json:"pic"`
+	Character string `json:"character"`
+}
+
+func (t *MovieCreditTemplate) Assign(credit *database.MovieCredit) {
+	t.Pic = credit.Pic
+	t.Character = credit.Character
+	t.Name = credit.Name
 }

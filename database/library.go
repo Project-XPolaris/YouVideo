@@ -10,4 +10,5 @@ type Library struct {
 	Videos           []Video `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Users            []*User `gorm:"many2many:library_users;"`
 	Folders          []*Folder
+	Entity           []*Entity
 }

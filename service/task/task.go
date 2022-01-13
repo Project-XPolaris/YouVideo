@@ -1,4 +1,4 @@
-package service
+package task
 
 import (
 	. "github.com/ahmetb/go-linq/v3"

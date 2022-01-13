@@ -2,15 +2,18 @@ package httpapi
 
 import (
 	"fmt"
+	"github.com/ahmetb/go-linq/v3"
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/serializer"
 	"github.com/allentom/transcoder/ffmpeg"
+	"github.com/project-xpolaris/youplustoolkit/youlibrary"
 	"github.com/project-xpolaris/youplustoolkit/youplus"
 	"github.com/projectxpolaris/youvideo/database"
-	"github.com/projectxpolaris/youvideo/service"
+	"github.com/projectxpolaris/youvideo/service/task"
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 const formatTime = "2006-01-02 15:04:05"
@@ -55,6 +58,8 @@ type BaseFileTemplate struct {
 	MainAudioCodec string  `json:"main_audio_codec,omitempty"`
 	VideoId        uint    `json:"video_id"`
 	Name           string  `json:"name"`
+	CoverWidth     uint    `json:"coverWidth"`
+	CoverHeight    uint    `json:"coverHeight"`
 	Subtitles      string  `json:"subtitles,omitempty"`
 }
 
@@ -71,18 +76,23 @@ func (t *BaseFileTemplate) Assign(file *database.File) {
 	t.MainVideoCodec = file.MainVideoCodec
 	t.MainAudioCodec = file.MainAudioCodec
 	t.Name = filepath.Base(file.Path)
+	t.CoverWidth = uint(file.CoverWidth)
+	t.CoverHeight = uint(file.CoverHeight)
 	t.Subtitles = file.Subtitles
 }
 
 type BaseVideoTemplate struct {
-	Id               uint                     `json:"id"`
-	BaseDir          string                   `json:"base_dir"`
-	DirName          string                   `json:"dirName"`
-	Name             string                   `json:"name"`
-	LibraryId        uint                     `json:"library_id"`
-	Type             string                   `json:"type"`
-	Files            []BaseFileTemplate       `json:"files,omitempty"`
-	MovieInformation MovieInformationTemplate `json:"movieInformation"`
+	Id        uint                    `json:"id"`
+	BaseDir   string                  `json:"base_dir"`
+	DirName   string                  `json:"dirName"`
+	Name      string                  `json:"name"`
+	LibraryId uint                    `json:"library_id"`
+	Type      string                  `json:"type"`
+	Files     []BaseFileTemplate      `json:"files,omitempty"`
+	Infos     []BaseVideoMetaTemplate `json:"infos,omitempty"`
+	Subject   *youlibrary.Subject     `json:"subject,omitempty"`
+	Release   string                  `json:"release,omitempty"`
+	EntityId  uint                    `json:"entityId,omitempty"`
 }
 
 func (t *BaseVideoTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
@@ -98,6 +108,10 @@ func (t *BaseVideoTemplate) Assign(video *database.Video) {
 	t.Name = video.Name
 	t.LibraryId = video.LibraryId
 	t.Type = video.Type
+	t.EntityId = video.EntityID
+	if video.Release != nil {
+		t.Release = video.Release.Format(formatDate)
+	}
 	if video.Files != nil {
 		fileTemplates := make([]BaseFileTemplate, 0)
 		for _, file := range video.Files {
@@ -107,10 +121,14 @@ func (t *BaseVideoTemplate) Assign(video *database.Video) {
 		}
 		t.Files = fileTemplates
 	}
-	if video.MovieInformation != nil {
-		template := MovieInformationTemplate{}
-		template.Assign(video.MovieInformation)
-		t.MovieInformation = template
+	if video.Infos != nil {
+		infoTemplates := make([]BaseVideoMetaTemplate, 0)
+		for _, info := range video.Infos {
+			template := BaseVideoMetaTemplate{}
+			template.Serializer(info, nil)
+			infoTemplates = append(infoTemplates, template)
+		}
+		t.Infos = infoTemplates
 	}
 }
 
@@ -142,11 +160,11 @@ type BaseTaskTemplate struct {
 	Output interface{} `json:"output"`
 }
 
-func (t *BaseTaskTemplate) Assign(task *service.Task) {
-	t.Id = task.Id
-	t.Status = service.TaskStatusNameMapping[task.Status]
-	t.Type = service.TaskTypeNameMapping[task.Type]
-	t.Output = task.Output
+func (t *BaseTaskTemplate) Assign(taskData *task.Task) {
+	t.Id = taskData.Id
+	t.Status = task.TaskStatusNameMapping[taskData.Status]
+	t.Type = task.TaskTypeNameMapping[taskData.Type]
+	t.Output = taskData.Output
 }
 
 func (t *BaseTaskTemplate) AssignWithTrans(task youtrans.TaskResponse) {
@@ -249,35 +267,98 @@ func (t *BaseFolderTemplate) Serializer(dataModel interface{}, context map[strin
 	return nil
 }
 
-type MovieInformationTemplate struct {
-	Title   string                `json:"title"`
-	Cover   string                `json:"cover"`
-	Release string                `json:"release"`
-	Credits []MovieCreditTemplate `json:"credits"`
+type BaseVideoMetaTemplate struct {
+	Id    uint   `json:"id"`
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
-func (t *MovieInformationTemplate) Assign(info *database.MovieInformation) {
-	t.Title = info.Title
-	t.Release = info.Release.Format(formatDate)
-	t.Cover = info.Cover
-	if info.Credits != nil {
-		t.Credits = []MovieCreditTemplate{}
-		for _, credit := range info.Credits {
-			template := MovieCreditTemplate{}
-			template.Assign(&credit)
-			t.Credits = append(t.Credits, template)
+func (t *BaseVideoMetaTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
+	model := dataModel.(*database.VideoMetaItem)
+	t.Id = model.ID
+	t.Key = model.Key
+	t.Value = model.Value
+	return nil
+}
+
+type BaseEntityTemplate struct {
+	Id          uint                    `json:"id"`
+	Name        string                  `json:"name"`
+	Videos      []BaseVideoTemplate     `json:"videos,omitempty"`
+	Cover       string                  `json:"cover,omitempty"`
+	CoverWidth  int                     `json:"coverWidth,omitempty"`
+	CoverHeight int                     `json:"coverHeight,omitempty"`
+	Infos       []BaseVideoMetaTemplate `json:"infos,omitempty"`
+	Release     string                  `json:"release,omitempty"`
+}
+
+func (t *BaseEntityTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
+	model := dataModel.(*database.Entity)
+	t.Id = model.ID
+	t.Name = model.Name
+	var release *time.Time
+	if model.Videos != nil {
+		videoTemplates := make([]BaseVideoTemplate, 0)
+		cover := ""
+		coverSelector := "auto"
+		var coverWidth int64
+		var coverHeight int64
+		infos := make([]*database.VideoMetaItem, 0)
+		for _, video := range model.Videos {
+			videoTemplate := BaseVideoTemplate{}
+			videoTemplate.Serializer(video, map[string]interface{}{})
+			videoTemplates = append(videoTemplates, videoTemplate)
+			if video.Files != nil && coverSelector == "auto" {
+				for _, file := range video.Files {
+					if len(file.Cover) > 0 {
+						cover = fmt.Sprintf("/video/file/%d/cover", file.ID)
+						coverWidth = file.CoverWidth
+						coverHeight = file.CoverHeight
+						if file.AutoGenCover {
+							coverSelector = "auto"
+						} else {
+							coverSelector = "cover"
+						}
+					}
+				}
+			}
+
+			if video.Infos != nil {
+				if video.Release != nil {
+					if release == nil {
+						release = video.Release
+					} else {
+						if video.Release.Before(*release) {
+							release = video.Release
+						}
+					}
+				}
+				for _, info := range video.Infos {
+					linq.From(video.Infos).WhereT(func(item *database.VideoMetaItem) bool {
+						return item.ID != info.ID
+					}).ToSlice(&infos)
+					infos = append(infos, info)
+				}
+			}
 		}
+
+		if len(infos) > 0 {
+			infosTemplate := make([]BaseVideoMetaTemplate, 0)
+			for _, info := range infos {
+				infoTemplate := BaseVideoMetaTemplate{}
+				infoTemplate.Serializer(info, map[string]interface{}{})
+				infosTemplate = append(infosTemplate, infoTemplate)
+			}
+			t.Infos = infosTemplate
+		}
+		t.Videos = videoTemplates
+		t.Cover = cover
+		t.CoverWidth = int(coverWidth)
+		t.CoverHeight = int(coverHeight)
+		// get cover
 	}
-}
-
-type MovieCreditTemplate struct {
-	Name      string `json:"name"`
-	Pic       string `json:"pic"`
-	Character string `json:"character"`
-}
-
-func (t *MovieCreditTemplate) Assign(credit *database.MovieCredit) {
-	t.Pic = credit.Pic
-	t.Character = credit.Character
-	t.Name = credit.Name
+	if release != nil {
+		t.Release = release.Format(formatDate)
+	}
+	return nil
 }

@@ -21,23 +21,25 @@ type EntityConfig struct {
 	Name    string
 	Version int64
 }
-type TMDBConfig struct {
-	ApiKey string
+type YouLibraryConfig struct {
+	Enable bool
+	Url    string
 }
+
 type Config struct {
-	CoversStore     string `json:"covers_store"`
-	FfmpegBin       string `json:"ffmpeg_bin"`
-	FfprobeBin      string `json:"ffprobe_bin"`
-	YoutransURL     string `json:"youtrans_url"`
-	EnableTranscode bool
-	EnableAuth      bool `json:"enable_auth"`
-	YouPlusPath     bool
-	YouPlusUrl      string
-	YouPlusRPCAddr  string
-	YouLogEnable    bool
-	Entity          EntityConfig
-	YouLogAddress   string
-	TMDBConfig      TMDBConfig
+	CoversStore      string `json:"covers_store"`
+	FfmpegBin        string `json:"ffmpeg_bin"`
+	FfprobeBin       string `json:"ffprobe_bin"`
+	YoutransURL      string `json:"youtrans_url"`
+	EnableTranscode  bool
+	EnableAuth       bool `json:"enable_auth"`
+	YouPlusPath      bool
+	YouPlusUrl       string
+	YouPlusRPCAddr   string
+	YouLogEnable     bool
+	Entity           EntityConfig
+	YouLogAddress    string
+	YouLibraryConfig YouLibraryConfig
 }
 
 func ReadConfig(provider *config.Provider) {
@@ -66,8 +68,9 @@ func ReadConfig(provider *config.Provider) {
 		EnableTranscode: configer.GetBool("transcode.enable"),
 		EnableAuth:      configer.GetBool("youplus.auth"),
 		YouPlusPath:     configer.GetBool("youplus.enablepath"),
-	}
-	if len(configer.GetString("tmdb.apikey")) > 0 {
-		Instance.TMDBConfig.ApiKey = configer.GetString("tmdb.apikey")
+		YouLibraryConfig: YouLibraryConfig{
+			Enable: configer.GetBool("youlibrary.enable"),
+			Url:    configer.GetString("youlibrary.url"),
+		},
 	}
 }

@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 var VideoLogger = logrus.New().WithFields(logrus.Fields{
@@ -46,7 +47,7 @@ func CheckLibrary(libraryId uint) error {
 }
 func ScanVideo(library *database.Library) ([]string, error) {
 	targetExtensions := []string{
-		"mp4", "mkv",
+		"mp4", "mkv", "avi", "rmvb", "flv", "wmv", "mov", "3gp", "m4v", "mpg", "mpeg", "mpe", "mpv", "m2v", "m4v", "m4p", "m4b", "m4r", "m4v", "m4a", "m4p", "m4b", "m4r", "m4v", "m4a", "m4p", "m4b", "m4r", "m4v", "m4a",
 	}
 	target := make([]string, 0)
 	err := afero.Walk(AppFs, library.Path, func(path string, info os.FileInfo, err error) error {
@@ -70,15 +71,18 @@ type VideoQueryBuilder struct {
 	gormh.DefaultPageFilter
 	VideoTagIdFilter
 	VideoLibraryIdFilter
-	Orders           []string `hsource:"query" hname:"order"`
-	GroupBy          []string `hsource:"query" hname:"group"`
-	BaseDirs         []string `hsource:"query" hname:"dir"`
-	Search           string   `hsource:"query" hname:"search"`
-	Uid              string   `hsource:"param" hname:"uid"`
-	Random           string   `hsource:"query" hname:"random"`
-	FolderId         uint     `hsource:"query" hname:"folder"`
-	DirectoryVideoId uint     `hsource:"query" hname:"directoryVideo"`
-	DirectoryView    uint     `hsource:"query" hname:"directoryView"`
+	Orders           []string   `hsource:"query" hname:"order"`
+	GroupBy          []string   `hsource:"query" hname:"group"`
+	BaseDirs         []string   `hsource:"query" hname:"dir"`
+	Search           string     `hsource:"query" hname:"search"`
+	Uid              string     `hsource:"param" hname:"uid"`
+	Random           string     `hsource:"query" hname:"random"`
+	FolderId         uint       `hsource:"query" hname:"folder"`
+	DirectoryVideoId uint       `hsource:"query" hname:"directoryVideo"`
+	DirectoryView    uint       `hsource:"query" hname:"directoryView"`
+	InfoId           uint       `hsource:"query" hname:"info"`
+	ReleaseStart     *time.Time `hsource:"query" hname:"releaseStart" format:"2006-01-02"`
+	ReleaseEnd       *time.Time `hsource:"query" hname:"releaseEnd" format:"2006-01-02"`
 }
 
 func (v *VideoQueryBuilder) InTagIds(ids ...interface{}) {
@@ -131,10 +135,21 @@ func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
 	if v.FolderId > 0 {
 		query = query.Where("folder_id = ?", v.FolderId)
 	}
+	if v.InfoId > 0 {
+		query = query.Joins("left join video_infos on video_infos.video_id = videos.id")
+		query = query.Where("video_infos.video_meta_item_id = ?", v.InfoId)
+	}
+	if v.ReleaseStart != nil {
+		query = query.Where("release >= ?", v.ReleaseStart)
+	}
+	if v.ReleaseEnd != nil {
+		query = query.Where("release < ?", v.ReleaseEnd)
+	}
 	models := make([]*database.Video, 0)
 	var count int64
 	err := query.Model(&database.Video{}).
 		Preload("Files").
+		Preload("Infos").
 		Limit(v.GetLimit()).
 		Offset(v.GetOffset()).
 		Find(&models).
@@ -165,7 +180,7 @@ func (f VideoLibraryIdFilter) ApplyQuery(db *gorm.DB) *gorm.DB {
 	}
 	return db
 }
-func CreateVideoFile(path string, libraryId uint, videoType string) error {
+func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject bool) error {
 	// check if video file exist
 	file, err := GetFileByPath(path)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -222,6 +237,10 @@ func CreateVideoFile(path string, libraryId uint, videoType string) error {
 		err = database.Instance.Create(&video).Error
 		if err != nil {
 			return err
+		}
+		// match subject
+		if matchSubject {
+			DefaultVideoInformationMatchService.In <- NewVideoInformationMatchInput(&video)
 		}
 	}
 	if video.FolderID != folder.ID {
@@ -374,4 +393,17 @@ func CheckVideoAccessible(id uint, uid string) bool {
 		Where("videos.id = ?", id).
 		Where("users.uid in ?", []string{PublicUid, uid}).Count(&videoCount)
 	return videoCount > 0
+}
+
+type UpdateVideoData struct {
+	Release time.Time
+}
+
+func UpdateVideo(id uint, updateData map[string]interface{}) error {
+	query := database.Instance.Model(&database.Video{}).Where("id = ?", id)
+	err := query.Updates(updateData).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -6,6 +6,10 @@ import (
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/util"
 	"github.com/sirupsen/logrus"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -27,6 +31,18 @@ type VideoCoverMetaAnalyzer struct {
 	Logger *logrus.Entry
 }
 
+func getImageDimension(imagePath string) (int, int, error) {
+	file, err := os.Open(imagePath)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	targetImage, _, err := image.DecodeConfig(file)
+	if err != nil {
+		return 0, 0, err
+	}
+	return targetImage.Width, targetImage.Height, nil
+}
 func GetTargetCover(targetFilePath string) string {
 	baseDir := filepath.Dir(targetFilePath)
 	fileExt := filepath.Ext(targetFilePath)
@@ -61,7 +77,6 @@ func (a *VideoCoverMetaAnalyzer) Run() {
 			"path": file.Path,
 			"file": filepath.Base(file.Path),
 		})
-		fileLogger.Info("generate cover")
 		// remove cover is not exist
 		if len(file.Cover) > 0 {
 			existCoverPath := filepath.Join(config.Instance.CoversStore, file.Cover)
@@ -90,7 +105,15 @@ func (a *VideoCoverMetaAnalyzer) Run() {
 			}
 			file.Cover = thumbnailFileName
 		}
-		err := database.Instance.Save(file).Error
+		coverStorePath := filepath.Join(config.Instance.CoversStore, file.Cover)
+		width, height, err := getImageDimension(coverStorePath)
+		if err != nil {
+			fileLogger.Error(err)
+			continue
+		}
+		file.CoverWidth = int64(width)
+		file.CoverHeight = int64(height)
+		err = database.Instance.Save(file).Error
 		if err != nil {
 			fileLogger.Error(err)
 		}

@@ -1,7 +1,8 @@
-package service
+package task
 
 import (
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/service"
 	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
@@ -18,6 +19,7 @@ type ScanTaskOutput struct {
 type CreateScanTaskOption struct {
 	LibraryId      uint
 	Uid            string
+	MatchSubject   bool
 	OnFileComplete func(task *Task)
 	OnFileError    func(task *Task, err error)
 	OnError        func(task *Task, err error)
@@ -26,7 +28,7 @@ type CreateScanTaskOption struct {
 
 func CreateSyncLibraryTask(option CreateScanTaskOption) (*Task, error) {
 	for _, task := range DefaultTaskPool.Tasks {
-		if task.Output.(*ScanTaskOutput).Id == option.LibraryId {
+		if scanOutput, ok := task.Output.(*ScanTaskOutput); ok && scanOutput.Id == option.LibraryId {
 			if task.Status == TaskStatusRunning {
 				return task, nil
 			}
@@ -58,7 +60,7 @@ func CreateSyncLibraryTask(option CreateScanTaskOption) (*Task, error) {
 	})
 	go func() {
 		logger.Info("task start")
-		err := CheckLibrary(library.ID)
+		err := service.CheckLibrary(library.ID)
 		if err != nil {
 			task.SetError(err)
 			if option.OnError != nil {
@@ -67,7 +69,7 @@ func CreateSyncLibraryTask(option CreateScanTaskOption) (*Task, error) {
 
 			return
 		}
-		pathList, err := ScanVideo(&library)
+		pathList, err := service.ScanVideo(&library)
 		if err != nil {
 			task.SetError(err)
 			if option.OnError != nil {
@@ -80,7 +82,7 @@ func CreateSyncLibraryTask(option CreateScanTaskOption) (*Task, error) {
 			output.Current = int64(idx + 1)
 			output.CurrentPath = path
 			output.CurrentName = filepath.Base(path)
-			err = CreateVideoFile(path, library.ID, library.DefaultVideoType)
+			err = service.CreateVideoFile(path, library.ID, library.DefaultVideoType, option.MatchSubject)
 			if err != nil {
 				if option.OnFileError != nil {
 					option.OnFileError(task, err)

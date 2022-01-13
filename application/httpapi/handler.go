@@ -5,6 +5,7 @@ import (
 	"github.com/allentom/haruka"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/service"
+	"github.com/projectxpolaris/youvideo/service/task"
 	"github.com/projectxpolaris/youvideo/youplus"
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"net/http"
@@ -63,7 +64,7 @@ var readDirectoryHandler haruka.RequestHandler = func(context *haruka.Context) {
 }
 
 var readTaskListHandler haruka.RequestHandler = func(context *haruka.Context) {
-	tasks := service.GetTaskList()
+	tasks := task.GetTaskList()
 	data := make([]BaseTaskTemplate, 0)
 	for _, task := range tasks {
 		template := BaseTaskTemplate{}

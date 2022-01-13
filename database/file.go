@@ -7,6 +7,8 @@ type File struct {
 	Path           string
 	VideoId        uint
 	Cover          string
+	CoverWidth     int64
+	CoverHeight    int64
 	AutoGenCover   bool
 	Duration       float64
 	Size           int64

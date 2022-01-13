@@ -1,8 +1,9 @@
-package service
+package task
 
 import (
 	"errors"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/service"
 	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
 )
@@ -35,7 +36,7 @@ func CreateGenerateVideoMetaTask(option CreateGenerateMetaOption) (*Task, error)
 			break
 		}
 	}
-	if !DefaultLibraryLockManager.TryToLock(option.LibraryId) {
+	if !service.DefaultLibraryLockManager.TryToLock(option.LibraryId) {
 		return nil, errors.New("library is busy")
 	}
 	output := &GenerateVideoMetaTaskOutput{
@@ -51,7 +52,7 @@ func CreateGenerateVideoMetaTask(option CreateGenerateMetaOption) (*Task, error)
 	var library database.Library
 	err := database.Instance.Where("id = ?", option.LibraryId).Preload("Videos").Preload("Videos.Files").Find(&library).Error
 	if err != nil {
-		DefaultLibraryLockManager.UnlockLibrary(option.LibraryId)
+		service.DefaultLibraryLockManager.UnlockLibrary(option.LibraryId)
 		return nil, err
 	}
 	output.Library = library
@@ -65,7 +66,7 @@ func CreateGenerateVideoMetaTask(option CreateGenerateMetaOption) (*Task, error)
 				doneChan := make(chan struct{}, 0)
 				errChan := make(chan error, 0)
 				output.CurrentPath = file.Path
-				DefaultVideoMetaAnalyzer.In <- VideoMetaAnalyzerInput{
+				service.DefaultVideoMetaAnalyzer.In <- service.VideoMetaAnalyzerInput{
 					File:    &file,
 					OnDone:  doneChan,
 					OnError: errChan,
@@ -90,7 +91,7 @@ func CreateGenerateVideoMetaTask(option CreateGenerateMetaOption) (*Task, error)
 			option.OnComplete(task)
 		}
 		task.Status = TaskStatusDone
-		DefaultLibraryLockManager.UnlockLibrary(library.ID)
+		service.DefaultLibraryLockManager.UnlockLibrary(library.ID)
 	}()
 	DefaultTaskPool.Lock()
 	DefaultTaskPool.Tasks = append(DefaultTaskPool.Tasks, task)

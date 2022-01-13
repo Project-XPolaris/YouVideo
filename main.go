@@ -29,9 +29,12 @@ func main() {
 	appEngine.UsePlugin(&youplus.DefaultYouPlusPlugin)
 	appEngine.UsePlugin(database.DefaultPlugin)
 	appEngine.HttpService = httpapi.GetEngine()
-	err = service.DefaultMovieInformationMatcher.Run(context.Background())
 	if err != nil {
 		logrus.Fatal(err)
+	}
+	if config.Instance.YouLibraryConfig.Enable {
+		service.DefaultVideoInformationMatchService.Init()
+		go service.DefaultVideoInformationMatchService.Run(context.Background())
 	}
 	appWrap, err := cli.NewWrapper(appEngine)
 	if err != nil {

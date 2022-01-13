@@ -1,8 +1,9 @@
-package service
+package task
 
 import (
 	"errors"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/service"
 	"github.com/rs/xid"
 	"gorm.io/gorm"
 )
@@ -20,7 +21,7 @@ type RemoveLibraryOption struct {
 
 func CreateRemoveLibraryTask(option RemoveLibraryOption) (*Task, error) {
 	for _, task := range DefaultTaskPool.Tasks {
-		if task.Output.(*RemoveLibraryOutput).Id == option.LibraryId {
+		if removeTask, ok := task.Output.(*RemoveLibraryOutput); ok && removeTask.Id == option.LibraryId {
 			if task.Status == TaskStatusRunning {
 				return task, nil
 			}
@@ -28,7 +29,7 @@ func CreateRemoveLibraryTask(option RemoveLibraryOption) (*Task, error) {
 			break
 		}
 	}
-	if !DefaultLibraryLockManager.TryToLock(option.LibraryId) {
+	if !service.DefaultLibraryLockManager.TryToLock(option.LibraryId) {
 		return nil, errors.New("library is busy")
 	}
 	var library database.Library
@@ -61,7 +62,7 @@ func CreateRemoveLibraryTask(option RemoveLibraryOption) (*Task, error) {
 			return
 		}
 		for _, video := range videos {
-			err = DeleteVideoById(video.ID)
+			err = service.DeleteVideoById(video.ID)
 			if err != nil {
 				if option.OnError != nil {
 					option.OnError(task, err)

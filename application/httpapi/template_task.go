@@ -1,6 +1,8 @@
 package httpapi
 
-import "github.com/projectxpolaris/youvideo/service"
+import (
+	"github.com/projectxpolaris/youvideo/service/task"
+)
 
 type TaskTemplate struct {
 	Id     string `json:"id"`
@@ -9,22 +11,22 @@ type TaskTemplate struct {
 	Output interface{}
 }
 
-func NewTaskTemplate(task *service.Task) *TaskTemplate {
+func NewTaskTemplate(task *task.Task) *TaskTemplate {
 	output := &TaskTemplate{}
 	output.SerializeTaskTemplate(task)
 	return output
 }
-func (t *TaskTemplate) SerializeTaskTemplate(task *service.Task) {
-	t.Id = task.Id
-	t.Type = service.TaskTypeNameMapping[task.Type]
-	t.Status = service.TaskStatusNameMapping[task.Status]
-	switch task.Output.(type) {
-	case *service.GenerateVideoMetaTaskOutput:
+func (t *TaskTemplate) SerializeTaskTemplate(taskData *task.Task) {
+	t.Id = taskData.Id
+	t.Type = task.TaskTypeNameMapping[taskData.Type]
+	t.Status = task.TaskStatusNameMapping[taskData.Status]
+	switch taskData.Output.(type) {
+	case *task.GenerateVideoMetaTaskOutput:
 		outputTemplate := ReadMetaTaskTemplate{}
-		outputTemplate.Serialize(task.Output.(*service.GenerateVideoMetaTaskOutput))
+		outputTemplate.Serialize(taskData.Output.(*task.GenerateVideoMetaTaskOutput))
 		t.Output = outputTemplate
 	default:
-		t.Output = task.Output
+		t.Output = taskData.Output
 	}
 }
 
@@ -36,7 +38,7 @@ type ReadMetaTaskTemplate struct {
 	CurrentName string `json:"currentName"`
 }
 
-func (t *ReadMetaTaskTemplate) Serialize(output *service.GenerateVideoMetaTaskOutput) {
+func (t *ReadMetaTaskTemplate) Serialize(output *task.GenerateVideoMetaTaskOutput) {
 	t.LibraryId = output.Id
 	t.Total = output.Total
 	t.CurrentName = output.CurrentName

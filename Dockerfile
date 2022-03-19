@@ -12,7 +12,7 @@ COPY . .
 
 RUN go build -o ${GOPATH}/bin/youvideo ./main.go
 
-FROM linuxserver/ffmpeg
+FROM ubuntu
 
 COPY --from=builder /usr/local/lib /usr/local/lib
 COPY --from=builder /etc/ssl/certs /etc/ssl/certs

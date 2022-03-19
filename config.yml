@@ -1,7 +1,7 @@
 addr: ':7700'
 application: "YouVideo Core Service"
 instance: "main"
-cover_store: './static/covers'
+cover_store: './data/covers'
 ffmpeg_bin: 'ffmpeg'
 ffprobe_bin: 'ffprobe'
 datasource: "sqlite"
@@ -9,7 +9,7 @@ service:
   name: "YouVideoCoreService"
   display: "YouVideo Core Service"
 sqlite:
-  path: './database.db'
+  path: './data/database.db'
 transcode:
   enable: false
   url: 'http://localhost:6700'
@@ -17,6 +17,7 @@ youplus:
   auth: false
   enablepath: false
   url: 'http://localhost:8999'
+  enablerpc: false
   rpc: 'localhost:50055'
   entity:
     enable: false
@@ -28,4 +29,11 @@ log:
     instance: "main"
     addr: "localhost:50052"
     retry: 3000
-    remote: true
+    remote: false
+youlibrary:
+  enable: false
+  url: "http://localhost:8000"
+thumbnail:
+  type: "thumbnailservice"
+thumbnails:
+  service_url: "http://localhost:8020"

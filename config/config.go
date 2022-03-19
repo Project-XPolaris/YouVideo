@@ -40,6 +40,7 @@ type Config struct {
 	Entity           EntityConfig
 	YouLogAddress    string
 	YouLibraryConfig YouLibraryConfig
+	ThumbnailType    string
 }
 
 func ReadConfig(provider *config.Provider) {
@@ -68,6 +69,7 @@ func ReadConfig(provider *config.Provider) {
 		EnableTranscode: configer.GetBool("transcode.enable"),
 		EnableAuth:      configer.GetBool("youplus.auth"),
 		YouPlusPath:     configer.GetBool("youplus.enablepath"),
+		ThumbnailType:   configer.GetString("thumbnail.type"),
 		YouLibraryConfig: YouLibraryConfig{
 			Enable: configer.GetBool("youlibrary.enable"),
 			Url:    configer.GetString("youlibrary.url"),

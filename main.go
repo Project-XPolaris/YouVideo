@@ -7,6 +7,7 @@ import (
 	"github.com/projectxpolaris/youvideo/application/httpapi"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/service"
 	"github.com/projectxpolaris/youvideo/youlog"
 	"github.com/projectxpolaris/youvideo/youplus"
@@ -28,6 +29,9 @@ func main() {
 	appEngine.LoggerPlugin = youlog.DefaultYouLogPlugin
 	appEngine.UsePlugin(&youplus.DefaultYouPlusPlugin)
 	appEngine.UsePlugin(database.DefaultPlugin)
+	if config.Instance.ThumbnailType == "thumbnailservice" {
+		appEngine.UsePlugin(plugin.DefaultThumbnailPlugin)
+	}
 	appEngine.HttpService = httpapi.GetEngine()
 	if err != nil {
 		logrus.Fatal(err)

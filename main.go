@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/allentom/harukap"
 	"github.com/allentom/harukap/cli"
+	"github.com/allentom/harukap/thumbnail"
 	"github.com/projectxpolaris/youvideo/application/httpapi"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
@@ -30,8 +31,13 @@ func main() {
 	appEngine.UsePlugin(&youplus.DefaultYouPlusPlugin)
 	appEngine.UsePlugin(database.DefaultPlugin)
 	if config.Instance.ThumbnailType == "thumbnailservice" {
+		plugin.DefaultThumbnailPlugin.SetConfig(&thumbnail.ThumbnailServiceConfig{
+			Enable:     true,
+			ServiceUrl: config.Instance.ThumbnailServiceUrl,
+		})
 		appEngine.UsePlugin(plugin.DefaultThumbnailPlugin)
 	}
+	appEngine.UsePlugin(&plugin.DefaultRegisterPlugin)
 	appEngine.HttpService = httpapi.GetEngine()
 	if err != nil {
 		logrus.Fatal(err)

@@ -5,3 +5,4 @@ static/
 pack-output/
 local_*_test.go
 depoly/
+reg.yml

@@ -27,20 +27,21 @@ type YouLibraryConfig struct {
 }
 
 type Config struct {
-	CoversStore      string `json:"covers_store"`
-	FfmpegBin        string `json:"ffmpeg_bin"`
-	FfprobeBin       string `json:"ffprobe_bin"`
-	YoutransURL      string `json:"youtrans_url"`
-	EnableTranscode  bool
-	EnableAuth       bool `json:"enable_auth"`
-	YouPlusPath      bool
-	YouPlusUrl       string
-	YouPlusRPCAddr   string
-	YouLogEnable     bool
-	Entity           EntityConfig
-	YouLogAddress    string
-	YouLibraryConfig YouLibraryConfig
-	ThumbnailType    string
+	CoversStore         string `json:"covers_store"`
+	FfmpegBin           string `json:"ffmpeg_bin"`
+	FfprobeBin          string `json:"ffprobe_bin"`
+	YoutransURL         string `json:"youtrans_url"`
+	EnableTranscode     bool
+	EnableAuth          bool `json:"enable_auth"`
+	YouPlusPath         bool
+	YouPlusUrl          string
+	YouPlusRPCAddr      string
+	YouLogEnable        bool
+	Entity              EntityConfig
+	YouLogAddress       string
+	YouLibraryConfig    YouLibraryConfig
+	ThumbnailType       string
+	ThumbnailServiceUrl string
 }
 
 func ReadConfig(provider *config.Provider) {
@@ -62,14 +63,15 @@ func ReadConfig(provider *config.Provider) {
 	configer.SetDefault("youlog.rpc_addr", "")
 
 	Instance = Config{
-		CoversStore:     configer.GetString("cover_store"),
-		FfmpegBin:       configer.GetString("ffmpeg_bin"),
-		FfprobeBin:      configer.GetString("ffprobe_bin"),
-		YoutransURL:     configer.GetString("transcode.url"),
-		EnableTranscode: configer.GetBool("transcode.enable"),
-		EnableAuth:      configer.GetBool("youplus.auth"),
-		YouPlusPath:     configer.GetBool("youplus.enablepath"),
-		ThumbnailType:   configer.GetString("thumbnail.type"),
+		CoversStore:         configer.GetString("cover_store"),
+		FfmpegBin:           configer.GetString("ffmpeg_bin"),
+		FfprobeBin:          configer.GetString("ffprobe_bin"),
+		YoutransURL:         configer.GetString("transcode.url"),
+		EnableTranscode:     configer.GetBool("transcode.enable"),
+		EnableAuth:          configer.GetBool("youplus.auth"),
+		YouPlusPath:         configer.GetBool("youplus.enablepath"),
+		ThumbnailType:       configer.GetString("thumbnail.type"),
+		ThumbnailServiceUrl: configer.GetString("thumbnail.service_url"),
 		YouLibraryConfig: YouLibraryConfig{
 			Enable: configer.GetBool("youlibrary.enable"),
 			Url:    configer.GetString("youlibrary.url"),

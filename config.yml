@@ -35,5 +35,9 @@ youlibrary:
   url: "http://localhost:8000"
 thumbnail:
   type: "thumbnailservice"
-thumbnails:
   service_url: "http://localhost:8020"
+register:
+  enable: false
+  endpoints:
+    - localhost:12379
+  regpath: ./reg.yml

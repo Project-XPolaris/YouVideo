@@ -1,6 +1,9 @@
 package service
 
-import . "github.com/ahmetb/go-linq/v3"
+import (
+	. "github.com/ahmetb/go-linq/v3"
+	ffmpeg_go "github.com/u2takey/ffmpeg-go"
+)
 import (
 	"fmt"
 	"github.com/allentom/transcoder"
@@ -8,7 +11,6 @@ import (
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/rs/xid"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -23,6 +25,7 @@ func NewTranscoder() transcoder.Transcoder {
 	return trans
 }
 func GetShotByFile(path string, output string) error {
+
 	trans := NewTranscoder()
 	trans.Input(path).Input(path)
 	meta, err := trans.GetMetadata()
@@ -33,20 +36,20 @@ func GetShotByFile(path string, output string) error {
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command(config.Instance.FfmpegBin, "-ss",
-		fmt.Sprintf("%d", int(rawSeconds)/2),
-		"-i",
-		path,
-		"-vframes",
-		"1",
-		"-vf",
-		"scale=320:320:force_original_aspect_ratio=decrease",
-		"-q:v",
-		"2",
-		output,
-	)
-	out, err := cmd.Output()
-	fmt.Println(string(out))
+
+	err = ffmpeg_go.
+		Input(
+			path,
+			ffmpeg_go.KwArgs{"ss": fmt.Sprintf("%d", int(rawSeconds)/2)},
+		).
+		Output(
+			output,
+			ffmpeg_go.KwArgs{
+				"vframes": "1",
+				"vf":      "scale=320:-1",
+				"q:v":     "2",
+			},
+		).Run()
 	if err != nil {
 		return err
 	}

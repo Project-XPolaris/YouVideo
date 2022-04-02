@@ -4,12 +4,13 @@ instance: "main"
 cover_store: './data/covers'
 ffmpeg_bin: 'ffmpeg'
 ffprobe_bin: 'ffprobe'
-datasource: "sqlite"
 service:
   name: "YouVideoCoreService"
   display: "YouVideo Core Service"
-sqlite:
-  path: './data/database.db'
+datasource:
+  sqlite:
+    type: sqlite
+    path: './data/database.db'
 transcode:
   enable: false
   url: 'http://localhost:6700'
@@ -25,16 +26,22 @@ youplus:
     version: 1
 log:
   youlog:
-    application: "YouVideo Core Service"
+    application: "YouVideo"
     instance: "main"
-    addr: "localhost:50052"
-    retry: 3000
-    remote: false
+    engine:
+      local:
+        type: logrus
+#      logservice:
+#        type: youlogservice
+#        address: "localhost:60376"
+#      fluentd:
+#        type: fluentd
+#        url:  "http://localhost:53373"
 youlibrary:
   enable: false
   url: "http://localhost:8000"
 thumbnail:
-  type: "thumbnailservice"
+  type: "local"
   service_url: "http://localhost:8020"
 register:
   enable: false

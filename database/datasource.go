@@ -18,6 +18,7 @@ var DefaultPlugin = &datasource.Plugin{
 			&Folder{},
 			&VideoMetaItem{},
 			&Entity{},
+			&Oauth{},
 		)
 		var user User
 		Instance.FirstOrCreate(&user, User{Uid: "-1"})

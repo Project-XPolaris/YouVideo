@@ -1,4 +1,4 @@
-package youplus
+package plugin
 
 import "github.com/allentom/harukap/youplus"
 

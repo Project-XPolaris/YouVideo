@@ -1,4 +1,4 @@
-package youlog
+package plugin
 
 import "github.com/allentom/harukap/youlog"
 

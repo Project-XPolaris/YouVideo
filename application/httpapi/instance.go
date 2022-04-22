@@ -55,10 +55,12 @@ func GetEngine() *haruka.Engine {
 	e.Router.POST("/callback/tran/complete", transCompleteCallback)
 	e.Router.GET("/history", getHistoryListHandler)
 	e.Router.GET("/user/auth", youPlusTokenHandler)
-	e.Router.POST("/user/auth", youPlusLoginHandler)
 	e.Router.GET("/folders", getFolderListHandler)
+	e.Router.GET("/oauth/youauth", generateAccessCodeWithYouAuthHandler)
+	e.Router.POST("/oauth/youplus", youPlusLoginHandler)
 	e.Router.AddHandler("/notification", notificationSocketHandler)
-	e.UseMiddleware(&AuthMiddleware{})
+	//e.UseMiddleware(&AuthMiddleware{})
+	e.UseMiddleware(&OauthMiddleware{})
 	e.UseMiddleware(&ReadUserMiddleware{})
 	return e
 }

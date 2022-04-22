@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/allentom/harukap"
 	"github.com/allentom/harukap/cli"
 	"github.com/allentom/harukap/thumbnail"
@@ -10,8 +11,6 @@ import (
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/service"
-	"github.com/projectxpolaris/youvideo/youlog"
-	"github.com/projectxpolaris/youvideo/youplus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,15 +19,15 @@ func main() {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	err = youlog.DefaultYouLogPlugin.OnInit(config.DefaultConfigProvider)
+	err = plugin.DefaultYouLogPlugin.OnInit(config.DefaultConfigProvider)
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
 	appEngine := harukap.NewHarukaAppEngine()
 	appEngine.ConfigProvider = config.DefaultConfigProvider
-	appEngine.LoggerPlugin = youlog.DefaultYouLogPlugin
-	appEngine.UsePlugin(&youplus.DefaultYouPlusPlugin)
+	appEngine.LoggerPlugin = plugin.DefaultYouLogPlugin
+	appEngine.UsePlugin(&plugin.DefaultYouPlusPlugin)
 	appEngine.UsePlugin(database.DefaultPlugin)
 	if config.Instance.ThumbnailType == "thumbnailservice" {
 		plugin.DefaultThumbnailPlugin.SetConfig(&thumbnail.ThumbnailServiceConfig{
@@ -38,6 +37,16 @@ func main() {
 		appEngine.UsePlugin(plugin.DefaultThumbnailPlugin)
 	}
 	appEngine.UsePlugin(&plugin.DefaultRegisterPlugin)
+	// init auth
+
+	rawAuth := config.DefaultConfigProvider.Manager.GetStringMap("auth")
+	for key, _ := range rawAuth {
+		rawAuthContent := config.DefaultConfigProvider.Manager.GetString(fmt.Sprintf("auth.%s.type", key))
+		if rawAuthContent == "youauth" {
+			plugin.DefaultYouAuthOauthPlugin.ConfigPrefix = fmt.Sprintf("auth.%s", key)
+			appEngine.UsePlugin(plugin.DefaultYouAuthOauthPlugin)
+		}
+	}
 	appEngine.HttpService = httpapi.GetEngine()
 	if err != nil {
 		logrus.Fatal(err)

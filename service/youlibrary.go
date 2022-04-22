@@ -7,7 +7,7 @@ import (
 	"github.com/project-xpolaris/youplustoolkit/youlog"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
-	youlog2 "github.com/projectxpolaris/youvideo/youlog"
+	"github.com/projectxpolaris/youvideo/plugin"
 )
 
 var DefaultVideoInformationMatchService = VideoInformationMatchService{}
@@ -42,7 +42,7 @@ func (s *VideoInformationMatchService) Init() {
 	s.In = make(chan *VideoInformationMatchInput, 1000)
 	s.Client = youlibrary.NewYouLibraryClient()
 	s.Client.Init(config.Instance.YouLibraryConfig.Url)
-	s.Logger = youlog2.DefaultYouLogPlugin.Logger.NewScope("VideoInformationMatch")
+	s.Logger = plugin.DefaultYouLogPlugin.Logger.NewScope("VideoInformationMatch")
 	s.Logger.Info("init success")
 }
 

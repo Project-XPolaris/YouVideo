@@ -5,9 +5,9 @@ import (
 	"github.com/allentom/haruka/validator"
 	"github.com/projectxpolaris/youvideo/commons"
 	"github.com/projectxpolaris/youvideo/config"
+	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/service"
 	"github.com/projectxpolaris/youvideo/service/task"
-	"github.com/projectxpolaris/youvideo/youplus"
 	"net/http"
 	"strconv"
 )
@@ -32,7 +32,7 @@ var createLibraryHandler haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	libraryPath := requestBody.Path
 	if config.Instance.YouPlusPath {
-		realPath, err := youplus.DefaultYouPlusPlugin.Client.GetRealPath(requestBody.Path, context.Param["token"].(string))
+		realPath, err := plugin.DefaultYouPlusPlugin.Client.GetRealPath(requestBody.Path, context.Param["token"].(string))
 		if err != nil {
 			AbortError(context, err, http.StatusBadRequest)
 			return

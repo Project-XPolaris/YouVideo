@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/allentom/haruka"
 	"github.com/projectxpolaris/youvideo/config"
+	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/service"
 	"github.com/projectxpolaris/youvideo/service/task"
-	"github.com/projectxpolaris/youvideo/youplus"
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"net/http"
 	"net/http/httputil"
@@ -18,7 +18,7 @@ var readDirectoryHandler haruka.RequestHandler = func(context *haruka.Context) {
 	rootPath := context.GetQueryString("path")
 	if config.Instance.YouPlusPath {
 		token := context.Param["token"].(string)
-		items, err := youplus.DefaultYouPlusPlugin.Client.ReadDir(rootPath, token)
+		items, err := plugin.DefaultYouPlusPlugin.Client.ReadDir(rootPath, token)
 		if err != nil {
 			AbortError(context, err, http.StatusInternalServerError)
 			return
@@ -119,43 +119,46 @@ var transCompleteCallback haruka.RequestHandler = func(context *haruka.Context) 
 }
 
 var serviceInfoHandler haruka.RequestHandler = func(context *haruka.Context) {
+	// get oauth addr
+	oauthUrl, err := plugin.DefaultYouAuthOauthPlugin.GetOauthUrl()
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	// get auth
+	authMaps := []haruka.JSON{}
+	configManager := config.DefaultConfigProvider.Manager
+	for key := range configManager.GetStringMap("auth") {
+		authType := configManager.GetString(fmt.Sprintf("auth.%s.type", key))
+		enable := configManager.GetBool(fmt.Sprintf("auth.%s.enable", key))
+		if !enable {
+			continue
+		}
+		switch authType {
+		case "youauth":
+			oauthUrl, err = plugin.DefaultYouAuthOauthPlugin.GetOauthUrl()
+			if err != nil {
+				AbortError(context, err, http.StatusInternalServerError)
+				return
+			}
+			authMaps = append(authMaps, haruka.JSON{
+				"name": "YouAuth",
+				"type": "weboauth",
+				"url":  oauthUrl,
+			})
+		case "youplus":
+			authMaps = append(authMaps, haruka.JSON{
+				"type": "base",
+				"url":  "/oauth/youplus",
+				"name": "YouPlus",
+			})
+		}
+	}
 	context.JSON(haruka.JSON{
 		"success":     true,
 		"name":        "YouVideo service",
-		"authEnable":  config.Instance.EnableAuth,
-		"authUrl":     fmt.Sprintf("%s/%s", config.Instance.YouPlusUrl, "user/auth"),
 		"transEnable": config.Instance.EnableTranscode,
-	})
-}
-
-type UserAuthRequestBody struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-var youPlusLoginHandler haruka.RequestHandler = func(context *haruka.Context) {
-	var requestBody UserAuthRequestBody
-	err := context.ParseJson(&requestBody)
-	if err != nil {
-		AbortError(context, err, http.StatusBadRequest)
-		return
-	}
-	resp, err := youplus.DefaultYouPlusPlugin.Client.FetchUserAuth(requestBody.Username, requestBody.Password)
-	if err != nil {
-		AbortError(context, err, http.StatusBadRequest)
-		return
-	}
-	context.JSON(resp)
-}
-
-var youPlusTokenHandler haruka.RequestHandler = func(context *haruka.Context) {
-	token := context.GetQueryString("token")
-	resp, err := youplus.DefaultYouPlusPlugin.Client.CheckAuth(token)
-	if err != nil {
-		AbortError(context, err, http.StatusBadRequest)
-		return
-	}
-	context.JSON(haruka.JSON{
-		"success": resp.Success,
+		"allowPublic": true,
+		"auth":        authMaps,
 	})
 }

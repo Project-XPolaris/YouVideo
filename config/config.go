@@ -63,7 +63,6 @@ func ReadConfig(provider *config.Provider) {
 	configer.SetDefault("youplus.rpc", "")
 	configer.SetDefault("youlog.enable", false)
 	configer.SetDefault("youlog.rpc_addr", "")
-
 	Instance = Config{
 		CoversStore:         configer.GetString("cover_store"),
 		FfmpegBin:           configer.GetString("ffmpeg_bin"),

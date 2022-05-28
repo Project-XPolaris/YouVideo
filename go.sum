@@ -87,6 +87,8 @@ github.com/allentom/harukap v0.0.0-20220422160752-9cfbdff97970 h1:Ce44tiWKBkgfpA
 github.com/allentom/harukap v0.0.0-20220422160752-9cfbdff97970/go.mod h1:CECRbdX6wkneVk6TZ0Jtajjb9HTljU997QT9aVuXF5o=
 github.com/allentom/harukap v0.0.0-20220428091819-2a61bab5f690 h1:/auTFXKbAX8zJFCr9vczxOXPPCLCiT/BnJO8F/i4ieY=
 github.com/allentom/harukap v0.0.0-20220428091819-2a61bab5f690/go.mod h1:CECRbdX6wkneVk6TZ0Jtajjb9HTljU997QT9aVuXF5o=
+github.com/allentom/harukap v0.0.0-20220528103916-aae7072ca8c2 h1:kPVDB7gZUNHw6q5GWJw/R742kgiZuCqIrJk6ubGBLf0=
+github.com/allentom/harukap v0.0.0-20220528103916-aae7072ca8c2/go.mod h1:0nfgTw5lQkCGJac2RyPYk+kYlChozt0wVyWee/4WK4M=
 github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f h1:5YL8PS1ARIkYAA+3kQDID5pL8jKp/DqfQaNvPnQ/Kj4=
 github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f/go.mod h1:n8EtRihlYzcb/YXzRDNqL2lYo3Vi7kprJ5NeU41jQGQ=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=

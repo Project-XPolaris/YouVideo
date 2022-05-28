@@ -189,10 +189,10 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 	fileExt := filepath.Ext(path)
 	videoName := strings.TrimSuffix(filepath.Base(path), fileExt)
 	baseDir := filepath.Dir(path)
+	// create file if not exist
 	if file == nil {
 		file = &database.File{}
 	}
-
 	file.Path = path
 	// check file subtitles file
 	subtitlesFiles := []string{
@@ -229,7 +229,7 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 			LibraryId: libraryId,
 			BaseDir:   baseDir,
 			Type:      videoType,
-			FolderID:  folder.ID,
+			FolderID:  &folder.ID,
 		}
 		VideoLogger.WithFields(logrus.Fields{
 			"name": videoName,
@@ -243,8 +243,8 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 			DefaultVideoInformationMatchService.In <- NewVideoInformationMatchInput(&video)
 		}
 	}
-	if video.FolderID != folder.ID {
-		video.FolderID = folder.ID
+	if *video.FolderID != folder.ID {
+		video.FolderID = &folder.ID
 		err = database.Instance.Save(video).Error
 		if err != nil {
 			return err
@@ -266,7 +266,21 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 	}
 	return err
 }
-
+func RefreshVideo(videoId uint) error {
+	var video database.Video
+	err := database.Instance.Preload("Files").Preload("Library").First(&video, videoId).Error
+	if err != nil {
+		return err
+	}
+	for _, file := range video.Files {
+		err = CreateVideoFile(file.Path, video.LibraryId, video.Type, false)
+		if err != nil {
+			return err
+		}
+	}
+	DefaultVideoInformationMatchService.In <- NewVideoInformationMatchInput(&video)
+	return nil
+}
 func DeleteVideoById(id uint) error {
 	var video database.Video
 	// remove files

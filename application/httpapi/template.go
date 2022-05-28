@@ -92,7 +92,7 @@ type BaseVideoTemplate struct {
 	Infos     []BaseVideoMetaTemplate `json:"infos,omitempty"`
 	Subject   *youlibrary.Subject     `json:"subject,omitempty"`
 	Release   string                  `json:"release,omitempty"`
-	EntityId  uint                    `json:"entityId,omitempty"`
+	EntityId  *uint                   `json:"entityId,omitempty"`
 }
 
 func (t *BaseVideoTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {

@@ -21,6 +21,6 @@ var DefaultPlugin = &datasource.Plugin{
 			&Oauth{},
 		)
 		var user User
-		Instance.FirstOrCreate(&user, User{Uid: "-1"})
+		Instance.FirstOrCreate(&user, User{Uid: "-1", Username: "public"})
 	},
 }

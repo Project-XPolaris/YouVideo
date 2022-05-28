@@ -1,8 +1,10 @@
 package service
 
 import (
+	"context"
 	. "github.com/ahmetb/go-linq/v3"
 	ffmpeg_go "github.com/u2takey/ffmpeg-go"
+	"gopkg.in/vansante/go-ffprobe.v2"
 )
 import (
 	"fmt"
@@ -72,10 +74,8 @@ func GenerateVideoCover(path string) (string, error) {
 	return outputPath, err
 }
 
-func GetVideoFileMeta(path string) (transcoder.Metadata, error) {
-	trans := NewTranscoder()
-	trans.Input(path).Input(path)
-	meta, err := trans.GetMetadata()
+func GetVideoFileMeta(path string) (*ffprobe.ProbeData, error) {
+	meta, err := ffprobe.ProbeURL(context.Background(), path)
 	if err != nil {
 		return nil, err
 	}

@@ -35,7 +35,6 @@ var playVideo haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	service.CreateHistory(file.VideoId, filePermissionValidator.Uid)
 	http.ServeFile(context.Writer, context.Request, file.Path)
 }
 

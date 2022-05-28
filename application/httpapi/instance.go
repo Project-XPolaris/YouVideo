@@ -4,6 +4,7 @@ import (
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/middleware"
 	"github.com/projectxpolaris/youvideo/config"
+	"github.com/projectxpolaris/youvideo/module"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
 )
@@ -54,13 +55,16 @@ func GetEngine() *haruka.Engine {
 	e.Router.POST("/file/{id:[0-9]+}/rename", renameFileHandler)
 	e.Router.POST("/callback/tran/complete", transCompleteCallback)
 	e.Router.GET("/history", getHistoryListHandler)
+	e.Router.POST("/history", createHistoryHandler)
 	e.Router.GET("/user/auth", youPlusTokenHandler)
 	e.Router.GET("/folders", getFolderListHandler)
 	e.Router.GET("/oauth/youauth", generateAccessCodeWithYouAuthHandler)
 	e.Router.POST("/oauth/youplus", youPlusLoginHandler)
 	e.Router.AddHandler("/notification", notificationSocketHandler)
 	//e.UseMiddleware(&AuthMiddleware{})
-	e.UseMiddleware(&OauthMiddleware{})
-	e.UseMiddleware(&ReadUserMiddleware{})
+	//e.UseMiddleware(&OauthMiddleware{})
+	//e.UseMiddleware(&ReadUserMiddleware{})
+	e.UseMiddleware(module.Auth.AuthMiddleware)
+	e.UseMiddleware(&CheckAuthMiddleware{})
 	return e
 }

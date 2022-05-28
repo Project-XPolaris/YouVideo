@@ -79,35 +79,27 @@ func NewFileTranscodeTask(id uint, format string, codec string) error {
 func NewVideoFile(path string) (file database.File) {
 	meta, metaerr := GetVideoFileMeta(path)
 	if metaerr == nil {
-		duration, err := strconv.ParseFloat(meta.GetFormat().GetDuration(), 10)
-		if err != nil {
-			VideoLogger.Error(err)
-		} else {
-			file.Duration = duration
-		}
-
-		size, err := strconv.ParseInt(meta.GetFormat().GetSize(), 10, 64)
+		file.Duration = meta.Format.DurationSeconds
+		size, err := strconv.ParseInt(meta.Format.Size, 10, 64)
 		if err != nil {
 			VideoLogger.Error(err)
 		} else {
 			file.Size = size
 		}
-
-		bitrate, err := strconv.ParseInt(meta.GetFormat().GetBitRate(), 10, 64)
+		bitrate, err := strconv.ParseInt(meta.Format.BitRate, 10, 64)
 		if err != nil {
 			VideoLogger.Error(err)
 		} else {
 			file.Bitrate = bitrate
 		}
-
 		// parse stream
-		for _, stream := range meta.GetStreams() {
-			if stream.GetCodecType() == "video" && len(file.MainVideoCodec) == 0 {
-				file.MainVideoCodec = stream.GetCodecName()
+		for _, stream := range meta.Streams {
+			if stream.CodecType == "video" && len(file.MainVideoCodec) == 0 {
+				file.MainVideoCodec = stream.CodecName
 				continue
 			}
-			if stream.GetCodecType() == "audio" && len(file.MainAudioCodec) == 0 {
-				file.MainAudioCodec = stream.GetCodecName()
+			if stream.CodecType == "audio" && len(file.MainAudioCodec) == 0 {
+				file.MainAudioCodec = stream.CodecName
 			}
 		}
 	}

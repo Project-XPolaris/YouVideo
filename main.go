@@ -9,6 +9,7 @@ import (
 	"github.com/projectxpolaris/youvideo/application/httpapi"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/module"
 	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/service"
 	"github.com/sirupsen/logrus"
@@ -27,7 +28,8 @@ func main() {
 	appEngine := harukap.NewHarukaAppEngine()
 	appEngine.ConfigProvider = config.DefaultConfigProvider
 	appEngine.LoggerPlugin = plugin.DefaultYouLogPlugin
-	appEngine.UsePlugin(&plugin.DefaultYouPlusPlugin)
+	plugin.CreateDefaultYouPlusPlugin()
+	appEngine.UsePlugin(plugin.DefaultYouPlusPlugin)
 	appEngine.UsePlugin(database.DefaultPlugin)
 	if config.Instance.ThumbnailType == "thumbnailservice" {
 		plugin.DefaultThumbnailPlugin.SetConfig(&thumbnail.ThumbnailServiceConfig{
@@ -38,15 +40,16 @@ func main() {
 	}
 	appEngine.UsePlugin(&plugin.DefaultRegisterPlugin)
 	// init auth
-
 	rawAuth := config.DefaultConfigProvider.Manager.GetStringMap("auth")
 	for key, _ := range rawAuth {
 		rawAuthContent := config.DefaultConfigProvider.Manager.GetString(fmt.Sprintf("auth.%s.type", key))
 		if rawAuthContent == "youauth" {
+			plugin.CreateYouAuthPlugin()
 			plugin.DefaultYouAuthOauthPlugin.ConfigPrefix = fmt.Sprintf("auth.%s", key)
 			appEngine.UsePlugin(plugin.DefaultYouAuthOauthPlugin)
 		}
 	}
+	module.CreateAuthModule()
 	appEngine.HttpService = httpapi.GetEngine()
 	if err != nil {
 		logrus.Fatal(err)

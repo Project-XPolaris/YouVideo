@@ -60,13 +60,13 @@ func CreateSyncLibraryTask(option CreateScanTaskOption) (*Task, error) {
 	})
 	go func() {
 		logger.Info("task start")
+		// remove file where is not found
 		err := service.CheckLibrary(library.ID)
 		if err != nil {
 			task.SetError(err)
 			if option.OnError != nil {
 				option.OnError(task, err)
 			}
-
 			return
 		}
 		pathList, err := service.ScanVideo(&library)

@@ -12,6 +12,20 @@ import (
 	"time"
 )
 
+func checkVideoAccessibleAndRaiseError(context *haruka.Context) bool {
+	permission := VideoAccessibleValidator{}
+	err := context.BindingInput(&permission)
+	if err := validator.RunValidators(&permission); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return false
+	}
+	if err = validator.RunValidators(&permission); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return false
+	}
+	return true
+}
+
 var readVideoList haruka.RequestHandler = func(context *haruka.Context) {
 	view := blueprint.ListView{
 		Context:      context,
@@ -47,15 +61,11 @@ var readVideoList haruka.RequestHandler = func(context *haruka.Context) {
 }
 
 var getVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
-	rawId := context.Parameters["id"]
-	id, err := strconv.Atoi(rawId)
-	if err != nil {
-		AbortError(context, err, http.StatusBadRequest)
+	if !checkVideoAccessibleAndRaiseError(context) {
 		return
 	}
-	videoPermissionValidator := VideoAccessibleValidator{}
-	context.BindingInput(&videoPermissionValidator)
-	if err = validator.RunValidators(&videoPermissionValidator); err != nil {
+	id, err := context.GetPathParameterAsInt("id")
+	if err != nil {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
@@ -67,8 +77,8 @@ var getVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 	template := BaseVideoTemplate{}
 	template.Assign(video)
 	// get subject
-	if video.SubjectId > 0 && config.Instance.YouLibraryConfig.Enable {
-		response, err := service.GetSubjectById(video.SubjectId)
+	if *video.SubjectId > 0 && config.Instance.YouLibraryConfig.Enable {
+		response, err := service.GetSubjectById(*video.SubjectId)
 		if err == nil {
 			template.Subject = &response.Data
 		}
@@ -77,15 +87,11 @@ var getVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 }
 
 var deleteVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
-	rawId := context.Parameters["id"]
-	id, err := strconv.Atoi(rawId)
-	if err != nil {
-		AbortError(context, err, http.StatusBadRequest)
+	if !checkVideoAccessibleAndRaiseError(context) {
 		return
 	}
-	permission := VideoAccessibleValidator{}
-	context.BindingInput(&permission)
-	if err = validator.RunValidators(&permission); err != nil {
+	id, err := context.GetPathParameterAsInt("id")
+	if err != nil {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
@@ -154,10 +160,7 @@ var transcodeHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	permission := VideoAccessibleValidator{}
-	context.BindingInput(&permission)
-	if err = validator.RunValidators(&permission); err != nil {
-		AbortError(context, err, http.StatusBadRequest)
+	if !checkVideoAccessibleAndRaiseError(context) {
 		return
 	}
 	err = service.NewVideoTranscodeTask(uint(id), requestBody.Format, requestBody.Codec)
@@ -188,12 +191,7 @@ var addVideoMetaHandler haruka.RequestHandler = func(context *haruka.Context) {
 		return
 	}
 
-	permission := VideoAccessibleValidator{
-		Id: uint(rawId),
-	}
-	context.BindingInput(&permission)
-	if err = validator.RunValidators(&permission); err != nil {
-		AbortError(context, err, http.StatusBadRequest)
+	if !checkVideoAccessibleAndRaiseError(context) {
 		return
 	}
 	meta, err := service.AddVideoInfoItem(uint(rawId), body.Key, body.Value)
@@ -231,12 +229,7 @@ var updateVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	permission := VideoAccessibleValidator{
-		Id: uint(rawId),
-	}
-	context.BindingInput(&permission)
-	if err = validator.RunValidators(&permission); err != nil {
-		AbortError(context, err, http.StatusBadRequest)
+	if !checkVideoAccessibleAndRaiseError(context) {
 		return
 	}
 	body := UpdateVideoRequestBody{}
@@ -296,5 +289,4 @@ var getMetaListHandler haruka.RequestHandler = func(context *haruka.Context) {
 		"pageSize": queryBuilder.PageSize,
 		"result":   serializer.SerializeMultipleTemplate(infos, &BaseVideoMetaTemplate{}, map[string]interface{}{}),
 	})
-
 }

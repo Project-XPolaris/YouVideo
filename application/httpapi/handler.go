@@ -1,9 +1,9 @@
 package httpapi
 
 import (
-	"fmt"
 	"github.com/allentom/haruka"
 	"github.com/projectxpolaris/youvideo/config"
+	"github.com/projectxpolaris/youvideo/module"
 	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/service"
 	"github.com/projectxpolaris/youvideo/service/task"
@@ -30,9 +30,10 @@ var readDirectoryHandler haruka.RequestHandler = func(context *haruka.Context) {
 			data = append(data, template)
 		}
 		context.JSON(haruka.JSON{
-			"path":  rootPath,
-			"sep":   "/",
-			"files": data,
+			"success": true,
+			"path":    rootPath,
+			"sep":     "/",
+			"files":   data,
 		})
 		return
 	} else {
@@ -56,9 +57,10 @@ var readDirectoryHandler haruka.RequestHandler = func(context *haruka.Context) {
 			data = append(data, template)
 		}
 		context.JSON(haruka.JSON{
-			"path":  rootPath,
-			"sep":   string(os.PathSeparator),
-			"files": data,
+			"success": true,
+			"path":    rootPath,
+			"sep":     string(os.PathSeparator),
+			"files":   data,
 		})
 	}
 }
@@ -84,8 +86,9 @@ var readTaskListHandler haruka.RequestHandler = func(context *haruka.Context) {
 		}
 	}
 	context.JSON(haruka.JSON{
-		"count":  len(tasks),
-		"result": data,
+		"success": true,
+		"count":   len(tasks),
+		"result":  data,
 	})
 }
 
@@ -119,40 +122,10 @@ var transCompleteCallback haruka.RequestHandler = func(context *haruka.Context) 
 }
 
 var serviceInfoHandler haruka.RequestHandler = func(context *haruka.Context) {
-	// get oauth addr
-	oauthUrl, err := plugin.DefaultYouAuthOauthPlugin.GetOauthUrl()
+	authMaps, err := module.Auth.GetAuthConfig()
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
-	}
-	// get auth
-	authMaps := []haruka.JSON{}
-	configManager := config.DefaultConfigProvider.Manager
-	for key := range configManager.GetStringMap("auth") {
-		authType := configManager.GetString(fmt.Sprintf("auth.%s.type", key))
-		enable := configManager.GetBool(fmt.Sprintf("auth.%s.enable", key))
-		if !enable {
-			continue
-		}
-		switch authType {
-		case "youauth":
-			oauthUrl, err = plugin.DefaultYouAuthOauthPlugin.GetOauthUrl()
-			if err != nil {
-				AbortError(context, err, http.StatusInternalServerError)
-				return
-			}
-			authMaps = append(authMaps, haruka.JSON{
-				"name": "YouAuth",
-				"type": "weboauth",
-				"url":  oauthUrl,
-			})
-		case "youplus":
-			authMaps = append(authMaps, haruka.JSON{
-				"type": "base",
-				"url":  "/oauth/youplus",
-				"name": "YouPlus",
-			})
-		}
 	}
 	context.JSON(haruka.JSON{
 		"success":     true,

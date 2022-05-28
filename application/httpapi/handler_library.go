@@ -81,6 +81,7 @@ var readLibraryList haruka.RequestHandler = func(context *haruka.Context) {
 		data = append(data, template)
 	}
 	context.JSON(haruka.JSON{
+		"success":  true,
 		"count":    count,
 		"page":     page,
 		"pageSize": pageSize,

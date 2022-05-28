@@ -61,7 +61,7 @@ func (s *VideoInformationMatchService) Run(context context.Context) {
 				return
 			}
 			// link video and subject
-			video.SubjectId = response.Data.Id
+			*video.SubjectId = response.Data.Id
 			err = database.Instance.Save(&video).Error
 			if err != nil {
 				input.RaiseError(err)

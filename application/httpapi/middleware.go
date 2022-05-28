@@ -1,93 +1,54 @@
 package httpapi
 
 import (
+	"errors"
 	"github.com/allentom/haruka"
-	"github.com/projectxpolaris/youvideo/config"
-	"github.com/projectxpolaris/youvideo/plugin"
+	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/service"
-	"strings"
 )
 
-var noAuthPath = []string{}
+type CheckAuthMiddleware struct{}
 
-type AuthMiddleware struct {
-}
-
-func (a *AuthMiddleware) OnRequest(ctx *haruka.Context) {
-	if !config.Instance.EnableAuth {
-		ctx.Param["uid"] = service.PublicUid
-		ctx.Param["username"] = service.PublicUsername
-		ctx.Param["token"] = ""
+func (m *CheckAuthMiddleware) OnRequest(ctx *haruka.Context) {
+	if claims, ok := ctx.Param["claim"]; ok {
+		user := claims.(*database.User)
+		ctx.Param["user"] = user
+		ctx.Param["uid"] = user.Uid
+		ctx.Param["username"] = user.Username
 		return
 	}
-	for _, targetPath := range noAuthPath {
-		if ctx.Request.URL.Path == targetPath {
-			return
-		}
-	}
-	rawString := ctx.Request.Header.Get("Authorization")
-	if len(rawString) == 0 {
-		rawString = ctx.GetQueryString("token")
-	}
-	ctx.Param["token"] = rawString
-	if len(rawString) > 0 {
-		rawString = strings.Replace(rawString, "Bearer ", "", 1)
-		response, err := plugin.DefaultYouPlusPlugin.Client.CheckAuth(rawString)
-		if err == nil && response.Success {
-			ctx.Param["uid"] = response.Uid
-			ctx.Param["username"] = response.Username
-		} else {
-			ctx.Param["uid"] = service.PublicUid
-			ctx.Param["username"] = service.PublicUsername
-		}
-	} else {
-		ctx.Param["uid"] = service.PublicUid
-		ctx.Param["username"] = service.PublicUsername
-	}
-}
-
-type ReadUserMiddleware struct {
-}
-
-func (m *ReadUserMiddleware) OnRequest(ctx *haruka.Context) {
-	user, _ := service.GetUserById(ctx.Param["uid"].(string))
-	ctx.Param["user"] = user
-}
-
-type OauthMiddleware struct {
-}
-
-func (m *OauthMiddleware) OnRequest(ctx *haruka.Context) {
-	if !config.Instance.EnableAuth {
-		ctx.Param["uid"] = service.PublicUid
-		ctx.Param["username"] = service.PublicUsername
-		ctx.Param["token"] = ""
+	// for public user
+	publicUser, err := service.GetUserById("-1")
+	if err != nil {
+		AbortError(ctx, errors.New("public user not found"), 500)
 		return
 	}
-	for _, targetPath := range noAuthPath {
-		if ctx.Request.URL.Path == targetPath {
-			return
+	ctx.Param["user"] = publicUser
+	ctx.Param["uid"] = publicUser.Uid
+	ctx.Param["username"] = publicUser.Username
+}
+
+type VideoAccessibleMiddleware struct{}
+
+func (m *VideoAccessibleMiddleware) OnRequest(ctx *haruka.Context) {
+	matchPatterns := []string{
+		"/video/{id:[0-9]+}",
+		"/video/{id:[0-9]+}",
+		"/video/{id:[0-9]+}",
+		"/video/{id:[0-9]+}/meta",
+		"/video/{id:[0-9]+}/trans",
+	}
+	isMatch := false
+	for _, pattern := range matchPatterns {
+		if ctx.Pattern == pattern {
+			isMatch = true
+			break
 		}
 	}
-	rawString := ctx.Request.Header.Get("Authorization")
-	if len(rawString) == 0 {
-		rawString = ctx.GetQueryString("token")
+	if !isMatch {
+		return
 	}
-	if len(rawString) > 0 {
-		rawString = strings.Replace(rawString, "Bearer ", "", 1)
-		user, err := service.GetUserByAuthToken(rawString)
-		if err != nil {
-			ctx.Param["uid"] = service.PublicUid
-			ctx.Param["username"] = service.PublicUsername
-			ctx.Param["token"] = ""
-		} else {
-			ctx.Param["uid"] = user.Uid
-			ctx.Param["username"] = user.Username
-			ctx.Param["token"] = rawString
-		}
-	} else {
-		ctx.Param["uid"] = service.PublicUid
-		ctx.Param["username"] = service.PublicUsername
-		ctx.Param["token"] = ""
+	if !checkVideoAccessibleAndRaiseError(ctx) {
+		ctx.Abort()
 	}
 }

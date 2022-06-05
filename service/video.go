@@ -54,7 +54,14 @@ func ScanVideo(library *database.Library) ([]string, error) {
 		if info.IsDir() {
 			return nil
 		}
+		if strings.HasPrefix(info.Name(), ".") {
+			return nil
+		}
+		if info.Size() == 0 {
+			return nil
+		}
 		for _, extension := range targetExtensions {
+
 			if strings.HasSuffix(info.Name(), extension) {
 				target = append(target, path)
 			}

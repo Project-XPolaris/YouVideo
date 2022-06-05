@@ -50,6 +50,11 @@ func main() {
 		}
 	}
 	module.CreateAuthModule()
+	err = module.CreateNotificationModule()
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	module.CreateTaskModule()
 	appEngine.HttpService = httpapi.GetEngine()
 	if err != nil {
 		logrus.Fatal(err)

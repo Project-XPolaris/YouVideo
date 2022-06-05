@@ -3,7 +3,6 @@ package httpapi
 import (
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/blueprint"
-	"github.com/allentom/haruka/serializer"
 	"github.com/allentom/haruka/validator"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/service"
@@ -17,69 +16,56 @@ type CreateTagRequestBody struct {
 }
 
 var createTagHandler haruka.RequestHandler = func(context *haruka.Context) {
-	view := blueprint.CreateModelView{
-		Context: context,
-		CreateModel: func() interface{} {
-			return &database.Tag{}
-		},
-		ResponseTemplate: &BaseTagTemplate{},
-		RequestBody:      &CreateTagRequestBody{},
-		OnError: func(err error) {
-			AbortError(context, err, http.StatusInternalServerError)
-			return
-		},
-
-		OnCreate: func(view *blueprint.CreateModelView, model interface{}) (interface{}, error) {
-			body := view.RequestBody.(*CreateTagRequestBody)
-			uid := service.PublicUid
-			if body.Private {
-				uid = context.Param["uid"].(string)
-			}
-			tag, err := service.CreateTag(body.Name, uid)
-			return tag, err
-		},
-		GetValidators: func(v *blueprint.CreateModelView) []validator.Validator {
-			tag := v.RequestBody.(*CreateTagRequestBody)
-			uid := service.PublicUid
-			if tag.Private {
-				uid = context.Param["uid"].(string)
-			}
-			return []validator.Validator{
-				&DuplicateTagValidator{Name: tag.Name, Uid: uid},
-			}
-		},
+	var requestBody CreateTagRequestBody
+	err := context.ParseJson(&requestBody)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
 	}
-	view.Run()
+	uid := service.PublicUid
+	if requestBody.Private {
+		uid = context.Param["uid"].(string)
+	}
+	if err = validator.RunValidators(
+		&DuplicateTagValidator{Name: requestBody.Name, Uid: uid},
+	); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	tag, err := service.CreateTag(requestBody.Name, uid)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	template := &BaseTagTemplate{}
+	template.Serializer(tag, map[string]interface{}{})
+	context.JSON(template)
 }
 
 var getTagListHandler haruka.RequestHandler = func(context *haruka.Context) {
-	view := blueprint.ListView{
-		Context:      context,
-		Pagination:   &blueprint.DefaultPagination{},
-		QueryBuilder: &service.TagQueryBuilder{},
-		FilterMapping: []blueprint.FilterMapping{
-			{
-				Lookup: "video",
-				Method: "InVideoIds",
-				Many:   true,
-			},
-		},
-		GetTemplate: func() serializer.TemplateSerializer {
-			return &BaseTagTemplate{}
-		},
-		GetContainer: func() serializer.ListContainerSerializer {
-			return &BaseListContainer{}
-		},
-		OnApplyQuery: func(v *blueprint.ListView) {
-			v.QueryBuilder.(*service.TagQueryBuilder).Uid = context.Param["uid"].(string)
-			context.BindingInput(v.QueryBuilder)
-		},
-		OnError: func(err error) {
-			AbortError(context, err, http.StatusInternalServerError)
-			return
-		},
+	queryBuilder := service.TagQueryBuilder{}
+	if err := context.BindingInput(&queryBuilder); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
 	}
-	view.Run()
+	count, models, err := queryBuilder.Query()
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	data := make([]BaseTagTemplate, 0)
+	for _, tag := range models {
+		template := BaseTagTemplate{}
+		template.Serializer(tag, map[string]interface{}{})
+		data = append(data, template)
+	}
+	context.JSON(haruka.JSON{
+		"success":  true,
+		"count":    count,
+		"page":     queryBuilder.Page,
+		"pageSize": queryBuilder.PageSize,
+		"result":   data,
+	})
 }
 var removeTagHandler haruka.RequestHandler = func(context *haruka.Context) {
 	view := blueprint.DeleteModelView{

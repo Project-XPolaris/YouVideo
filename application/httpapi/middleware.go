@@ -33,8 +33,6 @@ type VideoAccessibleMiddleware struct{}
 func (m *VideoAccessibleMiddleware) OnRequest(ctx *haruka.Context) {
 	matchPatterns := []string{
 		"/video/{id:[0-9]+}",
-		"/video/{id:[0-9]+}",
-		"/video/{id:[0-9]+}",
 		"/video/{id:[0-9]+}/meta",
 		"/video/{id:[0-9]+}/trans",
 	}

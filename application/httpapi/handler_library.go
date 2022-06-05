@@ -5,9 +5,10 @@ import (
 	"github.com/allentom/haruka/validator"
 	"github.com/projectxpolaris/youvideo/commons"
 	"github.com/projectxpolaris/youvideo/config"
+	"github.com/projectxpolaris/youvideo/module"
 	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/service"
-	"github.com/projectxpolaris/youvideo/service/task"
+	taskService "github.com/projectxpolaris/youvideo/service/task"
 	"net/http"
 	"strconv"
 )
@@ -88,6 +89,28 @@ var readLibraryList haruka.RequestHandler = func(context *haruka.Context) {
 		"result":   data,
 	})
 }
+var deleteLibrary haruka.RequestHandler = func(context *haruka.Context) {
+	rawId := context.Parameters["id"]
+	id, err := strconv.Atoi(rawId)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	permission := LibraryAccessibleValidator{}
+	context.BindingInput(&permission)
+	if err = validator.RunValidators(&permission); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	err = service.RemoveLibraryById(uint(id))
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
+}
 
 type ScanLibraryRequestBody struct {
 	MatchSubject bool `json:"matchSubject"`
@@ -121,32 +144,32 @@ var scanLibrary haruka.RequestHandler = func(context *haruka.Context) {
 		}, http.StatusBadRequest)
 		return
 	}
-	task, err := task.CreateSyncLibraryTask(task.CreateScanTaskOption{
+	task, err := taskService.CreateSyncLibraryTask(taskService.CreateScanTaskOption{
 		LibraryId:    uint(id),
 		Uid:          context.Param["uid"].(string),
 		MatchSubject: requestBody.MatchSubject,
-		OnFileComplete: func(task *task.Task) {
-			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+		OnFileComplete: func(task *taskService.ScanTask) {
+			module.Notification.Manager.SendJSONToUser(haruka.JSON{
 				"event": EventSyncTaskFileComplete,
 				"task":  NewTaskTemplate(task),
 			}, username)
 		},
-		OnFileError: func(task *task.Task, err error) {
-			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+		OnFileError: func(task *taskService.ScanTask, err error) {
+			module.Notification.Manager.SendJSONToUser(haruka.JSON{
 				"event": EventSyncTaskFileError,
 				"error": err,
 				"task":  NewTaskTemplate(task),
 			}, username)
 		},
-		OnError: func(task *task.Task, err error) {
-			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+		OnError: func(task *taskService.ScanTask, err error) {
+			module.Notification.Manager.SendJSONToUser(haruka.JSON{
 				"event": EventSyncTaskError,
 				"error": err,
 				"task":  NewTaskTemplate(task),
 			}, username)
 		},
-		OnComplete: func(task *task.Task) {
-			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+		OnComplete: func(task *taskService.ScanTask) {
+			module.Notification.Manager.SendJSONToUser(haruka.JSON{
 				"event": EventSyncTaskComplete,
 				"task":  NewTaskTemplate(task),
 			}, username)
@@ -156,9 +179,11 @@ var scanLibrary haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
+	go task.Start()
+	data := NewTaskTemplate(task)
 	context.JSON(haruka.JSON{
 		"success": true,
-		"task":    NewTaskTemplate(task),
+		"task":    data,
 	})
 }
 var newRemoveLibraryTask haruka.RequestHandler = func(context *haruka.Context) {
@@ -179,18 +204,18 @@ var newRemoveLibraryTask haruka.RequestHandler = func(context *haruka.Context) {
 		}, http.StatusBadRequest)
 		return
 	}
-	task, err := task.CreateRemoveLibraryTask(task.RemoveLibraryOption{
+	task, err := taskService.CreateRemoveLibraryTask(taskService.RemoveLibraryOption{
 		LibraryId: uint(id),
 		Uid:       context.Param["uid"].(string),
-		OnError: func(task *task.Task, err error) {
-			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+		OnError: func(task *taskService.RemoveLibraryTask, err error) {
+			module.Notification.Manager.SendJSONToUser(haruka.JSON{
 				"event": EventRemoveTaskError,
 				"error": err,
 				"task":  NewTaskTemplate(task),
 			}, username)
 		},
-		OnComplete: func(task *task.Task) {
-			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+		OnComplete: func(task *taskService.RemoveLibraryTask) {
+			module.Notification.Manager.SendJSONToUser(haruka.JSON{
 				"event": EventRemoveTaskComplete,
 				"task":  NewTaskTemplate(task),
 			}, username)
@@ -200,6 +225,7 @@ var newRemoveLibraryTask haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
+	go task.Start()
 	context.JSON(haruka.JSON{
 		"success": true,
 		"task":    NewTaskTemplate(task),
@@ -220,29 +246,29 @@ var readMetaTask haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	_, err = task.CreateGenerateVideoMetaTask(task.CreateGenerateMetaOption{
+	task, err := taskService.CreateGenerateVideoMetaTask(taskService.CreateGenerateMetaOption{
 		LibraryId: uint(id),
 		Uid:       uid,
-		OnFileComplete: func(task *task.Task) {
-			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+		OnFileComplete: func(task *taskService.GenerateVideoMetaTask) {
+			module.Notification.Manager.SendJSONToUser(haruka.JSON{
 				"event": EventMetaTaskFileComplete,
 				"task":  NewTaskTemplate(task),
 			}, username)
 		},
-		OnVideoComplete: func(task *task.Task) {
-			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+		OnVideoComplete: func(task *taskService.GenerateVideoMetaTask) {
+			module.Notification.Manager.SendJSONToUser(haruka.JSON{
 				"event": EventMetaTaskVideoComplete,
 				"task":  NewTaskTemplate(task),
 			}, username)
 		},
-		OnComplete: func(task *task.Task) {
-			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+		OnComplete: func(task *taskService.GenerateVideoMetaTask) {
+			module.Notification.Manager.SendJSONToUser(haruka.JSON{
 				"event": EventMetaTaskComplete,
 				"task":  NewTaskTemplate(task),
 			}, username)
 		},
-		OnFileError: func(task *task.Task, err error) {
-			DefaultNotificationManager.sendJSONToUser(haruka.JSON{
+		OnFileError: func(task *taskService.GenerateVideoMetaTask, err error) {
+			module.Notification.Manager.SendJSONToUser(haruka.JSON{
 				"event": EventMetaTaskFileError,
 				"error": err,
 				"task":  NewTaskTemplate(task),
@@ -253,28 +279,7 @@ var readMetaTask haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
-}
-var deleteLibrary haruka.RequestHandler = func(context *haruka.Context) {
-	rawId := context.Parameters["id"]
-	id, err := strconv.Atoi(rawId)
-	if err != nil {
-		AbortError(context, err, http.StatusBadRequest)
-		return
-	}
-	permission := LibraryAccessibleValidator{}
-	context.BindingInput(&permission)
-	if err = validator.RunValidators(&permission); err != nil {
-		AbortError(context, err, http.StatusBadRequest)
-		return
-	}
-	err = service.RemoveLibraryById(uint(id))
-	if err != nil {
-		AbortError(context, err, http.StatusInternalServerError)
-		return
-	}
+	go task.Start()
 	context.JSON(haruka.JSON{
 		"success": true,
 	})

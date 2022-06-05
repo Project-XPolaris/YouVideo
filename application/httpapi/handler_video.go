@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"github.com/allentom/haruka"
-	"github.com/allentom/haruka/blueprint"
 	"github.com/allentom/haruka/serializer"
 	"github.com/allentom/haruka/validator"
 	"github.com/projectxpolaris/youvideo/config"
@@ -27,37 +26,29 @@ func checkVideoAccessibleAndRaiseError(context *haruka.Context) bool {
 }
 
 var readVideoList haruka.RequestHandler = func(context *haruka.Context) {
-	view := blueprint.ListView{
-		Context:      context,
-		Pagination:   &blueprint.DefaultPagination{},
-		QueryBuilder: &service.VideoQueryBuilder{},
-		FilterMapping: []blueprint.FilterMapping{
-			{
-				Lookup: "tag",
-				Method: "InTagIds",
-				Many:   true,
-			},
-			{
-				Lookup: "library",
-				Method: "InLibraryIds",
-				Many:   true,
-			},
-		},
-		OnApplyQuery: func(v *blueprint.ListView) {
-			context.BindingInput(v.QueryBuilder)
-		},
-		GetTemplate: func() serializer.TemplateSerializer {
-			return &BaseVideoTemplate{}
-		},
-		GetContainer: func() serializer.ListContainerSerializer {
-			return &serializer.DefaultListContainer{}
-		},
-		OnError: func(err error) {
-			AbortError(context, err, http.StatusInternalServerError)
-			return
-		},
+	queryBuilder := service.VideoQueryBuilder{}
+	if err := context.BindingInput(&queryBuilder); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
 	}
-	view.Run()
+	count, models, err := queryBuilder.Query()
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	data := make([]BaseVideoTemplate, 0)
+	for _, video := range models {
+		template := BaseVideoTemplate{}
+		template.Assign(video)
+		data = append(data, template)
+	}
+	context.JSON(haruka.JSON{
+		"success":  true,
+		"count":    count,
+		"page":     queryBuilder.Page,
+		"pageSize": queryBuilder.PageSize,
+		"result":   data,
+	})
 }
 
 var getVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -77,7 +68,7 @@ var getVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 	template := BaseVideoTemplate{}
 	template.Assign(video)
 	// get subject
-	if *video.SubjectId > 0 && config.Instance.YouLibraryConfig.Enable {
+	if video.SubjectId != nil && config.Instance.YouLibraryConfig.Enable {
 		response, err := service.GetSubjectById(*video.SubjectId)
 		if err == nil {
 			template.Subject = &response.Data
@@ -137,6 +128,7 @@ var moveVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
+
 	template := BaseVideoTemplate{}
 	template.Assign(video)
 	context.JSON(template)
@@ -288,5 +280,21 @@ var getMetaListHandler haruka.RequestHandler = func(context *haruka.Context) {
 		"page":     queryBuilder.Page,
 		"pageSize": queryBuilder.PageSize,
 		"result":   serializer.SerializeMultipleTemplate(infos, &BaseVideoMetaTemplate{}, map[string]interface{}{}),
+	})
+}
+
+var refreshVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
+	rawId, err := context.GetPathParameterAsInt("id")
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	err = service.RefreshVideo(uint(rawId))
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
 	})
 }

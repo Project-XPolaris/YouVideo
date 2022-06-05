@@ -22,6 +22,16 @@ func (m *LibraryLockManager) TryToLock(id uint) bool {
 	m.LockLibraryIds = append(m.LockLibraryIds, id)
 	return true
 }
+func (m *LibraryLockManager) IsLock(id uint) bool {
+	m.Lock()
+	defer m.Unlock()
+	for _, lockId := range m.LockLibraryIds {
+		if lockId == id {
+			return true
+		}
+	}
+	return false
+}
 
 func (m *LibraryLockManager) UnlockLibrary(id uint) {
 	m.Lock()

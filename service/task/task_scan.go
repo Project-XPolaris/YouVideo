@@ -1,12 +1,79 @@
 package task
 
 import (
+	"errors"
+	"github.com/allentom/harukap/module/task"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/module"
 	"github.com/projectxpolaris/youvideo/service"
-	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 )
+
+type ScanTask struct {
+	task.BaseTask
+	TaskOutput *ScanTaskOutput
+	Library    database.Library
+	logger     *logrus.Entry
+	Option     *CreateScanTaskOption
+}
+
+func (t *ScanTask) Stop() error {
+	return nil
+}
+
+func (t *ScanTask) Start() error {
+	t.logger.Info("task start")
+	// lock library
+	if !service.DefaultLibraryLockManager.TryToLock(t.Library.ID) {
+		t.logger.Error("library is busy")
+	}
+	defer service.DefaultLibraryLockManager.UnlockLibrary(t.Library.ID)
+	// remove file where is not found
+	err := service.CheckLibrary(t.Library.ID)
+	if err != nil {
+		t.Err = err
+		if t.Option.OnError != nil {
+			t.Option.OnError(t, err)
+		}
+		return nil
+	}
+	pathList, err := service.ScanVideo(&t.Library)
+	if err != nil {
+		t.Err = err
+		if t.Option.OnError != nil {
+			t.Option.OnError(t, err)
+		}
+		return nil
+	}
+	t.TaskOutput.Total = int64(len(pathList))
+	for idx, path := range pathList {
+		t.TaskOutput.Current = int64(idx + 1)
+		t.TaskOutput.CurrentPath = path
+		t.TaskOutput.CurrentName = filepath.Base(path)
+		err = service.CreateVideoFile(path, t.Library.ID, t.Library.DefaultVideoType, t.Option.MatchSubject)
+		if err != nil {
+			if t.Option.OnFileError != nil {
+				t.Option.OnFileError(t, err)
+			}
+			t.logger.Error(err)
+		} else {
+			if t.Option.OnFileComplete != nil {
+				t.Option.OnFileComplete(t)
+			}
+		}
+
+	}
+	t.BaseTask.Status = TaskStatusNameMapping[TaskStatusDone]
+	if t.Option.OnComplete != nil {
+		t.Option.OnComplete(t)
+	}
+	return nil
+}
+
+func (t *ScanTask) Output() (interface{}, error) {
+	return t.TaskOutput, nil
+}
 
 type ScanTaskOutput struct {
 	Id          uint   `json:"id"`
@@ -20,88 +87,40 @@ type CreateScanTaskOption struct {
 	LibraryId      uint
 	Uid            string
 	MatchSubject   bool
-	OnFileComplete func(task *Task)
-	OnFileError    func(task *Task, err error)
-	OnError        func(task *Task, err error)
-	OnComplete     func(task *Task)
+	OnFileComplete func(task *ScanTask)
+	OnFileError    func(task *ScanTask, err error)
+	OnError        func(task *ScanTask, err error)
+	OnComplete     func(task *ScanTask)
 }
 
-func CreateSyncLibraryTask(option CreateScanTaskOption) (*Task, error) {
-	for _, task := range DefaultTaskPool.Tasks {
-		if scanOutput, ok := task.Output.(*ScanTaskOutput); ok && scanOutput.Id == option.LibraryId {
-			if task.Status == TaskStatusRunning {
-				return task, nil
-			}
-			DefaultTaskPool.RemoveTaskById(task.Id)
-			break
-		}
+func CreateSyncLibraryTask(option CreateScanTaskOption) (*ScanTask, error) {
+	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeScanLibrary], TaskStatusNameMapping[TaskStatusRunning])
+	if existRunningTask != nil {
+		return existRunningTask.(*ScanTask), nil
+	}
+	if service.DefaultLibraryLockManager.IsLock(option.LibraryId) {
+		return nil, errors.New("library is busy")
 	}
 	var library database.Library
 	err := database.Instance.Preload("Users").Find(&library, option.LibraryId).Error
 	if err != nil {
 		return nil, err
 	}
-	id := xid.New().String()
 	output := &ScanTaskOutput{
 		Id:   library.ID,
 		Path: library.Path,
 	}
-	task := &Task{
-		Id:     id,
-		Type:   TaskTypeScanLibrary,
-		Status: TaskStatusRunning,
-		Output: output,
-		Uid:    option.Uid,
+	task := &ScanTask{
+		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeScanLibrary], option.Uid, TaskStatusNameMapping[TaskStatusRunning]),
+		TaskOutput: output,
+		Library:    library,
+		Option:     &option,
 	}
-	logger := TaskLogger.WithFields(logrus.Fields{
-		"id":        id,
+	task.logger = TaskLogger.WithFields(logrus.Fields{
+		"id":        task.Id,
 		"path":      library.Path,
 		"libraryId": library.ID,
 	})
-	go func() {
-		logger.Info("task start")
-		// remove file where is not found
-		err := service.CheckLibrary(library.ID)
-		if err != nil {
-			task.SetError(err)
-			if option.OnError != nil {
-				option.OnError(task, err)
-			}
-			return
-		}
-		pathList, err := service.ScanVideo(&library)
-		if err != nil {
-			task.SetError(err)
-			if option.OnError != nil {
-				option.OnError(task, err)
-			}
-			return
-		}
-		output.Total = int64(len(pathList))
-		for idx, path := range pathList {
-			output.Current = int64(idx + 1)
-			output.CurrentPath = path
-			output.CurrentName = filepath.Base(path)
-			err = service.CreateVideoFile(path, library.ID, library.DefaultVideoType, option.MatchSubject)
-			if err != nil {
-				if option.OnFileError != nil {
-					option.OnFileError(task, err)
-				}
-				logger.Error(err)
-			} else {
-				if option.OnFileComplete != nil {
-					option.OnFileComplete(task)
-				}
-			}
-
-		}
-		task.Status = TaskStatusDone
-		if option.OnComplete != nil {
-			option.OnComplete(task)
-		}
-	}()
-	DefaultTaskPool.Lock()
-	DefaultTaskPool.Tasks = append(DefaultTaskPool.Tasks, task)
-	DefaultTaskPool.Unlock()
+	module.TaskModule.Pool.AddTask(task)
 	return task, nil
 }

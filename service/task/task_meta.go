@@ -2,11 +2,64 @@ package task
 
 import (
 	"errors"
+	"github.com/allentom/harukap/module/task"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/module"
 	"github.com/projectxpolaris/youvideo/service"
-	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
 )
+
+type GenerateVideoMetaTask struct {
+	task.BaseTask
+	TaskOutput *GenerateVideoMetaTaskOutput
+	Library    database.Library
+	Option     *CreateGenerateMetaOption
+}
+
+func (t *GenerateVideoMetaTask) Stop() error {
+	return nil
+}
+
+func (t *GenerateVideoMetaTask) Start() error {
+	for idx, video := range t.Library.Videos {
+		t.TaskOutput.Current = int64(idx) + 1
+		t.TaskOutput.CurrentName = video.Name
+		for _, file := range video.Files {
+			doneChan := make(chan struct{}, 0)
+			errChan := make(chan error, 0)
+			t.TaskOutput.CurrentPath = file.Path
+			service.DefaultVideoMetaAnalyzer.In <- service.VideoMetaAnalyzerInput{
+				File:    &file,
+				OnDone:  doneChan,
+				OnError: errChan,
+			}
+			select {
+			case <-doneChan:
+			case metaErr := <-errChan:
+				if t.Option.OnFileError != nil {
+					t.Option.OnFileError(t, metaErr)
+				}
+				logrus.Error(metaErr)
+			}
+			if t.Option.OnFileComplete != nil {
+				t.Option.OnFileComplete(t)
+			}
+		}
+		if t.Option.OnVideoComplete != nil {
+			t.Option.OnVideoComplete(t)
+		}
+	}
+	if t.Option.OnComplete != nil {
+		t.Option.OnComplete(t)
+	}
+	t.BaseTask.Status = TaskStatusNameMapping[TaskStatusDone]
+	service.DefaultLibraryLockManager.UnlockLibrary(t.Library.ID)
+	return nil
+}
+
+func (t *GenerateVideoMetaTask) Output() (interface{}, error) {
+	return t.TaskOutput, nil
+}
 
 type GenerateVideoMetaTaskOutput struct {
 	Id          uint             `json:"id"`
@@ -19,22 +72,16 @@ type GenerateVideoMetaTaskOutput struct {
 type CreateGenerateMetaOption struct {
 	LibraryId       uint
 	Uid             string
-	OnVideoComplete func(task *Task)
-	OnFileComplete  func(task *Task)
-	OnFileError     func(task *Task, err error)
-	OnComplete      func(task *Task)
+	OnVideoComplete func(task *GenerateVideoMetaTask)
+	OnFileComplete  func(task *GenerateVideoMetaTask)
+	OnFileError     func(task *GenerateVideoMetaTask, err error)
+	OnComplete      func(task *GenerateVideoMetaTask)
 }
 
-func CreateGenerateVideoMetaTask(option CreateGenerateMetaOption) (*Task, error) {
-	for _, task := range DefaultTaskPool.Tasks {
-		if task.Output.(*GenerateVideoMetaTaskOutput).Id == option.LibraryId {
-			if task.Status == TaskStatusRunning {
-				return task, nil
-			}
-			// recreate task
-			DefaultTaskPool.RemoveTaskById(task.Id)
-			break
-		}
+func CreateGenerateVideoMetaTask(option CreateGenerateMetaOption) (*GenerateVideoMetaTask, error) {
+	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeMeta], TaskStatusNameMapping[TaskStatusRunning])
+	if existRunningTask != nil {
+		return existRunningTask.(*GenerateVideoMetaTask), nil
 	}
 	if !service.DefaultLibraryLockManager.TryToLock(option.LibraryId) {
 		return nil, errors.New("library is busy")
@@ -42,12 +89,10 @@ func CreateGenerateVideoMetaTask(option CreateGenerateMetaOption) (*Task, error)
 	output := &GenerateVideoMetaTaskOutput{
 		Id: option.LibraryId,
 	}
-	task := &Task{
-		Id:     xid.New().String(),
-		Type:   TaskTypeMeta,
-		Status: TaskStatusRunning,
-		Output: output,
-		Uid:    option.Uid,
+	task := &GenerateVideoMetaTask{
+		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeMeta], option.Uid, TaskStatusNameMapping[TaskStatusRunning]),
+		TaskOutput: output,
+		Option:     &option,
 	}
 	var library database.Library
 	err := database.Instance.Where("id = ?", option.LibraryId).Preload("Videos").Preload("Videos.Files").Find(&library).Error
@@ -55,46 +100,9 @@ func CreateGenerateVideoMetaTask(option CreateGenerateMetaOption) (*Task, error)
 		service.DefaultLibraryLockManager.UnlockLibrary(option.LibraryId)
 		return nil, err
 	}
+	task.Library = library
 	output.Library = library
 	output.Total = int64(len(library.Videos))
-
-	go func() {
-		for idx, video := range library.Videos {
-			output.Current = int64(idx) + 1
-			output.CurrentName = video.Name
-			for _, file := range video.Files {
-				doneChan := make(chan struct{}, 0)
-				errChan := make(chan error, 0)
-				output.CurrentPath = file.Path
-				service.DefaultVideoMetaAnalyzer.In <- service.VideoMetaAnalyzerInput{
-					File:    &file,
-					OnDone:  doneChan,
-					OnError: errChan,
-				}
-				select {
-				case <-doneChan:
-				case metaErr := <-errChan:
-					if option.OnFileError != nil {
-						option.OnFileError(task, metaErr)
-					}
-					logrus.Error(metaErr)
-				}
-				if option.OnFileComplete != nil {
-					option.OnFileComplete(task)
-				}
-			}
-			if option.OnVideoComplete != nil {
-				option.OnVideoComplete(task)
-			}
-		}
-		if option.OnComplete != nil {
-			option.OnComplete(task)
-		}
-		task.Status = TaskStatusDone
-		service.DefaultLibraryLockManager.UnlockLibrary(library.ID)
-	}()
-	DefaultTaskPool.Lock()
-	DefaultTaskPool.Tasks = append(DefaultTaskPool.Tasks, task)
-	DefaultTaskPool.Unlock()
+	module.TaskModule.Pool.AddTask(task)
 	return task, nil
 }

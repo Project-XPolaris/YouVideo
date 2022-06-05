@@ -2,11 +2,80 @@ package task
 
 import (
 	"errors"
+	"github.com/allentom/harukap/module/task"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/module"
 	"github.com/projectxpolaris/youvideo/service"
-	"github.com/rs/xid"
 	"gorm.io/gorm"
 )
+
+type RemoveLibraryTask struct {
+	task.BaseTask
+	TaskOutput *RemoveLibraryOutput
+	Library    database.Library
+	Option     *RemoveLibraryOption
+}
+
+func (t *RemoveLibraryTask) Stop() error {
+	return nil
+}
+
+func (t *RemoveLibraryTask) Start() error {
+	var videos []database.Video
+	err := database.Instance.
+		Model(&database.Library{Model: gorm.Model{ID: t.Library.ID}}).
+		Association("Videos").
+		Find(&videos)
+	if err != nil {
+		if t.Option.OnError != nil {
+			t.Option.OnError(t, err)
+		}
+		return nil
+	}
+	for _, video := range videos {
+		err = service.DeleteVideoById(video.ID)
+		if err != nil {
+			if t.Option.OnError != nil {
+				t.Option.OnError(t, err)
+			}
+			return nil
+		}
+	}
+	// clear library users
+	err = database.Instance.
+		Model(&database.Library{Model: gorm.Model{ID: t.Library.ID}}).
+		Association("Users").Clear()
+	if err != nil {
+		if t.Option.OnError != nil {
+			t.Option.OnError(t, err)
+		}
+		return nil
+	}
+	// clear library folder
+	err = database.Instance.Unscoped().Where("library_id = ?", t.Library.ID).Delete(database.Folder{}).Error
+	if err != nil {
+		if t.Option.OnError != nil {
+			t.Option.OnError(t, err)
+		}
+		return nil
+	}
+	err = database.Instance.Unscoped().Delete(&database.Library{}, t.Library.ID).Error
+	if err != nil {
+		if t.Option.OnError != nil {
+			t.Option.OnError(t, err)
+		}
+		return nil
+	}
+	t.BaseTask.Status = TaskStatusNameMapping[TaskStatusDone]
+	if t.Option.OnComplete != nil {
+		t.Option.OnComplete(t)
+	}
+	return nil
+}
+
+func (t *RemoveLibraryTask) Output() (interface{}, error) {
+	return t.TaskOutput, nil
+}
 
 type RemoveLibraryOutput struct {
 	Id   uint   `json:"id"`
@@ -15,19 +84,14 @@ type RemoveLibraryOutput struct {
 type RemoveLibraryOption struct {
 	LibraryId  uint
 	Uid        string
-	OnError    func(task *Task, err error)
-	OnComplete func(task *Task)
+	OnError    func(task *RemoveLibraryTask, err error)
+	OnComplete func(task *RemoveLibraryTask)
 }
 
-func CreateRemoveLibraryTask(option RemoveLibraryOption) (*Task, error) {
-	for _, task := range DefaultTaskPool.Tasks {
-		if removeTask, ok := task.Output.(*RemoveLibraryOutput); ok && removeTask.Id == option.LibraryId {
-			if task.Status == TaskStatusRunning {
-				return task, nil
-			}
-			DefaultTaskPool.RemoveTaskById(task.Id)
-			break
-		}
+func CreateRemoveLibraryTask(option RemoveLibraryOption) (*RemoveLibraryTask, error) {
+	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeRemove], TaskStatusNameMapping[TaskStatusRunning])
+	if existRunningTask != nil {
+		return existRunningTask.(*RemoveLibraryTask), nil
 	}
 	if !service.DefaultLibraryLockManager.TryToLock(option.LibraryId) {
 		return nil, errors.New("library is busy")
@@ -37,69 +101,16 @@ func CreateRemoveLibraryTask(option RemoveLibraryOption) (*Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	id := xid.New().String()
 	output := &RemoveLibraryOutput{
 		Id:   library.ID,
 		Path: library.Path,
 	}
-	task := &Task{
-		Id:     id,
-		Type:   TaskTypeRemove,
-		Status: TaskStatusRunning,
-		Output: output,
-		Uid:    option.Uid,
+	task := &RemoveLibraryTask{
+		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeRemove], option.Uid, TaskStatusNameMapping[TaskStatusRunning]),
+		TaskOutput: output,
+		Library:    library,
+		Option:     &option,
 	}
-	go func() {
-		var videos []database.Video
-		err = database.Instance.
-			Model(&database.Library{Model: gorm.Model{ID: library.ID}}).
-			Association("Videos").
-			Find(&videos)
-		if err != nil {
-			if option.OnError != nil {
-				option.OnError(task, err)
-			}
-			return
-		}
-		for _, video := range videos {
-			err = service.DeleteVideoById(video.ID)
-			if err != nil {
-				if option.OnError != nil {
-					option.OnError(task, err)
-				}
-				return
-			}
-		}
-		err = database.Instance.
-			Model(&database.Library{Model: gorm.Model{ID: library.ID}}).
-			Association("Users").Clear()
-		if err != nil {
-			if option.OnError != nil {
-				option.OnError(task, err)
-			}
-			return
-		}
-		err = database.Instance.Unscoped().Delete(&database.Library{}, library.ID).Error
-		if err != nil {
-			if option.OnError != nil {
-				option.OnError(task, err)
-			}
-			return
-		}
-		err = database.Instance.Unscoped().Where("library_id = ?", library.ID).Delete(database.Folder{}).Error
-		if err != nil {
-			if option.OnError != nil {
-				option.OnError(task, err)
-			}
-			return
-		}
-		task.Status = TaskStatusDone
-		if option.OnComplete != nil {
-			option.OnComplete(task)
-		}
-	}()
-	DefaultTaskPool.Lock()
-	DefaultTaskPool.Tasks = append(DefaultTaskPool.Tasks, task)
-	DefaultTaskPool.Unlock()
+	module.TaskModule.Pool.AddTask(task)
 	return task, nil
 }

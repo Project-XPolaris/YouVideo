@@ -5,11 +5,11 @@ import (
 	"github.com/ahmetb/go-linq/v3"
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/serializer"
+	"github.com/allentom/harukap/module/task"
 	"github.com/allentom/transcoder/ffmpeg"
 	"github.com/project-xpolaris/youplustoolkit/youlibrary"
 	"github.com/project-xpolaris/youplustoolkit/youplus"
 	"github.com/projectxpolaris/youvideo/database"
-	"github.com/projectxpolaris/youvideo/service/task"
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"os"
 	"path/filepath"
@@ -160,11 +160,12 @@ type BaseTaskTemplate struct {
 	Output interface{} `json:"output"`
 }
 
-func (t *BaseTaskTemplate) Assign(taskData *task.Task) {
-	t.Id = taskData.Id
-	t.Status = task.TaskStatusNameMapping[taskData.Status]
-	t.Type = task.TaskTypeNameMapping[taskData.Type]
-	t.Output = taskData.Output
+func (t *BaseTaskTemplate) Assign(taskData task.Task) {
+	t.Id = taskData.GetId()
+	t.Status = taskData.GetStatus()
+	t.Type = taskData.GetType()
+	output, _ := taskData.Output()
+	t.Output = output
 }
 
 func (t *BaseTaskTemplate) AssignWithTrans(task youtrans.TaskResponse) {

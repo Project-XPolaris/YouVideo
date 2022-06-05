@@ -6,9 +6,9 @@ type Library struct {
 	gorm.Model
 	Path             string
 	Name             string
-	DefaultVideoType string  `gorm:"default:video"`
-	Videos           []Video `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	Users            []*User `gorm:"many2many:library_users;"`
-	Folders          []*Folder
-	Entity           []*Entity
+	DefaultVideoType string    `gorm:"default:video"`
+	Videos           []Video   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Users            []*User   `gorm:"many2many:library_users;"`
+	Folders          []*Folder `gorm:"constraint:OnDelete:CASCADE;"`
+	Entity           []*Entity `gorm:"constraint:OnDelete:CASCADE;"`
 }

@@ -68,9 +68,10 @@ func ScanVideo(library *database.Library) ([]string, error) {
 }
 
 type VideoQueryBuilder struct {
-	gormh.DefaultPageFilter
-	VideoTagIdFilter
-	VideoLibraryIdFilter
+	Library          []int      `hsource:"query" hname:"library"`
+	Tag              []int      `hsource:"query" hname:"tag"`
+	Page             int        `hsource:"param" hname:"page"`
+	PageSize         int        `hsource:"param" hname:"pageSize"`
 	Orders           []string   `hsource:"query" hname:"order"`
 	GroupBy          []string   `hsource:"query" hname:"group"`
 	BaseDirs         []string   `hsource:"query" hname:"dir"`
@@ -85,19 +86,7 @@ type VideoQueryBuilder struct {
 	ReleaseEnd       *time.Time `hsource:"query" hname:"releaseEnd" format:"2006-01-02"`
 }
 
-func (v *VideoQueryBuilder) InTagIds(ids ...interface{}) {
-	if v.VideoTagIdFilter.tagIds == nil {
-		v.VideoTagIdFilter.tagIds = []interface{}{}
-	}
-	v.VideoTagIdFilter.tagIds = append(v.VideoTagIdFilter.tagIds, ids...)
-}
-func (v *VideoQueryBuilder) InLibraryIds(ids ...interface{}) {
-	if v.VideoLibraryIdFilter.libraryIds == nil {
-		v.VideoLibraryIdFilter.libraryIds = []interface{}{}
-	}
-	v.VideoLibraryIdFilter.libraryIds = append(v.VideoLibraryIdFilter.libraryIds, ids...)
-}
-func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
+func (v *VideoQueryBuilder) Query() (int64, []*database.Video, error) {
 	query := database.Instance
 	query = gormh.ApplyFilters(v, query)
 	if len(v.Random) > 0 {
@@ -139,6 +128,13 @@ func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
 		query = query.Joins("left join video_infos on video_infos.video_id = videos.id")
 		query = query.Where("video_infos.video_meta_item_id = ?", v.InfoId)
 	}
+	if v.Tag != nil && len(v.Tag) > 0 {
+		query = query.Joins("left join video_tags on video_tags.video_id = videos.id").
+			Where("video_tags.tag_id In ?", v.Tag)
+	}
+	if v.Library != nil && len(v.Library) > 0 {
+		query = query.Where("videos.library_id In ?", v.Library)
+	}
 	if v.ReleaseStart != nil {
 		query = query.Where("release >= ?", v.ReleaseStart)
 	}
@@ -150,35 +146,13 @@ func (v *VideoQueryBuilder) ReadModels() (int64, interface{}, error) {
 	err := query.Model(&database.Video{}).
 		Preload("Files").
 		Preload("Infos").
-		Limit(v.GetLimit()).
-		Offset(v.GetOffset()).
+		Limit(v.PageSize).
+		Offset(v.PageSize * (v.Page - 1)).
 		Find(&models).
 		Offset(-1).
 		Count(&count).
 		Error
 	return count, models, err
-}
-
-type VideoTagIdFilter struct {
-	tagIds []interface{}
-}
-
-func (f VideoTagIdFilter) ApplyQuery(db *gorm.DB) *gorm.DB {
-	if f.tagIds != nil && len(f.tagIds) > 0 {
-		return db.Joins("left join video_tags on video_tags.video_id = videos.id").Where("video_tags.tag_id In ?", f.tagIds)
-	}
-	return db
-}
-
-type VideoLibraryIdFilter struct {
-	libraryIds []interface{}
-}
-
-func (f VideoLibraryIdFilter) ApplyQuery(db *gorm.DB) *gorm.DB {
-	if f.libraryIds != nil && len(f.libraryIds) > 0 {
-		return db.Where("videos.library_id In ?", f.libraryIds)
-	}
-	return db
 }
 func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject bool) error {
 	// check if video file exist
@@ -278,7 +252,6 @@ func RefreshVideo(videoId uint) error {
 			return err
 		}
 	}
-	DefaultVideoInformationMatchService.In <- NewVideoInformationMatchInput(&video)
 	return nil
 }
 func DeleteVideoById(id uint) error {

@@ -26,32 +26,15 @@ func GetTagByID(id uint, uid string) (*database.Tag, error) {
 }
 
 type TagQueryBuilder struct {
-	gormh.DefaultPageFilter
-	TagVideoIdsQueryFilter
+	Page       int    `hsource:"param" hname:"page"`
+	PageSize   int    `hsource:"param" hname:"pageSize"`
+	Video      []int  `hsource:"query" hname:"video"`
 	SearchName string `hsource:"query" hname:"search"`
 	Ids        []uint `hsource:"query" hname:"id"`
 	Uid        string
 }
 
-func (t *TagQueryBuilder) InVideoIds(ids ...interface{}) {
-	if t.videoIds == nil {
-		t.videoIds = []interface{}{}
-	}
-	t.videoIds = append(t.videoIds, ids...)
-}
-
-type TagVideoIdsQueryFilter struct {
-	videoIds []interface{}
-}
-
-func (f TagVideoIdsQueryFilter) ApplyQuery(db *gorm.DB) *gorm.DB {
-	if f.videoIds != nil && len(f.videoIds) > 0 {
-		return db.Joins("left join video_tags on video_tags.tag_id = tags.id").Where("video_tags.video_id In ?", f.videoIds)
-	}
-	return db
-}
-
-func (t *TagQueryBuilder) ReadModels() (int64, interface{}, error) {
+func (t *TagQueryBuilder) Query() (int64, []*database.Tag, error) {
 	query := database.Instance
 	query = gormh.ApplyFilters(t, query)
 	if len(t.SearchName) > 0 {
@@ -60,12 +43,16 @@ func (t *TagQueryBuilder) ReadModels() (int64, interface{}, error) {
 	if len(t.Ids) > 0 {
 		query = query.Where("id IN ?", t.Ids)
 	}
+	if len(t.Video) > 0 {
+		query = query.Joins("left join video_tags on video_tags.tag_id = tags.id").
+			Where("video_tags.video_id In ?", t.Video)
+	}
 	query = query.Joins("left join tag_users on tag_users.tag_id = tags.id").
 		Joins("left join users on tag_users.user_id = users.id").
 		Where("users.uid in ?", []string{t.Uid, PublicUid})
 	models := make([]*database.Tag, 0)
 	var count int64
-	err := query.Model(&database.Tag{}).Limit(t.GetLimit()).Offset(t.GetOffset()).Find(&models).Count(&count).Error
+	err := query.Model(&database.Tag{}).Limit(t.PageSize).Offset(t.PageSize * (t.Page - 1)).Find(&models).Count(&count).Error
 	return count, models, err
 }
 func AddOrCreateTagFromVideo(tagName []string, uid string, ids ...uint) error {

@@ -34,6 +34,7 @@ func GetEngine() *haruka.Engine {
 	e.Router.GET("/video/file/{id:[0-9]+}/subtitles", videoSubtitle)
 	e.Router.POST("/video/{id:[0-9]+}/move", moveVideoHandler)
 	e.Router.POST("/video/{id:[0-9]+}/trans", transcodeHandler)
+	e.Router.POST("/video/{id:[0-9]+}/refresh", refreshVideoHandler)
 	e.Router.POST("/video/match", matchVideoInformationHandler)
 	e.Router.GET("/meta", getMetaListHandler)
 	e.Router.POST("/entities", createEntityHandler)
@@ -48,7 +49,7 @@ func GetEngine() *haruka.Engine {
 	e.Router.GET("/ffmpeg/codec", getCodecsHandler)
 	e.Router.GET("/ffmpeg/formats", getFormatsHandler)
 	e.Router.GET("/files", readDirectoryHandler)
-	e.Router.GET("/task", readTaskListHandler)
+	e.Router.GET("/task", module.TaskModule.ListHandler)
 	e.Router.Static("/covers", config.Instance.CoversStore)
 	e.Router.GET("/info", serviceInfoHandler)
 	e.Router.DELETE("/file/{id:[0-9]+}", removeFileHandler)
@@ -60,11 +61,14 @@ func GetEngine() *haruka.Engine {
 	e.Router.GET("/folders", getFolderListHandler)
 	e.Router.GET("/oauth/youauth", generateAccessCodeWithYouAuthHandler)
 	e.Router.POST("/oauth/youplus", youPlusLoginHandler)
-	e.Router.AddHandler("/notification", notificationSocketHandler)
+	e.Router.AddHandler("/notification", module.Notification.NotificationSocketHandler)
 	//e.UseMiddleware(&AuthMiddleware{})
 	//e.UseMiddleware(&OauthMiddleware{})
 	//e.UseMiddleware(&ReadUserMiddleware{})
 	e.UseMiddleware(module.Auth.AuthMiddleware)
 	e.UseMiddleware(&CheckAuthMiddleware{})
+
+	// register converter
+	module.TaskModule.AddConverter(NewReadMetaTaskTemplate)
 	return e
 }

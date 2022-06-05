@@ -77,6 +77,7 @@ func (a *VideoCoverMetaAnalyzer) Run() {
 			"path": file.Path,
 			"file": filepath.Base(file.Path),
 		})
+		coverFilePath := GetTargetCover(file.Path)
 		// remove cover is not exist
 		if len(file.Cover) > 0 {
 			existCoverPath := filepath.Join(config.Instance.CoversStore, file.Cover)
@@ -84,10 +85,24 @@ func (a *VideoCoverMetaAnalyzer) Run() {
 				file.Cover = ""
 			}
 		}
-		coverFilePath := GetTargetCover(file.Path)
-		if len(file.Cover) > 0 {
+		if len(file.Cover) > 0 && len(coverFilePath) == 0 {
 			continue
 		}
+		// check if cover is same as old
+		if len(coverFilePath) > 0 {
+			// check if cover is same as old
+			md5, err := util.MD5Checksum(coverFilePath)
+			if err != nil {
+				fileLogger.Error(err)
+				continue
+			}
+			// if cover is same as old, skip
+			if file.CoverFileMd5 == md5 {
+				continue
+			}
+			file.CoverFileMd5 = md5
+		}
+
 		// use video shot
 		if len(coverFilePath) == 0 {
 			coverPath, err := GenerateVideoCover(file.Path)
@@ -104,6 +119,7 @@ func (a *VideoCoverMetaAnalyzer) Run() {
 				continue
 			}
 			file.Cover = thumbnailFileName
+			file.AutoGenCover = false
 		}
 		coverStorePath := filepath.Join(config.Instance.CoversStore, file.Cover)
 		width, height, err := getImageDimension(coverStorePath)

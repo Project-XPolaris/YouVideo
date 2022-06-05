@@ -10,6 +10,7 @@ type File struct {
 	CoverWidth     int64
 	CoverHeight    int64
 	AutoGenCover   bool
+	CoverFileMd5   string
 	Duration       float64
 	Size           int64
 	Bitrate        int64

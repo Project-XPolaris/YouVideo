@@ -17,8 +17,8 @@ func CreateEntity(name string, libraryId uint) (*database.Entity, error) {
 type EntityQueryBuilder struct {
 	Id           uint   `hsource:"query" hname:"id"`
 	Search       string `hsource:"query" hname:"search"`
-	Page         int
-	PageSize     int
+	Page         int    `hsource:"param" hname:"page"`
+	PageSize     int    `hsource:"param" hname:"pageSize"`
 	Name         string `hsource:"query" hname:"name"`
 	ReleaseStart string `hsource:"query" hname:"releaseStart"`
 	ReleaseEnd   string `hsource:"query" hname:"releaseEnd"`

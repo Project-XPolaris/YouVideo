@@ -6,7 +6,6 @@ import (
 	"github.com/projectxpolaris/youvideo/module"
 	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/service"
-	"github.com/projectxpolaris/youvideo/service/task"
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"net/http"
 	"net/http/httputil"
@@ -66,7 +65,7 @@ var readDirectoryHandler haruka.RequestHandler = func(context *haruka.Context) {
 }
 
 var readTaskListHandler haruka.RequestHandler = func(context *haruka.Context) {
-	tasks := task.GetTaskList()
+	tasks := module.TaskModule.Pool.Tasks
 	data := make([]BaseTaskTemplate, 0)
 	for _, task := range tasks {
 		template := BaseTaskTemplate{}

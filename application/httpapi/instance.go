@@ -35,6 +35,7 @@ func GetEngine() *haruka.Engine {
 	e.Router.POST("/video/{id:[0-9]+}/move", moveVideoHandler)
 	e.Router.POST("/video/{id:[0-9]+}/trans", transcodeHandler)
 	e.Router.POST("/video/{id:[0-9]+}/refresh", refreshVideoHandler)
+	e.Router.GET("/link/{id:[0-9]+}/{type}/{token}", playLinkHandler)
 	e.Router.POST("/video/match", matchVideoInformationHandler)
 	e.Router.GET("/meta", getMetaListHandler)
 	e.Router.POST("/entities", createEntityHandler)
@@ -65,7 +66,7 @@ func GetEngine() *haruka.Engine {
 	//e.UseMiddleware(&AuthMiddleware{})
 	//e.UseMiddleware(&OauthMiddleware{})
 	//e.UseMiddleware(&ReadUserMiddleware{})
-	e.UseMiddleware(module.Auth.AuthMiddleware)
+	e.UseMiddleware(&AuthMiddleware{})
 	e.UseMiddleware(&CheckAuthMiddleware{})
 
 	// register converter

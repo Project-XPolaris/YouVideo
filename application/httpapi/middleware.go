@@ -4,7 +4,9 @@ import (
 	"errors"
 	"github.com/allentom/haruka"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/module"
 	"github.com/projectxpolaris/youvideo/service"
+	"net/http"
 )
 
 type CheckAuthMiddleware struct{}
@@ -49,4 +51,29 @@ func (m *VideoAccessibleMiddleware) OnRequest(ctx *haruka.Context) {
 	if !checkVideoAccessibleAndRaiseError(ctx) {
 		ctx.Abort()
 	}
+}
+
+type AuthMiddleware struct {
+}
+
+func (m *AuthMiddleware) OnRequest(ctx *haruka.Context) {
+	noAuthMatchPatterns := []string{
+		"/oauth/youauth",
+		"/oauth/youplus",
+		"/info",
+		"/link/{id:[0-9]+}/{type}/{token}",
+	}
+	for _, pattern := range noAuthMatchPatterns {
+		if ctx.Pattern == pattern {
+			return
+		}
+	}
+	rawToken := module.Auth.ParseAuthHeader(ctx)
+	user, err := module.Auth.ParseToken(rawToken)
+	if err != nil {
+		AbortError(ctx, err, http.StatusForbidden)
+		ctx.Abort()
+		return
+	}
+	ctx.Param["claim"] = user
 }

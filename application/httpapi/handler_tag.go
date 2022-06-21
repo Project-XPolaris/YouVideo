@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"github.com/allentom/haruka"
-	"github.com/allentom/haruka/blueprint"
 	"github.com/allentom/haruka/validator"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/service"
@@ -68,49 +67,67 @@ var getTagListHandler haruka.RequestHandler = func(context *haruka.Context) {
 	})
 }
 var removeTagHandler haruka.RequestHandler = func(context *haruka.Context) {
-	view := blueprint.DeleteModelView{
-		Context: context,
-		Lookup:  "id",
-		OnError: func(err error) {
-			AbortError(context, err, http.StatusInternalServerError)
-			return
-		},
-		GetValidators: func(v *blueprint.DeleteModelView) []validator.Validator {
-			permissionValidator := TagOwnerPermission{}
-			context.BindingInput(&permissionValidator)
-			return []validator.Validator{
-				&permissionValidator,
-			}
-		},
-		Model: &database.Tag{},
+	id, err := context.GetPathParameterAsInt("id")
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
 	}
-	view.Run()
+	permissionValidator := TagOwnerPermission{}
+	err = context.BindingInput(&permissionValidator)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	validators := []validator.Validator{
+		&permissionValidator,
+	}
+	if err := validator.RunValidators(validators...); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+	}
+	tag := &database.Tag{}
+	err = tag.DeleteById(uint(id))
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
 }
 
 var updateTagHandler haruka.RequestHandler = func(context *haruka.Context) {
-	view := blueprint.UpdateModelView{
-		Context: context,
-		Lookup:  "id",
-		OnError: func(err error) {
-			AbortError(context, err, http.StatusInternalServerError)
-			return
-		},
-		Model:    &database.Tag{},
-		Template: &BaseTagTemplate{},
-		GetValidators: func(v *blueprint.UpdateModelView) []validator.Validator {
-			permissionValidator := TagOwnerPermission{}
-			context.BindingInput(&permissionValidator)
-			duplicateTagValidator := DuplicateTagValidator{
-				Name: v.RequestBody["name"].(string),
-				Uid:  context.Param["uid"].(string),
-			}
-			return []validator.Validator{
-				&permissionValidator,
-				&duplicateTagValidator,
-			}
-		},
+	id, err := context.GetPathParameterAsInt("id")
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
 	}
-	view.Run()
+	permissionValidator := TagOwnerPermission{}
+	err = context.BindingInput(&permissionValidator)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	body := map[string]interface{}{}
+	err = context.ParseJson(&body)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+	}
+	duplicateTagValidator := DuplicateTagValidator{
+		Name: body["name"].(string),
+		Uid:  context.Param["uid"].(string),
+	}
+	validators := []validator.Validator{
+		&permissionValidator,
+		&duplicateTagValidator,
+	}
+	if err := validator.RunValidators(validators...); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+	}
+
+	tagModel := &database.Tag{}
+	rawTag, err := tagModel.UpdateById(uint(id), body)
+	template := BaseTagTemplate{}
+	template.Serializer(rawTag, map[string]interface{}{})
+	context.JSON(template)
 }
 
 type TagVideoBatchRequestBody struct {

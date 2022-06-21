@@ -10,6 +10,7 @@ import (
 	"github.com/project-xpolaris/youplustoolkit/youlibrary"
 	"github.com/project-xpolaris/youplustoolkit/youplus"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/service"
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"os"
 	"path/filepath"
@@ -362,4 +363,27 @@ func (t *BaseEntityTemplate) Serializer(dataModel interface{}, context map[strin
 		t.Release = release.Format(formatDate)
 	}
 	return nil
+}
+
+type CCTemplate struct {
+	Index int    `json:"index"`
+	Start int64  `json:"start"`
+	End   int64  `json:"end"`
+	Text  string `json:"text"`
+}
+
+func NewCCTemplate(cc *service.CC) *CCTemplate {
+	return &CCTemplate{
+		Index: cc.Index,
+		Start: cc.StartTime.Milliseconds(),
+		End:   cc.EndTime.Milliseconds(),
+		Text:  cc.Text,
+	}
+}
+func NewCCTemplates(ccs []*service.CC) []*CCTemplate {
+	templates := make([]*CCTemplate, 0)
+	for _, cc := range ccs {
+		templates = append(templates, NewCCTemplate(cc))
+	}
+	return templates
 }

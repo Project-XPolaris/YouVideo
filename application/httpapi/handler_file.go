@@ -189,6 +189,17 @@ var playLinkHandler haruka.RequestHandler = func(context *haruka.Context) {
 		http.ServeFile(context.Writer, context.Request, file.Subtitles)
 	case "cover":
 		http.ServeFile(context.Writer, context.Request, filepath.Join(config.Instance.CoversStore, file.Cover))
+	case "cc":
+		ccs, err := service.GetCloseCaption(file)
+		if err != nil {
+			AbortError(context, err, http.StatusInternalServerError)
+			return
+		}
+		context.JSON(haruka.JSON{
+			"success": true,
+			"subs":    NewCCTemplates(ccs),
+		})
+		break
 	default:
 		AbortError(context, errors.New("invalid sources type"), http.StatusBadRequest)
 	}

@@ -31,7 +31,7 @@ type TagQueryBuilder struct {
 	Video      []int  `hsource:"query" hname:"video"`
 	SearchName string `hsource:"query" hname:"search"`
 	Ids        []uint `hsource:"query" hname:"id"`
-	Uid        string
+	Uid        string `hsource:"param" hname:"uid"`
 }
 
 func (t *TagQueryBuilder) Query() (int64, []*database.Tag, error) {

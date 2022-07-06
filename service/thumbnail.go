@@ -1,9 +1,11 @@
 package service
 
 import (
+	"bytes"
+	"context"
 	"errors"
 	"fmt"
-	"github.com/allentom/harukap/thumbnail"
+	"github.com/allentom/harukap/plugins/thumbnail"
 	"github.com/nfnt/resize"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/plugin"
@@ -23,10 +25,15 @@ func GenerateThumbnail(coverFilePath string) (string, error) {
 	output := filepath.Join(config.Instance.CoversStore, outputName)
 	switch config.Instance.ThumbnailType {
 	case "thumbnailservice":
-		err := plugin.DefaultThumbnailPlugin.Client.Generate(coverFilePath, output, thumbnail.ThumbnailOption{
+		buf, err := plugin.DefaultThumbnailPlugin.Client.GenerateAsRaw(coverFilePath, output, thumbnail.ThumbnailOption{
 			MaxWidth: 320,
 			Mode:     "width",
 		})
+		if err != nil {
+			return "", err
+		}
+		storage := plugin.GetDefaultStorage()
+		err = storage.Upload(context.Background(), buf, plugin.GetDefaultBucket(), output)
 		if err != nil {
 			return "", err
 		}
@@ -64,24 +71,28 @@ func GenerateThumbnailWithResize(coverFilePath string, output string) error {
 	}
 
 	m := resize.Resize(320, 0, img, resize.Lanczos3)
-	out, err := os.Create(output)
+	buf := new(bytes.Buffer)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
 	switch ext {
 	case ".jpg":
-		err = jpeg.Encode(out, m, nil)
+		err = jpeg.Encode(buf, m, nil)
 		if err != nil {
 			return err
 		}
 	case ".png":
-		err = png.Encode(out, m)
+		err = png.Encode(buf, m)
 		if err != nil {
 			return err
 		}
 	default:
 		return errors.New("unknown output format")
+	}
+	storage := plugin.GetDefaultStorage()
+	err = storage.Upload(context.Background(), buf, plugin.GetDefaultBucket(), output)
+	if err != nil {
+		return err
 	}
 	return nil
 }

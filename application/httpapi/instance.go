@@ -3,7 +3,6 @@ package httpapi
 import (
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/middleware"
-	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/module"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
@@ -51,7 +50,6 @@ func GetEngine() *haruka.Engine {
 	e.Router.GET("/ffmpeg/formats", getFormatsHandler)
 	e.Router.GET("/files", readDirectoryHandler)
 	e.Router.GET("/task", module.TaskModule.ListHandler)
-	e.Router.Static("/covers", config.Instance.CoversStore)
 	e.Router.GET("/info", serviceInfoHandler)
 	e.Router.DELETE("/file/{id:[0-9]+}", removeFileHandler)
 	e.Router.POST("/file/{id:[0-9]+}/rename", renameFileHandler)

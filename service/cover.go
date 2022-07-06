@@ -1,15 +1,16 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/util"
 	"github.com/sirupsen/logrus"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -32,12 +33,11 @@ type VideoCoverMetaAnalyzer struct {
 }
 
 func getImageDimension(imagePath string) (int, int, error) {
-	file, err := os.Open(imagePath)
+	buff, err := plugin.ReadFileBuffer(imagePath)
 	if err != nil {
 		return 0, 0, err
 	}
-
-	targetImage, _, err := image.DecodeConfig(file)
+	targetImage, _, err := image.DecodeConfig(buff)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -81,7 +81,9 @@ func (a *VideoCoverMetaAnalyzer) Run() {
 		// remove cover is not exist
 		if len(file.Cover) > 0 {
 			existCoverPath := filepath.Join(config.Instance.CoversStore, file.Cover)
-			if !util.CheckFileExist(existCoverPath) {
+			storage := plugin.GetDefaultStorage()
+			isExist, _ := storage.IsExist(context.Background(), plugin.GetDefaultBucket(), existCoverPath)
+			if !isExist {
 				file.Cover = ""
 			}
 		}

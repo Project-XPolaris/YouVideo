@@ -1,16 +1,21 @@
 package httpapi
 
 import (
+	"bytes"
+	context2 "context"
 	"errors"
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/validator"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/module"
+	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/service"
+	"io/ioutil"
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"time"
 )
 
 type FileObjectInput struct {
@@ -152,7 +157,15 @@ var fileCoverHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	http.ServeFile(context.Writer, context.Request, filepath.Join(config.Instance.CoversStore, file.Cover))
+	storageKey := filepath.Join(config.Instance.CoversStore, file.Cover)
+	storage := plugin.GetDefaultStorage()
+	buf, err := storage.Get(context2.Background(), plugin.GetDefaultBucket(), storageKey)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	data, _ := ioutil.ReadAll(buf)
+	http.ServeContent(context.Writer, context.Request, file.Cover, time.Now(), bytes.NewReader(data))
 }
 
 var playLinkHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -190,7 +203,15 @@ var playLinkHandler haruka.RequestHandler = func(context *haruka.Context) {
 	case "subs":
 		http.ServeFile(context.Writer, context.Request, file.Subtitles)
 	case "cover":
-		http.ServeFile(context.Writer, context.Request, filepath.Join(config.Instance.CoversStore, file.Cover))
+		storageKey := filepath.Join(config.Instance.CoversStore, file.Cover)
+		storage := plugin.GetDefaultStorage()
+		buf, err := storage.Get(context2.Background(), plugin.GetDefaultBucket(), storageKey)
+		if err != nil {
+			AbortError(context, err, http.StatusInternalServerError)
+			return
+		}
+		data, _ := ioutil.ReadAll(buf)
+		http.ServeContent(context.Writer, context.Request, file.Cover, time.Now(), bytes.NewReader(data))
 	case "cc":
 		ccs, err := service.GetCloseCaption(file)
 		if err != nil {

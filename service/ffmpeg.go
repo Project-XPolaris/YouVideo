@@ -1,10 +1,14 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	. "github.com/ahmetb/go-linq/v3"
+	"github.com/projectxpolaris/youvideo/plugin"
 	ffmpeg_go "github.com/u2takey/ffmpeg-go"
 	"gopkg.in/vansante/go-ffprobe.v2"
+	"io/ioutil"
+	"os"
 )
 import (
 	"fmt"
@@ -12,7 +16,6 @@ import (
 	"github.com/allentom/transcoder/ffmpeg"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/rs/xid"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -38,6 +41,7 @@ func GetShotByFile(path string, output string) error {
 	if err != nil {
 		return err
 	}
+	outputTempPath := filepath.Join(config.Instance.TempStore, filepath.Base(output))
 
 	err = ffmpeg_go.
 		Input(
@@ -45,7 +49,7 @@ func GetShotByFile(path string, output string) error {
 			ffmpeg_go.KwArgs{"ss": fmt.Sprintf("%d", int(rawSeconds)/2)},
 		).
 		Output(
-			output,
+			outputTempPath,
 			ffmpeg_go.KwArgs{
 				"vframes": "1",
 				"vf":      "scale=320:-1",
@@ -55,19 +59,23 @@ func GetShotByFile(path string, output string) error {
 	if err != nil {
 		return err
 	}
+	defer os.Remove(outputTempPath)
+	data, err := ioutil.ReadFile(outputTempPath)
+	if err != nil {
+		return err
+	}
+	buf := bytes.NewBuffer(data)
+	storage := plugin.GetDefaultStorage()
+	err = storage.Upload(context.Background(), buf, plugin.GetDefaultBucket(), output)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func GenerateVideoCover(path string) (string, error) {
-	err := os.MkdirAll(config.Instance.CoversStore, os.FileMode(0775))
-	if err != nil {
-		return "", err
-	}
-	outputPath, err := filepath.Abs(filepath.Join(config.Instance.CoversStore, fmt.Sprintf("%s.jpg", xid.New().String())))
-	if err != nil {
-		return "", err
-	}
-	err = GetShotByFile(path, outputPath)
+	outputPath := filepath.Join(config.Instance.CoversStore, fmt.Sprintf("%s.jpg", xid.New().String()))
+	err := GetShotByFile(path, outputPath)
 	if err != nil {
 		return "", err
 	}

@@ -3,7 +3,7 @@ package plugin
 import (
 	"errors"
 	"github.com/allentom/harukap/commons"
-	"github.com/allentom/harukap/youplus"
+	"github.com/allentom/harukap/plugins/youplus"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/module"
 )

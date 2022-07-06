@@ -30,6 +30,7 @@ type YouLibraryConfig struct {
 
 type Config struct {
 	CoversStore         string `json:"covers_store"`
+	TempStore           string `json:"temp_store"`
 	FfmpegBin           string `json:"ffmpeg_bin"`
 	FfprobeBin          string `json:"ffprobe_bin"`
 	YoutransURL         string `json:"youtrans_url"`
@@ -52,6 +53,7 @@ func ReadConfig(provider *config.Provider) {
 	configer.SetDefault("application", "YouVideo Core Service")
 	configer.SetDefault("instance", "main")
 	configer.SetDefault("cover_store", "./static/covers")
+	configer.SetDefault("temp_store", "./temp")
 	configer.SetDefault("ffmpeg_bin", "ffmpeg")
 	configer.SetDefault("ffprobe_bin", "ffprobe")
 	configer.SetDefault("transcode.url", "")
@@ -73,6 +75,7 @@ func ReadConfig(provider *config.Provider) {
 		YouPlusPath:         configer.GetBool("youplus.enablepath"),
 		ThumbnailType:       configer.GetString("thumbnail.type"),
 		ThumbnailServiceUrl: configer.GetString("thumbnail.service_url"),
+		TempStore:           configer.GetString("temp_store"),
 		YouLibraryConfig: YouLibraryConfig{
 			Enable: configer.GetBool("youlibrary.enable"),
 			Url:    configer.GetString("youlibrary.url"),

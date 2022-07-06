@@ -1,10 +1,12 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/util"
 	"github.com/projectxpolaris/youvideo/youtrans"
 	"github.com/rs/xid"
@@ -120,7 +122,13 @@ func CompleteTrans(tranTask youtrans.TaskResponse) error {
 	// generate cover
 	if len(original.Cover) > 0 {
 		coverFileName := fmt.Sprintf("%s%s", xid.New(), filepath.Ext(original.Cover))
-		err = util.CopyFile(path.Join(config.Instance.CoversStore, original.Cover), path.Join(config.Instance.CoversStore, coverFileName))
+		storage := plugin.GetDefaultStorage()
+		err = storage.Copy(context.Background(),
+			plugin.GetDefaultBucket(),
+			path.Join(config.Instance.CoversStore, original.Cover),
+			plugin.GetDefaultBucket(),
+			path.Join(config.Instance.CoversStore, coverFileName),
+		)
 		if err != nil {
 			return err
 		}

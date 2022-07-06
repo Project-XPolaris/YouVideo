@@ -69,6 +69,9 @@ func (m *AuthMiddleware) OnRequest(ctx *haruka.Context) {
 		}
 	}
 	rawToken := module.Auth.ParseAuthHeader(ctx)
+	if module.Auth.Config.EnableAnonymous {
+		return
+	}
 	user, err := module.Auth.ParseToken(rawToken)
 	if err != nil {
 		AbortError(ctx, err, http.StatusForbidden)

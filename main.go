@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/allentom/harukap"
 	"github.com/allentom/harukap/cli"
-	"github.com/allentom/harukap/thumbnail"
+	"github.com/allentom/harukap/plugins/thumbnail"
 	"github.com/projectxpolaris/youvideo/application/httpapi"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
@@ -39,6 +39,8 @@ func main() {
 		appEngine.UsePlugin(plugin.DefaultThumbnailPlugin)
 	}
 	appEngine.UsePlugin(&plugin.DefaultRegisterPlugin)
+	appEngine.UsePlugin(&plugin.InitPlugin{})
+	appEngine.UsePlugin(plugin.StorageEnginePlugin)
 	// init auth
 	rawAuth := config.DefaultConfigProvider.Manager.GetStringMap("auth")
 	for key, _ := range rawAuth {

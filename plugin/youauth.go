@@ -2,7 +2,7 @@ package plugin
 
 import (
 	"github.com/allentom/harukap/commons"
-	"github.com/allentom/harukap/youauth"
+	"github.com/allentom/harukap/plugins/youauth"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/module"
 )

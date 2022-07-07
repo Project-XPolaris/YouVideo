@@ -3,7 +3,6 @@ package httpapi
 import (
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/serializer"
-	"github.com/project-xpolaris/youplustoolkit/youlink"
 	"github.com/projectxpolaris/youvideo/service"
 	"net/http"
 )
@@ -17,12 +16,12 @@ var createEntityHandler haruka.RequestHandler = func(context *haruka.Context) {
 	var requestBody CreateEntityRequestBody
 	err := context.ParseJson(&requestBody)
 	if err != nil {
-		youlink.AbortErrorWithStatus(err, context, http.StatusBadRequest)
+		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
 	entity, err := service.CreateEntity(requestBody.Name, requestBody.LibraryId)
 	if err != nil {
-		youlink.AbortErrorWithStatus(err, context, http.StatusInternalServerError)
+		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
 	template := BaseEntityTemplate{}
@@ -37,12 +36,12 @@ var getEntitiesHandler haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	err := context.BindingInput(&queryBuilder)
 	if err != nil {
-		youlink.AbortErrorWithStatus(err, context, http.StatusBadRequest)
+		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
 	entities, total, err := queryBuilder.Query()
 	if err != nil {
-		youlink.AbortErrorWithStatus(err, context, http.StatusInternalServerError)
+		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
 	context.JSON(haruka.JSON{
@@ -52,4 +51,31 @@ var getEntitiesHandler haruka.RequestHandler = func(context *haruka.Context) {
 		"pageSize": queryBuilder.PageSize,
 		"result":   serializer.SerializeMultipleTemplate(entities, &BaseEntityTemplate{}, map[string]interface{}{}),
 	})
+}
+
+type AddVideoToEntityRequestBody struct {
+	Ids []uint `json:"ids"`
+}
+
+var addVideoToEntityHandler haruka.RequestHandler = func(context *haruka.Context) {
+	var requestBody AddVideoToEntityRequestBody
+	err := context.ParseJson(&requestBody)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	entityId, err := context.GetPathParameterAsInt("id")
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	err = service.AddVideoToEntity(requestBody.Ids, uint(entityId))
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
+
 }

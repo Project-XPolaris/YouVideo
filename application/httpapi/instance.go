@@ -39,6 +39,7 @@ func GetEngine() *haruka.Engine {
 	e.Router.GET("/meta", getMetaListHandler)
 	e.Router.POST("/entities", createEntityHandler)
 	e.Router.GET("/entities", getEntitiesHandler)
+	e.Router.POST("/entity/{id:[0-9]+}/videos", addVideoToEntityHandler)
 	e.Router.POST("/tag", createTagHandler)
 	e.Router.GET("/tag", getTagListHandler)
 	e.Router.DELETE("/tag/{id:[0-9]+}", removeTagHandler)

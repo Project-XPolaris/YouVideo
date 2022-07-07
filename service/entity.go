@@ -1,6 +1,9 @@
 package service
 
-import "github.com/projectxpolaris/youvideo/database"
+import (
+	"github.com/projectxpolaris/youvideo/database"
+	"gorm.io/gorm"
+)
 
 func CreateEntity(name string, libraryId uint) (*database.Entity, error) {
 	newData := database.Entity{
@@ -55,4 +58,19 @@ func (e *EntityQueryBuilder) Query() ([]*database.Entity, int64, error) {
 		return nil, 0, err
 	}
 	return entities, count, nil
+}
+
+func AddVideoToEntity(videoIds []uint, entityId uint) error {
+	videoToAdd := make([]database.Video, 0)
+	for _, videoId := range videoIds {
+		videoToAdd = append(videoToAdd, database.Video{Model: gorm.Model{ID: videoId}})
+	}
+
+	err := database.Instance.Model(&database.Entity{Model: gorm.Model{ID: entityId}}).
+		Association("Videos").
+		Append(videoToAdd)
+	if err != nil {
+		return err
+	}
+	return nil
 }

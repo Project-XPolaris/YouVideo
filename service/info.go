@@ -12,8 +12,7 @@ func AddVideoInfoItem(videoId uint, key string, value string) (*database.VideoMe
 	}
 	err := database.Instance.
 		Model(&database.VideoMetaItem{}).
-		Where("key = ?", meta.Key).
-		Where("value = ?", meta.Value).
+		Where("`key` = ? and value = ? ", key, value).
 		First(meta).Error
 	if err == gorm.ErrRecordNotFound {
 		err := database.Instance.Create(meta).Error

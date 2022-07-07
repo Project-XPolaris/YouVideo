@@ -186,12 +186,14 @@ var addVideoMetaHandler haruka.RequestHandler = func(context *haruka.Context) {
 	if !checkVideoAccessibleAndRaiseError(context) {
 		return
 	}
-	meta, err := service.AddVideoInfoItem(uint(rawId), body.Key, body.Value)
+	_, err = service.AddVideoInfoItem(uint(rawId), body.Key, body.Value)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(meta)
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
 }
 
 func removeVideoMetaHandler(context *haruka.Context) {

@@ -97,7 +97,11 @@ func (v *VideoQueryBuilder) Query() (int64, []*database.Video, error) {
 	query := database.Instance
 	query = gormh.ApplyFilters(v, query)
 	if len(v.Random) > 0 {
-		query = query.Order("random()")
+		if database.Instance.Dialector.Name() == "sqlite" {
+			query = query.Order("random()")
+		} else {
+			query = query.Order("RAND()")
+		}
 	} else {
 		for _, order := range v.Orders {
 			query = query.Order(fmt.Sprintf("videos.%s", order))

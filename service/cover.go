@@ -100,7 +100,7 @@ func (a *VideoCoverMetaAnalyzer) Run() {
 			}
 			// if cover is same as old, skip
 			if file.CoverFileMd5 == md5 {
-				continue
+				//continue
 			}
 			file.CoverFileMd5 = md5
 		}

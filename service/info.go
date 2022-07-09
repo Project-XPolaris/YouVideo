@@ -73,3 +73,18 @@ func (e *InfoQueryBuilder) Query() ([]*database.VideoMetaItem, int64, error) {
 	}
 	return entities, count, nil
 }
+func TryToRemoveEmptyRelInfo(ids ...uint) error {
+	for _, id := range ids {
+		info := &database.VideoMetaItem{
+			Model: gorm.Model{ID: id},
+		}
+		count := database.Instance.Model(&info).Association("Videos").Count()
+		if count == 0 {
+			err := database.Instance.Unscoped().Delete(info).Error
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}

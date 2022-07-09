@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/compute v1.7.0 // indirect
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/allentom/haruka v0.0.0-20220527084807-cad00e6ff194
-	github.com/allentom/harukap v0.0.0-20220705130440-a058897756a6
+	github.com/allentom/harukap v0.0.0-20220709035720-2e12822f8825
 	github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f
 	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/asticode/go-astisub v0.21.0
@@ -30,10 +30,10 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
-	golang.org/x/net v0.0.0-20220630215102-69896b714898 // indirect
+	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
 	golang.org/x/oauth2 v0.0.0-20220630143837-2104d58473e0 // indirect
-	golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e // indirect
-	google.golang.org/genproto v0.0.0-20220630174209-ad1d48641aa7 // indirect
+	golang.org/x/sys v0.0.0-20220708085239-5a0f0661e09d // indirect
+	google.golang.org/genproto v0.0.0-20220708155623-50e5f4832e73 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/vansante/go-ffprobe.v2 v2.0.3
 	gorm.io/gorm v1.22.0

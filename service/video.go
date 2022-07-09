@@ -283,6 +283,22 @@ func DeleteVideoById(id uint) error {
 	if err != nil {
 		return err
 	}
+	// clean info rel
+	infoAss := database.Instance.Model(&video).Association("Infos")
+	infos := make([]database.VideoMetaItem, 0)
+	err = infoAss.Find(&infos)
+	if err != nil {
+		return err
+	}
+	err = database.Instance.Model(&video).Association("Infos").Clear()
+	if err != nil {
+		return err
+	}
+	infoIds := make([]uint, 0)
+	for _, info := range infos {
+		infoIds = append(infoIds, info.ID)
+	}
+	TryToRemoveEmptyRelInfo(infoIds...)
 	err = database.Instance.
 		Model(&database.Video{}).
 		Unscoped().
@@ -292,6 +308,7 @@ func DeleteVideoById(id uint) error {
 	if err != nil {
 		return err
 	}
+	// remove video info
 	return nil
 }
 

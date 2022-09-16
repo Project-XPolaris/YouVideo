@@ -286,3 +286,50 @@ var readMetaTask haruka.RequestHandler = func(context *haruka.Context) {
 		"success": true,
 	})
 }
+var newMatchEntityTask haruka.RequestHandler = func(context *haruka.Context) {
+	rawId := context.Parameters["id"]
+	uid := context.Param["uid"].(string)
+	username := context.Param["username"].(string)
+	id, err := strconv.Atoi(rawId)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	permission := LibraryAccessibleValidator{}
+	context.BindingInput(&permission)
+	if err = validator.RunValidators(&permission); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	task, err := taskService.CreateMatchEntityTask(taskService.MatchEntityOption{
+		LibraryId: uint(id),
+		Uid:       uid,
+		OnEntityComplete: func(task *taskService.MatchEntityTask) {
+			module.Notification.Manager.SendJSONToUser(haruka.JSON{
+				"event": EventMatchTaskEntityComplete,
+				"task":  NewTaskTemplate(task),
+			}, username)
+		},
+		OnComplete: func(task *taskService.MatchEntityTask) {
+			module.Notification.Manager.SendJSONToUser(haruka.JSON{
+				"event": EventMatchTaskComplete,
+				"task":  NewTaskTemplate(task),
+			}, username)
+		},
+		OnEntityError: func(task *taskService.MatchEntityTask, err error) {
+			module.Notification.Manager.SendJSONToUser(haruka.JSON{
+				"event": EventMatchTaskEntityError,
+				"error": err,
+				"task":  NewTaskTemplate(task),
+			}, username)
+		},
+	})
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	go task.Start()
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
+}

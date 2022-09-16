@@ -54,6 +54,7 @@ func main() {
 	if err != nil {
 		logrus.Fatal(err)
 	}
+	service.InitTMDB()
 	if config.Instance.YouLibraryConfig.Enable {
 		service.DefaultVideoInformationMatchService.Init()
 		go service.DefaultVideoInformationMatchService.Run(context.Background())

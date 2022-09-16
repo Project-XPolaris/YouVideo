@@ -1,10 +1,16 @@
 package httpapi
 
 import (
+	"bytes"
+	context2 "context"
+	"fmt"
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/serializer"
+	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/service"
+	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type CreateEntityRequestBody struct {
@@ -78,4 +84,30 @@ var addVideoToEntityHandler haruka.RequestHandler = func(context *haruka.Context
 		"success": true,
 	})
 
+}
+
+var getEntityCoverHandler haruka.RequestHandler = func(context *haruka.Context) {
+	id, err := context.GetPathParameterAsInt("id")
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	entity, err := service.GetEntityById(uint(id))
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	if len(entity.Cover) == 0 {
+		AbortError(context, err, http.StatusNotFound)
+		return
+	}
+	storage := plugin.GetDefaultStorage()
+	key := fmt.Sprintf("entity/%s", entity.Cover)
+	buf, err := storage.Get(context2.Background(), plugin.GetDefaultBucket(), key)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	data, _ := ioutil.ReadAll(buf)
+	http.ServeContent(context.Writer, context.Request, entity.Cover, time.Now(), bytes.NewReader(data))
 }

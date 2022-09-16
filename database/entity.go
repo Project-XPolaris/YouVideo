@@ -7,4 +7,7 @@ type Entity struct {
 	Name      string   `json:"name"`
 	Videos    []*Video `json:"videos"`
 	LibraryId uint     `json:"library_id"`
+	Cover     string   `json:"cover"`
+	Summary   string   `json:"summary"`
+	Template  string   `json:"template"`
 }

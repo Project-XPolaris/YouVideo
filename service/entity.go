@@ -86,3 +86,12 @@ func GetOrCreateEntity(name string, libraryId uint) (*database.Entity, error) {
 	}
 	return &entity, nil
 }
+
+func GetEntityById(id uint) (*database.Entity, error) {
+	var entity database.Entity
+	err := database.Instance.Where("id = ?", id).First(&entity).Error
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}

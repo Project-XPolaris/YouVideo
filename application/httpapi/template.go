@@ -305,12 +305,17 @@ func (t *BaseEntityTemplate) Serializer(dataModel interface{}, context map[strin
 		coverSelector := "auto"
 		var coverWidth int64
 		var coverHeight int64
+		hasCover := false
+		if len(model.Cover) > 0 {
+			cover = fmt.Sprintf("/entity/%d/cover", model.ID)
+			hasCover = true
+		}
 		infos := make([]*database.VideoMetaItem, 0)
 		for _, video := range model.Videos {
 			videoTemplate := BaseVideoTemplate{}
 			videoTemplate.Serializer(video, map[string]interface{}{})
 			videoTemplates = append(videoTemplates, videoTemplate)
-			if video.Files != nil && coverSelector == "auto" {
+			if video.Files != nil && coverSelector == "auto" && !hasCover {
 				for _, file := range video.Files {
 					if len(file.Cover) > 0 {
 						cover = fmt.Sprintf("/video/file/%d/cover", file.ID)

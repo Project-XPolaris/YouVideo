@@ -11,6 +11,7 @@ const (
 	TaskTypeScanLibrary = iota + 1
 	TaskTypeMeta
 	TaskTypeRemove
+	TaskTypeMatchEntity
 )
 const (
 	TaskStatusRunning = iota + 1
@@ -26,6 +27,7 @@ var TaskTypeNameMapping map[int]string = map[int]string{
 	TaskTypeScanLibrary: "ScanLibrary",
 	TaskTypeMeta:        "Meta",
 	TaskTypeRemove:      "RemoveLibrary",
+	TaskTypeMatchEntity: "MatchEntity",
 }
 
 var TaskStatusNameMapping map[int]string = map[int]string{

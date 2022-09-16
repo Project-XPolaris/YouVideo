@@ -11,6 +11,7 @@ require (
 	github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f
 	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/asticode/go-astisub v0.21.0
+	github.com/cyruzin/golang-tmdb v1.4.4 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/googleapis/enterprise-certificate-proxy v0.1.0 // indirect
 	github.com/hashicorp/consul/api v1.13.0 // indirect

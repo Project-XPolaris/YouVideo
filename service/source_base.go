@@ -20,11 +20,14 @@ type InfoSource interface {
 	DownloadCover(url string) (string, error)
 }
 
-func GetInfoSource() InfoSource {
-	if tmdbSource != nil {
-		return tmdbSource
+func GetInfoSource(name string) InfoSource {
+	if len(name) == 0 {
+		return nil
 	}
-	if bangumiInfoSource != nil {
+	switch name {
+	case "tmdb":
+		return tmdbSource
+	case "bangumi":
 		return bangumiInfoSource
 	}
 	return nil

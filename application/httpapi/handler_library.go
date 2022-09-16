@@ -286,6 +286,11 @@ var readMetaTask haruka.RequestHandler = func(context *haruka.Context) {
 		"success": true,
 	})
 }
+
+type MatchEntityTaskRequestBody struct {
+	Source string `json:"source"`
+}
+
 var newMatchEntityTask haruka.RequestHandler = func(context *haruka.Context) {
 	rawId := context.Parameters["id"]
 	uid := context.Param["uid"].(string)
@@ -298,6 +303,12 @@ var newMatchEntityTask haruka.RequestHandler = func(context *haruka.Context) {
 	permission := LibraryAccessibleValidator{}
 	context.BindingInput(&permission)
 	if err = validator.RunValidators(&permission); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	var requestBody MatchEntityTaskRequestBody
+	err = context.ParseJson(&requestBody)
+	if err != nil {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}

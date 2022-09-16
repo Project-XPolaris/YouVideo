@@ -28,7 +28,7 @@ func (t *MatchEntityTask) Start() error {
 		t.TaskOutput.Current = int64(idx) + 1
 		t.TaskOutput.CurrentName = entity.Name
 		t.Logger.Info(fmt.Sprintf("match entity for [%s]", entity.Name))
-		source := service.GetInfoSource()
+		source := service.GetInfoSource(t.Option.Source)
 		err := source.MatchEntity(entity)
 		if err != nil {
 			if t.Option.OnEntityError != nil {
@@ -77,6 +77,7 @@ type MatchEntityTaskOutput struct {
 type MatchEntityOption struct {
 	LibraryId        uint
 	Uid              string
+	Source           string
 	OnEntityComplete func(task *MatchEntityTask)
 	OnEntityError    func(task *MatchEntityTask, err error)
 	OnComplete       func(task *MatchEntityTask)

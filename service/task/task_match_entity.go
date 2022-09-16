@@ -28,7 +28,8 @@ func (t *MatchEntityTask) Start() error {
 		t.TaskOutput.Current = int64(idx) + 1
 		t.TaskOutput.CurrentName = entity.Name
 		t.Logger.Info(fmt.Sprintf("match entity for [%s]", entity.Name))
-		err := service.MatchEntity(entity)
+		source := service.GetInfoSource()
+		err := source.MatchEntity(entity)
 		if err != nil {
 			if t.Option.OnEntityError != nil {
 				t.Option.OnEntityError(t, err)
@@ -36,7 +37,7 @@ func (t *MatchEntityTask) Start() error {
 			continue
 		}
 		if entity.Cover != "" {
-			coverFilename, err := service.DownloadCover(entity.Cover)
+			coverFilename, err := source.DownloadCover(entity.Cover)
 			if err != nil {
 				if t.Option.OnEntityError != nil {
 					t.Option.OnEntityError(t, err)

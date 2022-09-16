@@ -27,24 +27,25 @@ type YouLibraryConfig struct {
 	Enable bool
 	Url    string
 }
-
+type TMdbConfig struct {
+	Enable bool
+	ApiKey string
+	Proxy  string
+}
+type BangumiConfig struct {
+	Enable bool
+}
 type Config struct {
-	CoversStore         string `json:"covers_store"`
-	TempStore           string `json:"temp_store"`
-	FfmpegBin           string `json:"ffmpeg_bin"`
-	FfprobeBin          string `json:"ffprobe_bin"`
-	YoutransURL         string `json:"youtrans_url"`
-	EnableTranscode     bool
-	EnableAuth          bool `json:"enable_auth"`
-	YouPlusPath         bool
-	YouPlusUrl          string
-	YouPlusRPCAddr      string
-	YouLogEnable        bool
-	Entity              EntityConfig
-	YouLogAddress       string
-	YouLibraryConfig    YouLibraryConfig
-	ThumbnailType       string
-	ThumbnailServiceUrl string
+	CoversStore      string `json:"covers_store"`
+	TempStore        string `json:"temp_store"`
+	FfmpegBin        string `json:"ffmpeg_bin"`
+	FfprobeBin       string `json:"ffprobe_bin"`
+	YoutransURL      string `json:"youtrans_url"`
+	EnableTranscode  bool
+	YouPlusPath      bool
+	YouLibraryConfig YouLibraryConfig
+	TMdbConfig       TMdbConfig
+	BangumiConfig    BangumiConfig
 }
 
 func ReadConfig(provider *config.Provider) {
@@ -65,20 +66,27 @@ func ReadConfig(provider *config.Provider) {
 	configer.SetDefault("youplus.rpc", "")
 	configer.SetDefault("youlog.enable", false)
 	configer.SetDefault("youlog.rpc_addr", "")
+	configer.SetDefault("tmdb.enable", false)
+	configer.SetDefault("bangumi.enable", false)
 	Instance = Config{
-		CoversStore:         configer.GetString("cover_store"),
-		FfmpegBin:           configer.GetString("ffmpeg_bin"),
-		FfprobeBin:          configer.GetString("ffprobe_bin"),
-		YoutransURL:         configer.GetString("transcode.url"),
-		EnableTranscode:     configer.GetBool("transcode.enable"),
-		EnableAuth:          configer.GetBool("youplus.auth"),
-		YouPlusPath:         configer.GetBool("youplus.enablepath"),
-		ThumbnailType:       configer.GetString("thumbnail.type"),
-		ThumbnailServiceUrl: configer.GetString("thumbnail.service_url"),
-		TempStore:           configer.GetString("temp_store"),
+		CoversStore:     configer.GetString("cover_store"),
+		FfmpegBin:       configer.GetString("ffmpeg_bin"),
+		FfprobeBin:      configer.GetString("ffprobe_bin"),
+		YoutransURL:     configer.GetString("transcode.url"),
+		EnableTranscode: configer.GetBool("transcode.enable"),
+		YouPlusPath:     configer.GetBool("youplus.enablepath"),
+		TempStore:       configer.GetString("temp_store"),
 		YouLibraryConfig: YouLibraryConfig{
 			Enable: configer.GetBool("youlibrary.enable"),
 			Url:    configer.GetString("youlibrary.url"),
+		},
+		TMdbConfig: TMdbConfig{
+			Enable: configer.GetBool("tmdb.enable"),
+			ApiKey: configer.GetString("tmdb.apikey"),
+			Proxy:  configer.GetString("tmdb.proxy"),
+		},
+		BangumiConfig: BangumiConfig{
+			Enable: configer.GetBool("bangumi.enable"),
 		},
 	}
 }

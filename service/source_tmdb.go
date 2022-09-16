@@ -3,8 +3,9 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	tmdb "github.com/cyruzin/golang-tmdb"
+	"github.com/project-xpolaris/youplustoolkit/youlog"
+	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/plugin"
 	"net/http"
@@ -13,40 +14,57 @@ import (
 	"time"
 )
 
-type SearchMovieResult struct {
-	Name    string
-	Cover   string
-	Summary string
-}
-type SearchTVResult struct {
-	Name    string
-	Cover   string
-	Summary string
-}
+var tmdbSource *TMDBSource
 
-var tmdbClient *tmdb.Client
+type TMDBSource struct {
+	tmdbClient *tmdb.Client
+	logScope   *youlog.Scope
+}
 
 func InitTMDB() {
 	var err error
-	tmdbClient, err = tmdb.Init("7a89accf9a240cba6a2e56c0ff91cb00")
-	if err != nil {
-		fmt.Println(err)
+	logScope := plugin.DefaultYouLogPlugin.Logger.NewScope("tmdb")
+	tmdbConfig := config.Instance.TMdbConfig
+	logScope.Info("init tmdb")
+	if !tmdbConfig.Enable {
+		logScope.Info("tmdb is disabled")
+		return
 	}
-	proxyUrl, err := url.Parse("http://localhost:7890")
+	if len(tmdbConfig.ApiKey) == 0 {
+		logScope.Fatal("tmdb api key is empty")
+		return
+	}
+
+	tmdbSource = &TMDBSource{
+		logScope: logScope,
+	}
+	tmdbClient, err := tmdb.Init(tmdbConfig.ApiKey)
+	if err != nil {
+		logScope.Fatal(err)
+		return
+	}
+	tmdbSource.tmdbClient = tmdbClient
 	customClient := http.Client{
 		Timeout: time.Second * 5,
-		Transport: &http.Transport{
-			MaxIdleConns:    10,
-			IdleConnTimeout: 15 * time.Second,
-			Proxy:           http.ProxyURL(proxyUrl),
-		},
 	}
+	clientTransport := &http.Transport{
+		MaxIdleConns:    10,
+		IdleConnTimeout: 15 * time.Second,
+	}
+	if len(tmdbConfig.Proxy) > 0 {
+		proxyUrl, err := url.Parse(tmdbConfig.Proxy)
+		if err != nil {
+			logScope.Fatal(err)
+			return
+		}
+		clientTransport.Proxy = http.ProxyURL(proxyUrl)
+	}
+	customClient.Transport = clientTransport
 	tmdbClient.SetClientConfig(customClient)
-
 }
 
-func SearchMovie(query string) (*SearchMovieResult, error) {
-	movie, err := tmdbClient.GetSearchMovies(query, nil)
+func (s *TMDBSource) SearchMovie(query string) (*SearchMovieResult, error) {
+	movie, err := s.tmdbClient.GetSearchMovies(query, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -60,8 +78,8 @@ func SearchMovie(query string) (*SearchMovieResult, error) {
 	}
 	return nil, nil
 }
-func SearchTv(query string) (*SearchTVResult, error) {
-	tvList, err := tmdbClient.GetSearchTVShow(query, nil)
+func (s *TMDBSource) SearchTv(query string) (*SearchTVResult, error) {
+	tvList, err := s.tmdbClient.GetSearchTVShow(query, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +94,7 @@ func SearchTv(query string) (*SearchTVResult, error) {
 	}
 	return nil, nil
 }
-func DownloadCover(url string) (string, error) {
+func (s *TMDBSource) DownloadCover(url string) (string, error) {
 	prefix := "https://image.tmdb.org/t/p/w500"
 	response, err := http.Get(prefix + url)
 	if err != nil {
@@ -96,10 +114,10 @@ func DownloadCover(url string) (string, error) {
 	}
 	return baseFileName, nil
 }
-func MatchEntity(entity *database.Entity) error {
+func (s *TMDBSource) MatchEntity(entity *database.Entity) error {
 	switch entity.Template {
 	case "film":
-		movie, err := SearchMovie(entity.Name)
+		movie, err := s.SearchMovie(entity.Name)
 		if err != nil {
 			return err
 		}
@@ -109,7 +127,7 @@ func MatchEntity(entity *database.Entity) error {
 			entity.Summary = movie.Summary
 		}
 	case "tv":
-		tv, err := SearchTv(entity.Name)
+		tv, err := s.SearchTv(entity.Name)
 		if err != nil {
 			return err
 		}

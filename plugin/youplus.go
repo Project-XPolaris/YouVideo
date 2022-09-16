@@ -1,7 +1,6 @@
 package plugin
 
 import (
-	"errors"
 	"github.com/allentom/harukap/commons"
 	"github.com/allentom/harukap/plugins/youplus"
 	"github.com/projectxpolaris/youvideo/database"
@@ -20,13 +19,13 @@ func CreateDefaultYouPlusPlugin() {
 }
 func GetUserByPlusAuthToken(accessToken string) (*database.User, error) {
 	var oauthRecord database.Oauth
-	response, err := DefaultYouPlusPlugin.Client.CheckAuth(accessToken)
+	_, err := DefaultYouPlusPlugin.Client.CheckAuth(accessToken)
 	if err != nil {
 		return nil, err
 	}
-	if !response.Success {
-		return nil, errors.New("invalid token")
-	}
+	//if !response.Success {
+	//	return nil, errors.New("invalid token")
+	//}
 	err = database.Instance.Model(&database.Oauth{}).Preload("User").Where("access_token = ?", accessToken).
 		Where("provider = ?", "YouPlusService").
 		Find(&oauthRecord).Error

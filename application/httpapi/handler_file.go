@@ -13,6 +13,7 @@ import (
 	"github.com/projectxpolaris/youvideo/service"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -44,7 +45,7 @@ var playVideo haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	service.CreateHistory(file.VideoId, context.Param["uid"].(*database.User).Uid)
+	service.CreateHistory(file.VideoId, context.Param["uid"].(string))
 	http.ServeFile(context.Writer, context.Request, file.Path)
 }
 
@@ -199,7 +200,17 @@ var playLinkHandler haruka.RequestHandler = func(context *haruka.Context) {
 	switch sourcesType {
 	case "video":
 		service.CreateHistory(file.VideoId, user.Uid)
-		http.ServeFile(context.Writer, context.Request, file.Path)
+		file, err := os.OpenFile(file.Path, os.O_RDONLY, 0666)
+		if err != nil {
+			AbortError(context, err, http.StatusInternalServerError)
+			return
+		}
+		if err != nil {
+			AbortError(context, err, http.StatusInternalServerError)
+			return
+		}
+		http.ServeContent(context.Writer, context.Request, file.Name(), time.Now(), file)
+		//http.ServeFile(context.Writer, context.Request, file.Path)
 	case "subs":
 		http.ServeFile(context.Writer, context.Request, file.Subtitles)
 	case "cover":

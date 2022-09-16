@@ -165,11 +165,11 @@ func (v *VideoQueryBuilder) Query() (int64, []*database.Video, error) {
 		Error
 	return count, models, err
 }
-func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject bool) error {
+func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject bool) (*database.Video, error) {
 	// check if video file exist
 	file, err := GetFileByPath(path)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return err
+		return nil, err
 	}
 	fileExt := filepath.Ext(path)
 	videoName := strings.TrimSuffix(filepath.Base(path), fileExt)
@@ -199,13 +199,13 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 	var folder database.Folder
 	err = database.Instance.FirstOrCreate(&folder, database.Folder{Path: baseDir, LibraryId: libraryId}).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var video database.Video
 	err = database.Instance.Model(&database.Video{}).Where("name = ?", videoName).Where("base_dir = ?", baseDir).First(&video).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return err
+		return nil, err
 	}
 	// create if not found
 	if video.ID == 0 {
@@ -221,7 +221,7 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 		}).Warn("video not exist,try to create")
 		err = database.Instance.Create(&video).Error
 		if err != nil {
-			return err
+			return nil, err
 		}
 		// match subject
 		if matchSubject {
@@ -232,13 +232,13 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 		video.FolderID = &folder.ID
 		err = database.Instance.Save(video).Error
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	file.VideoId = video.ID
 	err = database.Instance.Save(file).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// analyze video meta
 	DefaultVideoMetaAnalyzer.In <- VideoMetaAnalyzerInput{
@@ -247,9 +247,9 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 	DefaultVideoCoverGenerator.In <- file
 	err = database.Instance.Save(file).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return err
+	return &video, err
 }
 func RefreshVideo(videoId uint) error {
 	var video database.Video
@@ -258,7 +258,7 @@ func RefreshVideo(videoId uint) error {
 		return err
 	}
 	for _, file := range video.Files {
-		err = CreateVideoFile(file.Path, video.LibraryId, video.Type, false)
+		_, err = CreateVideoFile(file.Path, video.LibraryId, video.Type, false)
 		if err != nil {
 			return err
 		}

@@ -74,3 +74,15 @@ func AddVideoToEntity(videoIds []uint, entityId uint) error {
 	}
 	return nil
 }
+
+func GetOrCreateEntity(name string, libraryId uint) (*database.Entity, error) {
+	var entity database.Entity
+	err := database.Instance.Where("name = ?", name).Where("library_id = ?", libraryId).First(&entity).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return CreateEntity(name, libraryId)
+		}
+		return nil, err
+	}
+	return &entity, nil
+}

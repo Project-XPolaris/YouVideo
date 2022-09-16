@@ -51,16 +51,37 @@ func (t *ScanTask) Start() error {
 		t.TaskOutput.Current = int64(idx + 1)
 		t.TaskOutput.CurrentPath = path
 		t.TaskOutput.CurrentName = filepath.Base(path)
-		err = service.CreateVideoFile(path, t.Library.ID, t.Library.DefaultVideoType, t.Option.MatchSubject)
+		video, err := service.CreateVideoFile(path, t.Library.ID, t.Library.DefaultVideoType, t.Option.MatchSubject)
 		if err != nil {
 			if t.Option.OnFileError != nil {
 				t.Option.OnFileError(t, err)
 			}
 			t.logger.Error(err)
-		} else {
-			if t.Option.OnFileComplete != nil {
-				t.Option.OnFileComplete(t)
+			continue
+		}
+
+		if t.Option.DirectoryMode {
+			parentDirName := filepath.Base(filepath.Dir(path))
+			// create entity
+			entity, err := service.GetOrCreateEntity(parentDirName, t.Library.ID)
+			if err != nil {
+				if t.Option.OnFileError != nil {
+					t.Option.OnFileError(t, err)
+				}
+				t.logger.Error(err)
+				continue
 			}
+			err = service.AddVideoToEntity([]uint{video.ID}, entity.ID)
+			if err != nil {
+				if t.Option.OnFileError != nil {
+					t.Option.OnFileError(t, err)
+				}
+				t.logger.Error(err)
+				continue
+			}
+		}
+		if t.Option.OnFileComplete != nil {
+			t.Option.OnFileComplete(t)
 		}
 
 	}
@@ -87,6 +108,7 @@ type CreateScanTaskOption struct {
 	LibraryId      uint
 	Uid            string
 	MatchSubject   bool
+	DirectoryMode  bool
 	OnFileComplete func(task *ScanTask)
 	OnFileError    func(task *ScanTask, err error)
 	OnError        func(task *ScanTask, err error)

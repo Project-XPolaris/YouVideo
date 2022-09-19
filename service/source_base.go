@@ -1,6 +1,13 @@
 package service
 
-import "github.com/projectxpolaris/youvideo/database"
+import (
+	"context"
+	"errors"
+	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/plugin"
+	"net/http"
+	"path/filepath"
+)
 
 type SearchMovieResult struct {
 	Name    string
@@ -33,4 +40,27 @@ func GetInfoSource(name string) InfoSource {
 		return bangumiInfoSource
 	}
 	return nil
+}
+
+func DownloadEntityCover(url string) (string, error) {
+	if len(url) == 0 {
+		return "", errors.New("url is empty")
+	}
+	response, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		return "", errors.New("received non 200 response code")
+	}
+	baseFileName := filepath.Base(url)
+	key := "entity/" + baseFileName
+	storage := plugin.GetDefaultStorage()
+	err = storage.Upload(context.Background(), response.Body, plugin.GetDefaultBucket(), key)
+	if err != nil {
+		return "", err
+	}
+	return baseFileName, nil
 }

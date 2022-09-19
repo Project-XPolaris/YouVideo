@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/allentom/harukap/module/task"
@@ -9,6 +10,7 @@ import (
 	"github.com/projectxpolaris/youvideo/module"
 	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/service"
+	"github.com/projectxpolaris/youvideo/util"
 )
 
 type MatchEntityTask struct {
@@ -46,6 +48,24 @@ func (t *MatchEntityTask) Start() error {
 			} else {
 				entity.Cover = coverFilename
 			}
+			storage := plugin.GetDefaultStorage()
+			reader, err := storage.Get(context.Background(), plugin.GetDefaultBucket(), "entity/"+coverFilename)
+			if err != nil {
+				if t.Option.OnEntityError != nil {
+					t.Option.OnEntityError(t, err)
+				}
+				continue
+			}
+			width, height, err := util.GetImageSize(reader)
+			if err != nil {
+				if t.Option.OnEntityError != nil {
+					t.Option.OnEntityError(t, err)
+				}
+				continue
+			}
+			entity.CoverWidth = width
+			entity.CoverHeight = height
+
 		}
 		err = database.Instance.Save(&entity).Error
 		if err != nil {

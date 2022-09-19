@@ -42,6 +42,8 @@ func GetEngine() *haruka.Engine {
 	e.Router.GET("/info/tv/search", searchTvInformationHandler)
 	e.Router.POST("/entities", createEntityHandler)
 	e.Router.GET("/entities", getEntitiesHandler)
+	e.Router.GET("/entity/{id:[0-9]+}", getEntityHandler)
+	e.Router.PATCH("/entity/{id:[0-9]+}", updateEntityHandler)
 	e.Router.GET("/entity/{id:[0-9]+}/cover", getEntityCoverHandler)
 	e.Router.POST("/entity/{id:[0-9]+}/videos", addVideoToEntityHandler)
 	e.Router.POST("/tag", createTagHandler)

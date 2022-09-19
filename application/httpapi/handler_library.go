@@ -315,6 +315,7 @@ var newMatchEntityTask haruka.RequestHandler = func(context *haruka.Context) {
 	task, err := taskService.CreateMatchEntityTask(taskService.MatchEntityOption{
 		LibraryId: uint(id),
 		Uid:       uid,
+		Source:    requestBody.Source,
 		OnEntityComplete: func(task *taskService.MatchEntityTask) {
 			module.Notification.Manager.SendJSONToUser(haruka.JSON{
 				"event": EventMatchTaskEntityComplete,

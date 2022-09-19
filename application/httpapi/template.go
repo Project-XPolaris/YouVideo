@@ -303,8 +303,8 @@ func (t *BaseEntityTemplate) Serializer(dataModel interface{}, context map[strin
 		videoTemplates := make([]BaseVideoTemplate, 0)
 		cover := ""
 		coverSelector := "auto"
-		var coverWidth int64
-		var coverHeight int64
+		coverWidth := int64(model.CoverWidth)
+		coverHeight := int64(model.CoverHeight)
 		hasCover := false
 		if len(model.Cover) > 0 {
 			cover = fmt.Sprintf("/entity/%d/cover", model.ID)
@@ -401,11 +401,17 @@ type SearchMoveInformationTemplate struct {
 }
 
 func NewSearchMoveInformationTemplate(m *service.SearchMovieResult, source string) *SearchMoveInformationTemplate {
-	return &SearchMoveInformationTemplate{
+	data := &SearchMoveInformationTemplate{
 		Name:    m.Name,
 		Summary: m.Summary,
 		Cover:   m.Cover,
 	}
+	switch source {
+	case "tmdb":
+		data.Cover = fmt.Sprintf("https://image.tmdb.org/t/p/w500%s", m.Cover)
+
+	}
+	return data
 }
 
 func NewSearchMoveInformationTemplates(ms []*service.SearchMovieResult, source string) []*SearchMoveInformationTemplate {
@@ -424,12 +430,18 @@ type SearchTvInformationTemplate struct {
 }
 
 func NewSearchTvInformationTemplate(m *service.SearchTVResult, source string) *SearchTvInformationTemplate {
-	return &SearchTvInformationTemplate{
+	data := &SearchTvInformationTemplate{
 		Name:    m.Name,
 		Summary: m.Summary,
 		Cover:   m.Cover,
 		Source:  source,
 	}
+	switch source {
+	case "tmdb":
+		data.Cover = fmt.Sprintf("https://image.tmdb.org/t/p/w500%s", m.Cover)
+
+	}
+	return data
 }
 
 func NewSearchTvInformationTemplates(ms []*service.SearchTVResult, source string) []*SearchTvInformationTemplate {

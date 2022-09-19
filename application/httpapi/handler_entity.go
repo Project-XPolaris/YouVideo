@@ -8,6 +8,7 @@ import (
 	"github.com/allentom/haruka/serializer"
 	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/service"
+	"github.com/projectxpolaris/youvideo/util"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -110,4 +111,46 @@ var getEntityCoverHandler haruka.RequestHandler = func(context *haruka.Context) 
 	}
 	data, _ := ioutil.ReadAll(buf)
 	http.ServeContent(context.Writer, context.Request, entity.Cover, time.Now(), bytes.NewReader(data))
+}
+
+var getEntityHandler haruka.RequestHandler = func(context *haruka.Context) {
+	id, err := context.GetPathParameterAsInt("id")
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	entity, err := service.GetEntityById(uint(id))
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	template := BaseEntityTemplate{}
+	template.Serializer(entity, map[string]interface{}{})
+	context.JSON(template)
+}
+
+var updateEntityValidKeys = []string{
+	"name", "summary", "coverUrl", "template",
+}
+var updateEntityHandler haruka.RequestHandler = func(context *haruka.Context) {
+	id, err := context.GetPathParameterAsInt("id")
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	updateData := make(map[string]interface{})
+	err = context.ParseJson(&updateData)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	util.FilterMapKey(updateData, updateEntityValidKeys)
+	entity, err := service.UpdateEntityById(uint(id), updateData)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	template := BaseEntityTemplate{}
+	template.Serializer(entity, map[string]interface{}{})
+	context.JSON(template)
 }

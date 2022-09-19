@@ -1,7 +1,10 @@
 package service
 
 import (
+	"context"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/plugin"
+	"github.com/projectxpolaris/youvideo/util"
 	"gorm.io/gorm"
 )
 
@@ -89,7 +92,44 @@ func GetOrCreateEntity(name string, libraryId uint) (*database.Entity, error) {
 
 func GetEntityById(id uint) (*database.Entity, error) {
 	var entity database.Entity
+	err := database.Instance.Where("id = ?", id).
+		Preload("Videos").
+		Preload("Videos.Files").
+		First(&entity).
+		Error
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}
+
+func UpdateEntityById(id uint, updateData map[string]interface{}) (*database.Entity, error) {
+	var entity database.Entity
 	err := database.Instance.Where("id = ?", id).First(&entity).Error
+	if coverUrl, isExist := updateData["coverUrl"]; isExist {
+		sotreKey, err := DownloadEntityCover(coverUrl.(string))
+		if err != nil {
+			return nil, err
+		}
+		storage := plugin.GetDefaultStorage()
+		reader, err := storage.Get(context.Background(), plugin.GetDefaultBucket(), "entity/"+sotreKey)
+		if err != nil {
+			return nil, err
+		}
+		width, height, err := util.GetImageSize(reader)
+		if err != nil {
+			return nil, err
+		}
+		updateData["cover_width"] = width
+		updateData["cover_height"] = height
+		updateData["cover"] = sotreKey
+		delete(updateData, "coverUrl")
+	}
+	err = database.Instance.Model(entity).Updates(updateData).Error
+	if err != nil {
+		return nil, err
+	}
+	err = database.Instance.Where("id = ?", id).First(&entity).Error
 	if err != nil {
 		return nil, err
 	}

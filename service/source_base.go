@@ -18,6 +18,8 @@ type InfoSource interface {
 	SearchTv(query string) (*SearchTVResult, error)
 	MatchEntity(entity *database.Entity) error
 	DownloadCover(url string) (string, error)
+	SearchTvList(query string) ([]*SearchTVResult, error)
+	SearchMovieList(query string) ([]*SearchMovieResult, error)
 }
 
 func GetInfoSource(name string) InfoSource {

@@ -392,3 +392,50 @@ func NewCCTemplates(ccs []*service.CC) []*CCTemplate {
 	}
 	return templates
 }
+
+type SearchMoveInformationTemplate struct {
+	Name    string `json:"name"`
+	Summary string `json:"summary"`
+	Cover   string `json:"cover"`
+	Source  string `json:"source"`
+}
+
+func NewSearchMoveInformationTemplate(m *service.SearchMovieResult, source string) *SearchMoveInformationTemplate {
+	return &SearchMoveInformationTemplate{
+		Name:    m.Name,
+		Summary: m.Summary,
+		Cover:   m.Cover,
+	}
+}
+
+func NewSearchMoveInformationTemplates(ms []*service.SearchMovieResult, source string) []*SearchMoveInformationTemplate {
+	templates := make([]*SearchMoveInformationTemplate, 0)
+	for _, m := range ms {
+		templates = append(templates, NewSearchMoveInformationTemplate(m, source))
+	}
+	return templates
+}
+
+type SearchTvInformationTemplate struct {
+	Name    string `json:"name"`
+	Summary string `json:"summary"`
+	Cover   string `json:"cover"`
+	Source  string `json:"source"`
+}
+
+func NewSearchTvInformationTemplate(m *service.SearchTVResult, source string) *SearchTvInformationTemplate {
+	return &SearchTvInformationTemplate{
+		Name:    m.Name,
+		Summary: m.Summary,
+		Cover:   m.Cover,
+		Source:  source,
+	}
+}
+
+func NewSearchTvInformationTemplates(ms []*service.SearchTVResult, source string) []*SearchTvInformationTemplate {
+	templates := make([]*SearchTvInformationTemplate, 0)
+	for _, m := range ms {
+		templates = append(templates, NewSearchTvInformationTemplate(m, source))
+	}
+	return templates
+}

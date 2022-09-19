@@ -38,6 +38,8 @@ func GetEngine() *haruka.Engine {
 	e.Router.GET("/link/{id:[0-9]+}/{type}/{token}/{any}", playLinkHandler)
 	e.Router.POST("/video/match", matchVideoInformationHandler)
 	e.Router.GET("/meta", getMetaListHandler)
+	e.Router.GET("/info/movie/search", searchMovieInformationHandler)
+	e.Router.GET("/info/tv/search", searchTvInformationHandler)
 	e.Router.POST("/entities", createEntityHandler)
 	e.Router.GET("/entities", getEntitiesHandler)
 	e.Router.GET("/entity/{id:[0-9]+}/cover", getEntityCoverHandler)

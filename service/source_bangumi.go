@@ -114,7 +114,24 @@ func (s *BangumiInfoSource) SearchMovie(query string) (*SearchMovieResult, error
 	}
 	return nil, nil
 }
-
+func (s *BangumiInfoSource) SearchMovieList(query string) ([]*SearchMovieResult, error) {
+	result, err := s.client.SearchSubject(query, &SearchObjectOption{
+		Type:          "2",
+		ResponseGroup: "large",
+	})
+	if err != nil {
+		return nil, err
+	}
+	resultList := make([]*SearchMovieResult, 0)
+	for _, item := range result.List {
+		resultList = append(resultList, &SearchMovieResult{
+			Name:    item.Name,
+			Cover:   item.Images.Large,
+			Summary: item.Summary,
+		})
+	}
+	return resultList, nil
+}
 func (s *BangumiInfoSource) SearchTv(query string) (*SearchTVResult, error) {
 	result, err := s.client.SearchSubject(query, &SearchObjectOption{
 		Type:          "2",
@@ -132,7 +149,24 @@ func (s *BangumiInfoSource) SearchTv(query string) (*SearchTVResult, error) {
 	}
 	return nil, nil
 }
-
+func (s *BangumiInfoSource) SearchTvList(query string) ([]*SearchTVResult, error) {
+	result, err := s.client.SearchSubject(query, &SearchObjectOption{
+		Type:          "2",
+		ResponseGroup: "large",
+	})
+	if err != nil {
+		return nil, err
+	}
+	resultList := make([]*SearchTVResult, 0)
+	for _, item := range result.List {
+		resultList = append(resultList, &SearchTVResult{
+			Name:    item.Name,
+			Cover:   item.Images.Large,
+			Summary: item.Summary,
+		})
+	}
+	return resultList, nil
+}
 func (s *BangumiInfoSource) MatchEntity(entity *database.Entity) error {
 	result, err := s.SearchMovie(entity.Name)
 	if err != nil {

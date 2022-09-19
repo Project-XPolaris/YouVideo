@@ -78,6 +78,21 @@ func (s *TMDBSource) SearchMovie(query string) (*SearchMovieResult, error) {
 	}
 	return nil, nil
 }
+func (s *TMDBSource) SearchMovieList(query string) ([]*SearchMovieResult, error) {
+	movie, err := s.tmdbClient.GetSearchMovies(query, nil)
+	if err != nil {
+		return nil, err
+	}
+	resultList := make([]*SearchMovieResult, 0)
+	for _, item := range movie.Results {
+		resultList = append(resultList, &SearchMovieResult{
+			Name:    item.Title,
+			Cover:   item.PosterPath,
+			Summary: item.Overview,
+		})
+	}
+	return nil, nil
+}
 func (s *TMDBSource) SearchTv(query string) (*SearchTVResult, error) {
 	tvList, err := s.tmdbClient.GetSearchTVShow(query, nil)
 	if err != nil {
@@ -93,6 +108,21 @@ func (s *TMDBSource) SearchTv(query string) (*SearchTVResult, error) {
 		return result, nil
 	}
 	return nil, nil
+}
+func (s *TMDBSource) SearchTvList(query string) ([]*SearchTVResult, error) {
+	tvList, err := s.tmdbClient.GetSearchTVShow(query, nil)
+	if err != nil {
+		return nil, err
+	}
+	resultList := make([]*SearchTVResult, 0)
+	for _, item := range tvList.Results {
+		resultList = append(resultList, &SearchTVResult{
+			Name:    item.Name,
+			Cover:   item.PosterPath,
+			Summary: item.Overview,
+		})
+	}
+	return resultList, nil
 }
 func (s *TMDBSource) DownloadCover(url string) (string, error) {
 	prefix := "https://image.tmdb.org/t/p/w500"

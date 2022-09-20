@@ -38,7 +38,7 @@ func (t *ScanTask) Start() error {
 		}
 		return nil
 	}
-	pathList, err := service.ScanVideo(&t.Library)
+	pathList, err := service.ScanVideo(&t.Library, t.Option.ExcludeDirList)
 	if err != nil {
 		t.Err = err
 		if t.Option.OnError != nil {
@@ -109,6 +109,7 @@ type CreateScanTaskOption struct {
 	Uid            string
 	MatchSubject   bool
 	DirectoryMode  bool
+	ExcludeDirList []string
 	OnFileComplete func(task *ScanTask)
 	OnFileError    func(task *ScanTask, err error)
 	OnError        func(task *ScanTask, err error)
@@ -131,6 +132,9 @@ func CreateSyncLibraryTask(option CreateScanTaskOption) (*ScanTask, error) {
 	output := &ScanTaskOutput{
 		Id:   library.ID,
 		Path: library.Path,
+	}
+	if option.ExcludeDirList == nil {
+		option.ExcludeDirList = []string{}
 	}
 	task := &ScanTask{
 		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeScanLibrary], option.Uid, TaskStatusNameMapping[TaskStatusRunning]),

@@ -45,13 +45,23 @@ func CheckLibrary(libraryId uint) error {
 	}
 	return nil
 }
-func ScanVideo(library *database.Library) ([]string, error) {
+func ScanVideo(library *database.Library, excludeDir []string) ([]string, error) {
 	targetExtensions := []string{
 		"mp4", "mkv", "avi", "rmvb", "flv", "wmv", "mov", "3gp", "m4v", "mpg", "mpeg", "mpe", "mpv", "m2v", "m4v", "m4p", "m4b", "m4r", "m4v", "m4a", "m4p", "m4b", "m4r", "m4v", "m4a", "m4p", "m4b", "m4r", "m4v", "m4a",
 	}
 	target := make([]string, 0)
 	err := afero.Walk(AppFs, library.Path, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
+			isExclude := false
+			for _, dir := range excludeDir {
+				if info.Name() == dir {
+					isExclude = true
+					break
+				}
+			}
+			if isExclude {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		if strings.HasPrefix(info.Name(), ".") {

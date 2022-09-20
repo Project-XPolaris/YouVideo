@@ -16,6 +16,6 @@ type File struct {
 	Bitrate        int64
 	MainVideoCodec string
 	MainAudioCodec string
-	Subtitles      string
+	Subtitles      []Subtitles `gorm:"constraint:OnDelete:CASCADE;"`
 	Checksum       string
 }

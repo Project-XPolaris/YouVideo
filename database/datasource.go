@@ -19,6 +19,7 @@ var DefaultPlugin = &datasource.Plugin{
 			&VideoMetaItem{},
 			&Entity{},
 			&Oauth{},
+			&Subtitles{},
 		)
 		var user User
 		Instance.FirstOrCreate(&user, User{Uid: "-1", Username: "public"})

@@ -166,6 +166,7 @@ func (v *VideoQueryBuilder) Query() (int64, []*database.Video, error) {
 	var count int64
 	err := query.Model(&database.Video{}).
 		Preload("Files").
+		Preload("Files.Subtitles").
 		Preload("Infos").
 		Limit(v.PageSize).
 		Offset(v.PageSize * (v.Page - 1)).
@@ -189,21 +190,6 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 		file = &database.File{}
 	}
 	file.Path = path
-	// check file subtitles file
-	subtitlesFiles := []string{
-		fmt.Sprintf("%s.srt", videoName),
-		fmt.Sprintf("%s.ass", videoName),
-		fmt.Sprintf("%s.ssa", videoName),
-	}
-	subtitlesFilePath := ""
-	for _, subtitlesFile := range subtitlesFiles {
-		subtitlesSourcePath := filepath.Join(baseDir, subtitlesFile)
-		if util.CheckFileExist(subtitlesSourcePath) {
-			subtitlesFilePath = subtitlesSourcePath
-			break
-		}
-	}
-	file.Subtitles = subtitlesFilePath
 
 	// save folder
 	var folder database.Folder
@@ -250,15 +236,30 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 	if err != nil {
 		return nil, err
 	}
-	// analyze video meta
-	DefaultVideoMetaAnalyzer.In <- VideoMetaAnalyzerInput{
-		File: file,
-	}
+
 	DefaultVideoCoverGenerator.In <- file
 	err = database.Instance.Save(file).Error
 	if err != nil {
 		return nil, err
 	}
+
+	items, err := os.ReadDir(baseDir)
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range items {
+		if util.IsSubtitlesFile(item.Name()) && strings.HasPrefix(item.Name(), videoName+".") {
+			_, err = database.ReadOrCreateSubtitles(filepath.Join(baseDir, item.Name()), file.ID)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	// analyze video meta
+	DefaultVideoMetaAnalyzer.In <- VideoMetaAnalyzerInput{
+		File: file,
+	}
+
 	return &video, err
 }
 func RefreshVideo(videoId uint) error {
@@ -351,7 +352,12 @@ func GetVideoById(id uint, rel ...string) (*database.Video, error) {
 
 func MoveVideoById(id uint, targetLibraryId uint, targetPath string) (*database.Video, error) {
 	var video database.Video
-	err := database.Instance.Model(&database.Video{}).Where("id = ?", id).Preload("Files").First(&video).Error
+	err := database.Instance.Model(&database.Video{}).
+		Where("id = ?", id).
+		Preload("Files").
+		Preload("Files.Subtitles").
+		First(&video).
+		Error
 	if err != nil {
 		return nil, err
 	}
@@ -387,7 +393,18 @@ func MoveVideoById(id uint, targetLibraryId uint, targetPath string) (*database.
 		file.Path = targetPath
 		// move subtitles
 		if len(file.Subtitles) > 0 {
-			err = AppFs.Rename(file.Subtitles, filepath.Join(filepath.Dir(targetPath), filepath.Base(file.Subtitles)))
+			for _, sub := range file.Subtitles {
+				newSubPath := filepath.Join(filepath.Dir(targetPath), filepath.Base(sub.Path))
+				err = AppFs.Rename(sub.Path, newSubPath)
+				if err != nil {
+					return nil, err
+				}
+				_, err = database.ReadOrCreateSubtitles(newSubPath, file.ID)
+				if err != nil {
+					return nil, err
+				}
+
+			}
 		}
 		database.Instance.Save(&file)
 		video.BaseDir = filepath.Dir(targetPath)

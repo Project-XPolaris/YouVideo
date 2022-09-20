@@ -15,7 +15,7 @@ type CC struct {
 
 func GetCloseCaption(file *database.File) ([]*CC, error) {
 	var cc []*CC
-	source, err := astisub.OpenFile(file.Subtitles)
+	source, err := astisub.OpenFile(file.Subtitles[0].Path)
 	if err != nil {
 		return cc, err
 	}

@@ -48,20 +48,24 @@ func (t *BaseLibraryTemplate) Assign(library *database.Library) {
 	t.Name = library.Name
 }
 
+type BaseSubtitleTemplate struct {
+	Id    uint
+	Label string
+}
 type BaseFileTemplate struct {
-	Id             uint    `json:"id"`
-	Path           string  `json:"path"`
-	Cover          string  `json:"cover,omitempty"`
-	Duration       float64 `json:"duration"`
-	Size           int64   `json:"size"`
-	Bitrate        int64   `json:"bitrate"`
-	MainVideoCodec string  `json:"main_video_codec，omitempty"`
-	MainAudioCodec string  `json:"main_audio_codec,omitempty"`
-	VideoId        uint    `json:"video_id"`
-	Name           string  `json:"name"`
-	CoverWidth     uint    `json:"coverWidth"`
-	CoverHeight    uint    `json:"coverHeight"`
-	Subtitles      string  `json:"subtitles,omitempty"`
+	Id             uint                   `json:"id"`
+	Path           string                 `json:"path"`
+	Cover          string                 `json:"cover,omitempty"`
+	Duration       float64                `json:"duration"`
+	Size           int64                  `json:"size"`
+	Bitrate        int64                  `json:"bitrate"`
+	MainVideoCodec string                 `json:"main_video_codec，omitempty"`
+	MainAudioCodec string                 `json:"main_audio_codec,omitempty"`
+	VideoId        uint                   `json:"video_id"`
+	Name           string                 `json:"name"`
+	CoverWidth     uint                   `json:"coverWidth"`
+	CoverHeight    uint                   `json:"coverHeight"`
+	Subtitles      []BaseSubtitleTemplate `json:"subtitles,omitempty"`
 }
 
 func (t *BaseFileTemplate) Assign(file *database.File) {
@@ -79,7 +83,15 @@ func (t *BaseFileTemplate) Assign(file *database.File) {
 	t.Name = filepath.Base(file.Path)
 	t.CoverWidth = uint(file.CoverWidth)
 	t.CoverHeight = uint(file.CoverHeight)
-	t.Subtitles = file.Subtitles
+	t.Subtitles = make([]BaseSubtitleTemplate, 0)
+	if file.Subtitles != nil {
+		for _, subtitle := range file.Subtitles {
+			t.Subtitles = append(t.Subtitles, BaseSubtitleTemplate{
+				Id:    subtitle.ID,
+				Label: subtitle.Label,
+			})
+		}
+	}
 }
 
 type BaseVideoTemplate struct {

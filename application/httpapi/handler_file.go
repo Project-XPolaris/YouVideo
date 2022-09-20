@@ -71,7 +71,12 @@ var videoSubtitle haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	http.ServeFile(context.Writer, context.Request, file.Subtitles)
+	if len(file.Subtitles) == 0 {
+		AbortError(context, errors.New("no subtitle"), http.StatusNotFound)
+		return
+	}
+
+	http.ServeFile(context.Writer, context.Request, file.Subtitles[0].Path)
 }
 var removeFileHandler haruka.RequestHandler = func(context *haruka.Context) {
 	var fileObjectInput FileObjectInput
@@ -178,12 +183,21 @@ var playLinkHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	rawAuth, err := module.Auth.ParseToken(token)
-	if err != nil {
-		AbortError(context, err, http.StatusBadRequest)
-		return
+	var user *database.User
+	if module.Auth.Config.EnableAnonymous && token == "noauth" {
+		user, err = service.GetUserById("-1")
+		if err != nil {
+			AbortError(context, err, http.StatusBadRequest)
+			return
+		}
+	} else {
+		rawAuth, err := module.Auth.ParseToken(token)
+		if err != nil {
+			AbortError(context, err, http.StatusBadRequest)
+			return
+		}
+		user = rawAuth.(*database.User)
 	}
-	user := rawAuth.(*database.User)
 	filePermissionValidator := FilePermissionValidator{
 		Id:  uint(id),
 		Uid: user.Uid,
@@ -212,7 +226,22 @@ var playLinkHandler haruka.RequestHandler = func(context *haruka.Context) {
 		http.ServeContent(context.Writer, context.Request, file.Name(), time.Now(), file)
 		//http.ServeFile(context.Writer, context.Request, file.Path)
 	case "subs":
-		http.ServeFile(context.Writer, context.Request, file.Subtitles)
+		rawSubId := context.GetQueryString("sub")
+		if rawSubId == "" {
+			http.ServeFile(context.Writer, context.Request, file.Subtitles[0].Path)
+		} else {
+			subId, err := strconv.Atoi(rawSubId)
+			if err != nil {
+				AbortError(context, err, http.StatusBadRequest)
+				return
+			}
+			for _, sub := range file.Subtitles {
+				if sub.ID == uint(subId) {
+					http.ServeFile(context.Writer, context.Request, sub.Path)
+					return
+				}
+			}
+		}
 	case "cover":
 		storageKey := filepath.Join(config.Instance.CoversStore, file.Cover)
 		storage := plugin.GetDefaultStorage()

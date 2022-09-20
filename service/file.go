@@ -46,13 +46,13 @@ func RemoveFileById(id uint) error {
 
 func GetFileById(id uint) (*database.File, error) {
 	var file database.File
-	err := database.Instance.Find(&file, id).Error
+	err := database.Instance.Preload("Subtitles").Find(&file, id).Error
 	return &file, err
 }
 
 func GetFileByPath(path string) (*database.File, error) {
 	file := database.File{}
-	err := database.Instance.Where("path = ?", path).First(&file).Error
+	err := database.Instance.Where("path = ?", path).Preload("Subtitles").First(&file).Error
 	return &file, err
 }
 
@@ -118,7 +118,10 @@ func CompleteTrans(tranTask youtrans.TaskResponse) error {
 	}
 	newFile := NewVideoFile(tranTask.Output)
 	newFile.VideoId = original.VideoId
-
+	err = database.Instance.Create(&newFile).Error
+	if err != nil {
+		return err
+	}
 	// generate cover
 	if len(original.Cover) > 0 {
 		coverFileName := fmt.Sprintf("%s%s", xid.New(), filepath.Ext(original.Cover))
@@ -137,18 +140,21 @@ func CompleteTrans(tranTask youtrans.TaskResponse) error {
 
 	if len(original.Subtitles) > 0 {
 		subName := strings.ReplaceAll(filepath.Base(tranTask.Output), filepath.Ext(tranTask.Output), "")
-		subFilename := util.ChangeFileNameWithoutExt(original.Subtitles, subName)
-		subPath := filepath.Join(filepath.Dir(original.Subtitles), subFilename)
-		err = util.CopyFile(original.Subtitles, subPath)
-		if err != nil {
-			return err
+		for _, subs := range original.Subtitles {
+			subFilename := util.ChangeFileNameWithoutExt(subs.Path, subName)
+			subPath := filepath.Join(filepath.Dir(subs.Path), subFilename)
+			err = util.CopyFile(subs.Path, subPath)
+			if err != nil {
+				return err
+			}
+			_, err := database.ReadOrCreateSubtitles(subPath, newFile.ID)
+			if err != nil {
+				return err
+			}
 		}
-		newFile.Subtitles = subPath
+
 	}
-	err = database.Instance.Create(&newFile).Error
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
 
@@ -197,11 +203,19 @@ func RenameFile(id uint, name string) error {
 		return err
 	}
 	if len(file.Subtitles) > 0 {
-		subFileExt := filepath.Ext(file.Subtitles)
-		err = AppFs.Rename(file.Subtitles, filepath.Join(fileDir, fmt.Sprintf("%s%s", name, subFileExt)))
-		if err != nil {
-			return err
+		for _, sub := range file.Subtitles {
+			subFileExt := filepath.Ext(sub.Path)
+			newSubPath := filepath.Join(fileDir, fmt.Sprintf("%s%s", name, subFileExt))
+			err = AppFs.Rename(sub.Path, newSubPath)
+			if err != nil {
+				return err
+			}
+			_, err = database.ReadOrCreateSubtitles(newSubPath, file.ID)
+			if err != nil {
+				return err
+			}
 		}
+
 	}
 	file.Path = newFilePath
 	err = database.Instance.Save(&file).Error

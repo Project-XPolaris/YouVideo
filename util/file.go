@@ -3,6 +3,7 @@ package util
 import (
 	"io"
 	"os"
+	"path/filepath"
 )
 
 func CopyFile(source string, dest string) error {
@@ -18,4 +19,9 @@ func CopyFile(source string, dest string) error {
 	defer dst.Close()
 	_, err = io.Copy(dst, src)
 	return err
+}
+
+func IsSubtitlesFile(path string) bool {
+	ext := filepath.Ext(path)
+	return ext == ".srt" || ext == ".ass" || ext == ".ssa" || ext == ".vtt"
 }

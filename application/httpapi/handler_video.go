@@ -60,7 +60,7 @@ var getVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	video, err := service.GetVideoById(uint(id), "Files", "Infos")
+	video, err := service.GetVideoById(uint(id), "Files", "Infos", "Files.Subtitles")
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return

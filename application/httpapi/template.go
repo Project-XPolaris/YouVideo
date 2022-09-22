@@ -49,8 +49,8 @@ func (t *BaseLibraryTemplate) Assign(library *database.Library) {
 }
 
 type BaseSubtitleTemplate struct {
-	Id    uint
-	Label string
+	Id    uint   `json:"id"`
+	Label string `json:"label"`
 }
 type BaseFileTemplate struct {
 	Id             uint                   `json:"id"`

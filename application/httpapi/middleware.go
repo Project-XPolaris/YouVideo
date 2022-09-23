@@ -61,7 +61,7 @@ func (m *AuthMiddleware) OnRequest(ctx *haruka.Context) {
 		"/oauth/youauth",
 		"/oauth/youplus",
 		"/info",
-		"/link/{id:[0-9]+}/{type}/{token}",
+		"/link/{id:[0-9]+}/{type}/{token}/{any}",
 	}
 	for _, pattern := range noAuthMatchPatterns {
 		if ctx.Pattern == pattern {

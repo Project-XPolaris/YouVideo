@@ -13,7 +13,6 @@ import (
 	"github.com/projectxpolaris/youvideo/service"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -178,6 +177,7 @@ var playLinkHandler haruka.RequestHandler = func(context *haruka.Context) {
 	rawId := context.GetPathParameterAsString("id")
 	sourcesType := context.GetPathParameterAsString("type")
 	token := context.GetPathParameterAsString("token")
+	param := context.GetPathParameterAsString("any")
 	id, err := strconv.Atoi(rawId)
 	if err != nil {
 		AbortError(context, err, http.StatusBadRequest)
@@ -213,20 +213,9 @@ var playLinkHandler haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	switch sourcesType {
 	case "video":
-		service.CreateHistory(file.VideoId, user.Uid)
-		file, err := os.OpenFile(file.Path, os.O_RDONLY, 0666)
-		if err != nil {
-			AbortError(context, err, http.StatusInternalServerError)
-			return
-		}
-		if err != nil {
-			AbortError(context, err, http.StatusInternalServerError)
-			return
-		}
-		http.ServeContent(context.Writer, context.Request, file.Name(), time.Now(), file)
-		//http.ServeFile(context.Writer, context.Request, file.Path)
+		http.ServeFile(context.Writer, context.Request, file.Path)
 	case "subs":
-		rawSubId := context.GetQueryString("sub")
+		rawSubId := param
 		if rawSubId == "" {
 			http.ServeFile(context.Writer, context.Request, file.Subtitles[0].Path)
 		} else {

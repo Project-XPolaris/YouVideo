@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/util"
@@ -21,14 +22,15 @@ func CreateEntity(name string, libraryId uint) (*database.Entity, error) {
 }
 
 type EntityQueryBuilder struct {
-	Id           uint   `hsource:"query" hname:"id"`
-	Search       string `hsource:"query" hname:"search"`
-	Page         int    `hsource:"param" hname:"page"`
-	PageSize     int    `hsource:"param" hname:"pageSize"`
-	Name         string `hsource:"query" hname:"name"`
-	ReleaseStart string `hsource:"query" hname:"releaseStart"`
-	ReleaseEnd   string `hsource:"query" hname:"releaseEnd"`
-	Order        string `hsource:"query" hname:"order"`
+	Id           uint     `hsource:"query" hname:"id"`
+	Search       string   `hsource:"query" hname:"search"`
+	Random       string   `hsource:"query" hname:"random"`
+	Page         int      `hsource:"param" hname:"page"`
+	PageSize     int      `hsource:"param" hname:"pageSize"`
+	Name         string   `hsource:"query" hname:"name"`
+	ReleaseStart string   `hsource:"query" hname:"releaseStart"`
+	ReleaseEnd   string   `hsource:"query" hname:"releaseEnd"`
+	Orders       []string `hsource:"query" hname:"order"`
 }
 
 func (e *EntityQueryBuilder) Query() ([]*database.Entity, int64, error) {
@@ -43,12 +45,24 @@ func (e *EntityQueryBuilder) Query() ([]*database.Entity, int64, error) {
 	}
 	if e.Search != "" {
 		query = query.Where("name LIKE ?", "%"+e.Search+"%")
+
 	}
 	if e.Name != "" {
 		query = query.Where("name = ?", e.Name)
 	}
 	if e.Id != 0 {
 		query = query.Where("id = ?", e.Id)
+	}
+	if len(e.Random) > 0 {
+		if database.Instance.Dialector.Name() == "sqlite" {
+			query = query.Order("random()")
+		} else {
+			query = query.Order("RAND()")
+		}
+	} else {
+		for _, order := range e.Orders {
+			query = query.Order(fmt.Sprintf("entities.%s", order))
+		}
 	}
 	err := query.
 		Preload("Videos").

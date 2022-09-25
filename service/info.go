@@ -56,10 +56,10 @@ func (e *InfoQueryBuilder) Query() ([]*database.VideoMetaItem, int64, error) {
 		e.PageSize = 10
 	}
 	if e.Dist != "" {
-		query = query.Distinct("key")
+		query = query.Distinct("video_meta_items.key")
 	}
 	if e.Key != "" {
-		query = query.Where("key = ?", e.Key)
+		query = query.Where("video_meta_items.key = ?", e.Key)
 	}
 	if e.Value != "" {
 		query = query.Where("value = ?", e.Value)

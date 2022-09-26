@@ -7,6 +7,7 @@ import (
 	"github.com/projectxpolaris/youvideo/module"
 	"github.com/projectxpolaris/youvideo/service"
 	"github.com/sirupsen/logrus"
+	"os"
 	"path/filepath"
 )
 
@@ -63,7 +64,7 @@ func (t *ScanTask) Start() error {
 		if t.Option.DirectoryMode {
 			parentDirName := filepath.Base(filepath.Dir(path))
 			// create entity
-			entity, err := service.GetOrCreateEntity(parentDirName, t.Library.ID)
+			isCreate, entity, err := service.GetOrCreateEntity(parentDirName, t.Library.ID)
 			if err != nil {
 				if t.Option.OnFileError != nil {
 					t.Option.OnFileError(t, err)
@@ -78,6 +79,42 @@ func (t *ScanTask) Start() error {
 				}
 				t.logger.Error(err)
 				continue
+			}
+			if isCreate {
+				t.logger.Info("scan meta entity ", entity.Name)
+				dirItems, err := os.ReadDir(filepath.Dir(path))
+				if err != nil {
+					if t.Option.OnFileError != nil {
+						t.Option.OnFileError(t, err)
+					}
+					t.logger.Error(err)
+					continue
+				}
+				metaPath := ""
+				for _, item := range dirItems {
+					if item.Name() == "meta.json" {
+						metaPath = filepath.Join(filepath.Dir(path), item.Name())
+						break
+					}
+				}
+				if len(metaPath) != 0 {
+					err = service.ParseEntityMetaFile(entity, metaPath)
+					if err != nil {
+						if t.Option.OnFileError != nil {
+							t.Option.OnFileError(t, err)
+						}
+						t.logger.Error(err)
+						continue
+					}
+					err = database.Instance.Save(entity).Error
+					if err != nil {
+						if t.Option.OnFileError != nil {
+							t.Option.OnFileError(t, err)
+						}
+						t.logger.Error(err)
+						continue
+					}
+				}
 			}
 		}
 		if t.Option.OnFileComplete != nil {

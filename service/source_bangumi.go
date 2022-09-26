@@ -8,6 +8,7 @@ import (
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/plugin"
+	"github.com/projectxpolaris/youvideo/util"
 	"net/http"
 	"path/filepath"
 )
@@ -66,6 +67,59 @@ type SearchSubjectResult struct {
 		} `json:"collection"`
 	} `json:"list"`
 }
+type GetSubjectResult struct {
+	Date     string `json:"date"`
+	Platform string `json:"platform"`
+	Images   struct {
+		Small  string `json:"small"`
+		Grid   string `json:"grid"`
+		Large  string `json:"large"`
+		Medium string `json:"medium"`
+		Common string `json:"common"`
+	} `json:"images"`
+	Summary string `json:"summary"`
+	Name    string `json:"name"`
+	NameCn  string `json:"name_cn"`
+	Tags    []struct {
+		Name  string `json:"name"`
+		Count int    `json:"count"`
+	} `json:"tags"`
+	Infobox []struct {
+		Key   string      `json:"key"`
+		Value interface{} `json:"value"`
+	} `json:"infobox"`
+	Rating struct {
+		Rank  int `json:"rank"`
+		Total int `json:"total"`
+		Count struct {
+			Num1  int `json:"1"`
+			Num2  int `json:"2"`
+			Num3  int `json:"3"`
+			Num4  int `json:"4"`
+			Num5  int `json:"5"`
+			Num6  int `json:"6"`
+			Num7  int `json:"7"`
+			Num8  int `json:"8"`
+			Num9  int `json:"9"`
+			Num10 int `json:"10"`
+		} `json:"count"`
+		Score float64 `json:"score"`
+	} `json:"rating"`
+	TotalEpisodes int `json:"total_episodes"`
+	Collection    struct {
+		OnHold  int `json:"on_hold"`
+		Dropped int `json:"dropped"`
+		Wish    int `json:"wish"`
+		Collect int `json:"collect"`
+		Doing   int `json:"doing"`
+	} `json:"collection"`
+	ID      int  `json:"id"`
+	Eps     int  `json:"eps"`
+	Volumes int  `json:"volumes"`
+	Locked  bool `json:"locked"`
+	Nsfw    bool `json:"nsfw"`
+	Type    int  `json:"type"`
+}
 
 func NewBangumiClient() *BangumiClient {
 	return &BangumiClient{
@@ -88,6 +142,15 @@ func (c *BangumiClient) SearchSubject(keyword string, option *SearchObjectOption
 		return nil, err
 	}
 	return response.Result().(*SearchSubjectResult), nil
+}
+func (c *BangumiClient) GetSubjectById(id string) (*GetSubjectResult, error) {
+	request := c.client.R()
+	result := &GetSubjectResult{}
+	response, err := request.SetResult(result).Get("https://api.bgm.tv/v0/subjects/" + id)
+	if err != nil {
+		return nil, err
+	}
+	return response.Result().(*GetSubjectResult), nil
 }
 
 var bangumiInfoSource *BangumiInfoSource
@@ -199,7 +262,33 @@ func (s *BangumiInfoSource) DownloadCover(url string) (string, error) {
 	}
 	return baseFileName, nil
 }
-
+func (s *BangumiInfoSource) ApplyEntityById(entity *database.Entity, id string) error {
+	result, err := s.client.GetSubjectById(id)
+	if err != nil {
+		return err
+	}
+	entity.Name = result.Name
+	entity.Summary = result.Summary
+	if len(result.Images.Large) > 0 {
+		coverFilename, err := s.DownloadCover(result.Images.Large)
+		if err != nil {
+			return err
+		}
+		entity.Cover = coverFilename
+		storage := plugin.GetDefaultStorage()
+		reader, err := storage.Get(context.Background(), plugin.GetDefaultBucket(), "entity/"+coverFilename)
+		if err != nil {
+			return err
+		}
+		width, height, err := util.GetImageSize(reader)
+		if err != nil {
+			return err
+		}
+		entity.CoverWidth = width
+		entity.CoverHeight = height
+	}
+	return nil
+}
 func InitBangumiInfoSource() {
 	logScope := plugin.DefaultYouLogPlugin.Logger.NewScope("bangumi")
 	bangumiConfig := config.Instance.BangumiConfig

@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/util"
 	"gorm.io/gorm"
+	"os"
 )
 
 func CreateEntity(name string, libraryId uint) (*database.Entity, error) {
@@ -18,7 +20,8 @@ func CreateEntity(name string, libraryId uint) (*database.Entity, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &newData, nil
+	err = database.Instance.Find(&newData, newData.ID).Error
+	return &newData, err
 }
 
 type EntityQueryBuilder struct {
@@ -92,16 +95,17 @@ func AddVideoToEntity(videoIds []uint, entityId uint) error {
 	return nil
 }
 
-func GetOrCreateEntity(name string, libraryId uint) (*database.Entity, error) {
+func GetOrCreateEntity(name string, libraryId uint) (bool, *database.Entity, error) {
 	var entity database.Entity
 	err := database.Instance.Where("name = ?", name).Where("library_id = ?", libraryId).First(&entity).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return CreateEntity(name, libraryId)
+			entity, err := CreateEntity(name, libraryId)
+			return true, entity, err
 		}
-		return nil, err
+		return false, nil, err
 	}
-	return &entity, nil
+	return false, &entity, nil
 }
 
 func GetEntityById(id uint) (*database.Entity, error) {
@@ -148,4 +152,26 @@ func UpdateEntityById(id uint, updateData map[string]interface{}) (*database.Ent
 		return nil, err
 	}
 	return &entity, nil
+}
+
+type EntityMetaFile struct {
+	BangumiId string `json:"bangumiId"`
+}
+
+func ParseEntityMetaFile(entity *database.Entity, metaPath string) error {
+	rawContent, err := os.ReadFile(metaPath)
+	if err != nil {
+		return err
+	}
+	meta := &EntityMetaFile{}
+	err = json.Unmarshal(rawContent, meta)
+	if err != nil {
+		return err
+	}
+	if len(meta.BangumiId) > 0 {
+		if bangumiInfoSource != nil {
+			return bangumiInfoSource.ApplyEntityById(entity, meta.BangumiId)
+		}
+	}
+	return nil
 }

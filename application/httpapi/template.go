@@ -304,12 +304,14 @@ type BaseEntityTemplate struct {
 	CoverHeight int                     `json:"coverHeight,omitempty"`
 	Infos       []BaseVideoMetaTemplate `json:"infos,omitempty"`
 	Release     string                  `json:"release,omitempty"`
+	LibraryId   uint                    `json:"libraryId,omitempty"`
 }
 
 func (t *BaseEntityTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
 	model := dataModel.(*database.Entity)
 	t.Id = model.ID
 	t.Name = model.Name
+	t.LibraryId = model.LibraryId
 	var release *time.Time
 	if model.Videos != nil {
 		videoTemplates := make([]BaseVideoTemplate, 0)

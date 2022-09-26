@@ -31,6 +31,7 @@ type EntityQueryBuilder struct {
 	Page         int      `hsource:"param" hname:"page"`
 	PageSize     int      `hsource:"param" hname:"pageSize"`
 	Name         string   `hsource:"query" hname:"name"`
+	LibraryId    int      `hsource:"query" hname:"library"`
 	ReleaseStart string   `hsource:"query" hname:"releaseStart"`
 	ReleaseEnd   string   `hsource:"query" hname:"releaseEnd"`
 	Orders       []string `hsource:"query" hname:"order"`
@@ -55,6 +56,9 @@ func (e *EntityQueryBuilder) Query() ([]*database.Entity, int64, error) {
 	}
 	if e.Id != 0 {
 		query = query.Where("id = ?", e.Id)
+	}
+	if e.LibraryId != 0 {
+		query = query.Where("library_id = ?", e.LibraryId)
 	}
 	if len(e.Random) > 0 {
 		if database.Instance.Dialector.Name() == "sqlite" {

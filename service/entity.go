@@ -99,12 +99,20 @@ func AddVideoToEntity(videoIds []uint, entityId uint) error {
 	return nil
 }
 
-func GetOrCreateEntity(name string, libraryId uint) (bool, *database.Entity, error) {
+func GetOrCreateEntityWithDirPath(name string, libraryId uint, dirPath string) (bool, *database.Entity, error) {
 	var entity database.Entity
-	err := database.Instance.Where("name = ?", name).Where("library_id = ?", libraryId).First(&entity).Error
+	err := database.Instance.
+		Where("directory_path = ?", dirPath).
+		Where("library_id = ?", libraryId).
+		First(&entity).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			entity, err := CreateEntity(name, libraryId)
+			entity := &database.Entity{
+				Name:          name,
+				DirectoryPath: dirPath,
+				LibraryId:     libraryId,
+			}
+			err = database.Instance.Create(entity).Error
 			return true, entity, err
 		}
 		return false, nil, err

@@ -64,7 +64,7 @@ func (t *ScanTask) Start() error {
 		if t.Option.DirectoryMode {
 			parentDirName := filepath.Base(filepath.Dir(path))
 			// create entity
-			isCreate, entity, err := service.GetOrCreateEntity(parentDirName, t.Library.ID)
+			isCreate, entity, err := service.GetOrCreateEntityWithDirPath(parentDirName, t.Library.ID, filepath.Dir(path))
 			if err != nil {
 				if t.Option.OnFileError != nil {
 					t.Option.OnFileError(t, err)

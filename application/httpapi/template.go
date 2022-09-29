@@ -298,6 +298,7 @@ func (t *BaseVideoMetaTemplate) Serializer(dataModel interface{}, context map[st
 type BaseEntityTemplate struct {
 	Id          uint                    `json:"id"`
 	Name        string                  `json:"name"`
+	Summary     string                  `json:"summary"`
 	Videos      []BaseVideoTemplate     `json:"videos,omitempty"`
 	Cover       string                  `json:"cover,omitempty"`
 	CoverWidth  int                     `json:"coverWidth,omitempty"`
@@ -312,6 +313,7 @@ func (t *BaseEntityTemplate) Serializer(dataModel interface{}, context map[strin
 	t.Id = model.ID
 	t.Name = model.Name
 	t.LibraryId = model.LibraryId
+	t.Summary = model.Summary
 	var release *time.Time
 	if model.Videos != nil {
 		videoTemplates := make([]BaseVideoTemplate, 0)

@@ -51,6 +51,27 @@ func (t *RemoveLibraryTask) Start() error {
 		}
 		return nil
 	}
+	// clear entity
+	var entities []database.Entity
+	err = database.Instance.
+		Model(&database.Library{Model: gorm.Model{ID: t.Library.ID}}).
+		Association("Entity").
+		Find(&entities)
+	if err != nil {
+		if t.Option.OnError != nil {
+			t.Option.OnError(t, err)
+		}
+		return nil
+	}
+	for _, entity := range entities {
+		err = database.Instance.Model(&entity).Association("Tags").Clear()
+		if err != nil {
+			if t.Option.OnError != nil {
+				t.Option.OnError(t, err)
+			}
+			return nil
+		}
+	}
 	// clear library folder
 	err = database.Instance.Unscoped().Where("library_id = ?", t.Library.ID).Delete(database.Folder{}).Error
 	if err != nil {

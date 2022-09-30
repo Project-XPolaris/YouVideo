@@ -212,6 +212,7 @@ var newRemoveLibraryTask haruka.RequestHandler = func(context *haruka.Context) {
 		LibraryId: uint(id),
 		Uid:       context.Param["uid"].(string),
 		OnError: func(task *taskService.RemoveLibraryTask, err error) {
+			Logger.Error(err)
 			module.Notification.Manager.SendJSONToUser(haruka.JSON{
 				"event": EventRemoveTaskError,
 				"error": err,

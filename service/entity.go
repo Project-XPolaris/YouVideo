@@ -75,6 +75,7 @@ func (e *EntityQueryBuilder) Query() ([]*database.Entity, int64, error) {
 		Preload("Videos").
 		Preload("Videos.Files").
 		Preload("Videos.Infos").
+		Preload("Tags").
 		Offset((e.Page - 1) * e.PageSize).
 		Limit(e.PageSize).
 		Find(&entities).Offset(-1).Count(&count).Error
@@ -125,6 +126,7 @@ func GetEntityById(id uint) (*database.Entity, error) {
 	err := database.Instance.Where("id = ?", id).
 		Preload("Videos").
 		Preload("Videos.Files").
+		Preload("Tags").
 		First(&entity).
 		Error
 	if err != nil {

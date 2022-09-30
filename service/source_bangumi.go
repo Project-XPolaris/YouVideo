@@ -287,7 +287,34 @@ func (s *BangumiInfoSource) ApplyEntityById(entity *database.Entity, id string) 
 		entity.CoverWidth = width
 		entity.CoverHeight = height
 	}
-	return nil
+	tags := make([]database.EntityTag, 0)
+	for _, tag := range result.Tags {
+		entityTag := database.EntityTag{
+			Name:  "Tag",
+			Value: tag.Name,
+		}
+		err = database.Instance.Where(entityTag).FirstOrCreate(&entityTag).Error
+		if err != nil {
+			return err
+		}
+		tags = append(tags, entityTag)
+	}
+	for _, infobox := range result.Infobox {
+		value, isString := infobox.Value.(string)
+		if !isString {
+			continue
+		}
+		entityTag := database.EntityTag{
+			Name:  infobox.Key,
+			Value: value,
+		}
+		err = database.Instance.Where(entityTag).FirstOrCreate(&entityTag).Error
+		if err != nil {
+			return err
+		}
+		tags = append(tags, entityTag)
+	}
+	return database.Instance.Model(entity).Association("Tags").Append(tags)
 }
 func InitBangumiInfoSource() {
 	logScope := plugin.DefaultYouLogPlugin.Logger.NewScope("bangumi")

@@ -20,6 +20,7 @@ var DefaultPlugin = &datasource.Plugin{
 			&Entity{},
 			&Oauth{},
 			&Subtitles{},
+			&EntityTag{},
 		)
 		var user User
 		Instance.FirstOrCreate(&user, User{Uid: "-1", Username: "public"})

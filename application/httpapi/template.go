@@ -295,6 +295,10 @@ func (t *BaseVideoMetaTemplate) Serializer(dataModel interface{}, context map[st
 	return nil
 }
 
+type BaseEntityTagTemplate struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
 type BaseEntityTemplate struct {
 	Id          uint                    `json:"id"`
 	Name        string                  `json:"name"`
@@ -306,6 +310,7 @@ type BaseEntityTemplate struct {
 	Infos       []BaseVideoMetaTemplate `json:"infos,omitempty"`
 	Release     string                  `json:"release,omitempty"`
 	LibraryId   uint                    `json:"libraryId,omitempty"`
+	Tags        []BaseEntityTagTemplate `json:"tags,omitempty"`
 }
 
 func (t *BaseEntityTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
@@ -382,6 +387,16 @@ func (t *BaseEntityTemplate) Serializer(dataModel interface{}, context map[strin
 	}
 	if release != nil {
 		t.Release = release.Format(formatDate)
+	}
+	if model.Tags != nil {
+		tags := make([]BaseEntityTagTemplate, 0)
+		for _, tag := range model.Tags {
+			tags = append(tags, BaseEntityTagTemplate{
+				Name:  tag.Name,
+				Value: tag.Value,
+			})
+		}
+		t.Tags = tags
 	}
 	return nil
 }

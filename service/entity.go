@@ -173,6 +173,8 @@ type EntityMetaFile struct {
 }
 
 func ParseEntityMetaFile(entity *database.Entity, metaPath string) error {
+	logScope := plugin.DefaultYouLogPlugin.Logger.NewScope("entity")
+	logScope.Info("parse meta file ", "path=", metaPath)
 	rawContent, err := os.ReadFile(metaPath)
 	if err != nil {
 		return err
@@ -183,6 +185,7 @@ func ParseEntityMetaFile(entity *database.Entity, metaPath string) error {
 		return err
 	}
 	if len(meta.BangumiId) > 0 {
+		logScope.Info("parse bangumi id ", meta.BangumiId)
 		if bangumiInfoSource != nil {
 			return bangumiInfoSource.ApplyEntityById(entity, meta.BangumiId)
 		}

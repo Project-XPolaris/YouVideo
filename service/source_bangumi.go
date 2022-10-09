@@ -263,6 +263,7 @@ func (s *BangumiInfoSource) DownloadCover(url string) (string, error) {
 	return baseFileName, nil
 }
 func (s *BangumiInfoSource) ApplyEntityById(entity *database.Entity, id string) error {
+	s.logScope.Info("apply entity by id ", id)
 	result, err := s.client.GetSubjectById(id)
 	if err != nil {
 		return err
@@ -270,22 +271,26 @@ func (s *BangumiInfoSource) ApplyEntityById(entity *database.Entity, id string) 
 	entity.Name = result.Name
 	entity.Summary = result.Summary
 	if len(result.Images.Large) > 0 {
+		entity.Cover, err = s.DownloadCover(result.Images.Large)
 		coverFilename, err := s.DownloadCover(result.Images.Large)
 		if err != nil {
 			return err
 		}
+		s.logScope.Info("download cover ", coverFilename)
 		entity.Cover = coverFilename
 		storage := plugin.GetDefaultStorage()
 		reader, err := storage.Get(context.Background(), plugin.GetDefaultBucket(), "entity/"+coverFilename)
 		if err != nil {
 			return err
 		}
+		s.logScope.Info("upload cover to storage ", coverFilename)
 		width, height, err := util.GetImageSize(reader)
 		if err != nil {
 			return err
 		}
 		entity.CoverWidth = width
 		entity.CoverHeight = height
+		s.logScope.Info("download cover ", entity.Cover, "width", width, "height", height)
 	}
 	tags := make([]database.EntityTag, 0)
 	for _, tag := range result.Tags {

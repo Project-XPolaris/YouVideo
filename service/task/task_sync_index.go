@@ -3,6 +3,7 @@ package task
 import (
 	"errors"
 	"github.com/allentom/harukap/module/task"
+	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/module"
 	"github.com/projectxpolaris/youvideo/service"
@@ -28,16 +29,20 @@ func (t *SyncIndexTask) Stop() error {
 }
 
 func (t *SyncIndexTask) Start() error {
-	return service.DefaultMeilisearchEngine.Sync(t.Library.ID)
+	switch config.Instance.SearchEngine {
+	case "meilisearch":
+		return service.DefaultMeilisearchEngine.Sync(t.Library.ID)
+	default:
+
+	}
+	t.BaseTask.Status = TaskStatusNameMapping[TaskStatusDone]
+	return nil
 }
 
 func (t *SyncIndexTask) Output() (interface{}, error) {
 	return t.TaskOutput, nil
 }
 func CreateSyncIndexTask(option CreateSyncIndexTaskOption) (*SyncIndexTask, error) {
-	if service.DefaultMeilisearchEngine.Enable {
-		return nil, errors.New("meilisearch engine is not enable")
-	}
 	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeSyncIndex], TaskStatusNameMapping[TaskStatusRunning])
 	if existRunningTask != nil {
 		return existRunningTask.(*SyncIndexTask), nil

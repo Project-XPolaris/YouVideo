@@ -46,6 +46,7 @@ type Config struct {
 	YouLibraryConfig YouLibraryConfig
 	TMdbConfig       TMdbConfig
 	BangumiConfig    BangumiConfig
+	SearchEngine     string `json:"search_engine"`
 }
 
 func ReadConfig(provider *config.Provider) {
@@ -88,5 +89,6 @@ func ReadConfig(provider *config.Provider) {
 		BangumiConfig: BangumiConfig{
 			Enable: configer.GetBool("bangumi.enable"),
 		},
+		SearchEngine: configer.GetString("search_engine"),
 	}
 }

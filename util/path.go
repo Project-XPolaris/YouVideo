@@ -2,7 +2,6 @@ package util
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 )
@@ -17,7 +16,9 @@ func GetMovePath(path string, sourcePath string, targetPath string) (string, err
 
 func CheckFileExist(path string) bool {
 	stat, err := os.Stat(path)
-	logrus.Error(err)
+	if err != nil {
+		return false
+	}
 	if stat != nil {
 		return true
 	}

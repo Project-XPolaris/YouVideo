@@ -18,6 +18,8 @@ require (
 	github.com/hashicorp/consul/api v1.13.0 // indirect
 	github.com/hashicorp/go-hclog v1.2.1 // indirect
 	github.com/hashicorp/serf v0.9.8 // indirect
+	github.com/klauspost/compress v1.15.11 // indirect
+	github.com/meilisearch/meilisearch-go v0.21.0 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pelletier/go-toml/v2 v2.0.2 // indirect
 	github.com/project-xpolaris/youplustoolkit v0.0.0-20220331083706-51df568cbf83
@@ -28,6 +30,7 @@ require (
 	github.com/spf13/viper v1.12.0 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
 	github.com/u2takey/ffmpeg-go v0.4.1
+	github.com/valyala/fasthttp v1.40.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
@@ -39,4 +42,7 @@ require (
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/vansante/go-ffprobe.v2 v2.0.3
 	gorm.io/gorm v1.22.0
+)
+replace (
+	github.com/allentom/harukap => /Users/duzhengheng/ProjectXPolaris/harukap
 )

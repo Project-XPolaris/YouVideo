@@ -34,6 +34,7 @@ func main() {
 	appEngine.UsePlugin(&plugin.InitPlugin{})
 	appEngine.UsePlugin(plugin.StorageEnginePlugin)
 	appEngine.UsePlugin(plugin.DefaultThumbnailPlugin)
+	appEngine.UsePlugin(plugin.DefaultMeiliSearchPlugin)
 	// init auth
 	rawAuth := config.DefaultConfigProvider.Manager.GetStringMap("auth")
 	for key, _ := range rawAuth {
@@ -56,6 +57,12 @@ func main() {
 	}
 	service.InitTMDB()
 	service.InitBangumiInfoSource()
+	appEngine.OnPluginInitComplete = func() {
+		err = service.InitMeiliSearch()
+		if err != nil {
+			logrus.Fatal(err)
+		}
+	}
 	if config.Instance.YouLibraryConfig.Enable {
 		service.DefaultVideoInformationMatchService.Init()
 		go service.DefaultVideoInformationMatchService.Run(context.Background())

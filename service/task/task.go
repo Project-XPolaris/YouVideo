@@ -12,6 +12,7 @@ const (
 	TaskTypeMeta
 	TaskTypeRemove
 	TaskTypeMatchEntity
+	TaskTypeSyncIndex
 )
 const (
 	TaskStatusRunning = iota + 1
@@ -28,6 +29,7 @@ var TaskTypeNameMapping map[int]string = map[int]string{
 	TaskTypeMeta:        "Meta",
 	TaskTypeRemove:      "RemoveLibrary",
 	TaskTypeMatchEntity: "MatchEntity",
+	TaskTypeSyncIndex:   "SyncIndex",
 }
 
 var TaskStatusNameMapping map[int]string = map[int]string{

@@ -87,6 +87,16 @@ func (t *RemoveLibraryTask) Start() error {
 		}
 		return nil
 	}
+	// remove index
+	if service.DefaultMeilisearchEngine.Enable {
+		err = service.DefaultMeilisearchEngine.DeleteAllIndexByLibrary(t.Library.ID)
+		if err != nil {
+			if t.Option.OnError != nil {
+				t.Option.OnError(t, err)
+			}
+			return nil
+		}
+	}
 	t.BaseTask.Status = TaskStatusNameMapping[TaskStatusDone]
 	if t.Option.OnComplete != nil {
 		t.Option.OnComplete(t)

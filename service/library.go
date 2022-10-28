@@ -105,7 +105,16 @@ func CheckLibraryUidOwner(id uint, uid string) bool {
 		Count(&count)
 	return count != 0
 }
-
+func GetUserAccessibleDatabase(uid string) ([]database.Library, error) {
+	var libraries []database.Library
+	database.Instance.
+		Model(&database.Library{}).
+		Joins("left join library_users on library_users.library_id = libraries.id").
+		Joins("left join users on users.id = library_users.user_id").
+		Where("users.uid in ?", []string{PublicUid, uid}).
+		Find(&libraries)
+	return libraries, nil
+}
 func CheckLibraryPathExist(path string) bool {
 	var count int64
 	database.Instance.

@@ -348,3 +348,40 @@ var newMatchEntityTask haruka.RequestHandler = func(context *haruka.Context) {
 		"success": true,
 	})
 }
+
+type SyncIndexTaskRequestBody struct {
+}
+
+var newSyncIndexTask haruka.RequestHandler = func(context *haruka.Context) {
+	rawId := context.Parameters["id"]
+	uid := context.Param["uid"].(string)
+	id, err := strconv.Atoi(rawId)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	permission := LibraryAccessibleValidator{}
+	context.BindingInput(&permission)
+	if err = validator.RunValidators(&permission); err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	var requestBody MatchEntityTaskRequestBody
+	err = context.ParseJson(&requestBody)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	task, err := taskService.CreateSyncIndexTask(taskService.CreateSyncIndexTaskOption{
+		LibraryId: uint(id),
+		Uid:       uid,
+	})
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	go task.Start()
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
+}

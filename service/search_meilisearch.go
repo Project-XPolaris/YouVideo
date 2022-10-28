@@ -256,8 +256,8 @@ func (e *MeilisearchEngine) Search(searchKey string, libraryIds []uint) (*Search
 }
 
 type SearchHit struct {
-	Videos   []database.Video  `json:"videos"`
-	Entities []database.Entity `json:"entities"`
+	Videos   []*database.Video  `json:"videos"`
+	Entities []*database.Entity `json:"entities"`
 }
 
 func (e *MeilisearchEngine) GetIndexByLibraryId(libraryId uint, index string) (*meilisearch.SearchResponse, error) {

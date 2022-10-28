@@ -84,6 +84,8 @@ github.com/allentom/harukap v0.0.0-20220705130440-a058897756a6 h1:hf2XREfuOtpiJx
 github.com/allentom/harukap v0.0.0-20220705130440-a058897756a6/go.mod h1:cTOB3aiWZbIzwaVK+8HUGUMPNciGZoYSx0q9QsFfoJs=
 github.com/allentom/harukap v0.0.0-20220709035720-2e12822f8825 h1:iiNZoKVMxd/p67lPnWqsI4p0+g3ZTnFQPgXqzIQILdM=
 github.com/allentom/harukap v0.0.0-20220709035720-2e12822f8825/go.mod h1:usury8YHRUu95pjvbexYARh69y9sf0ngu9MmPUAqwLY=
+github.com/allentom/harukap v0.0.0-20221028020855-87dec0269c43 h1:gkVLQJ9aMqvq3Oza8MV2ILZ3bAaOnmkz1H+AtNbXO1E=
+github.com/allentom/harukap v0.0.0-20221028020855-87dec0269c43/go.mod h1:Q9hJ3VcizNt5K0TKMOMyqJotsmhcjynOfsXOqxIzWE0=
 github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f h1:5YL8PS1ARIkYAA+3kQDID5pL8jKp/DqfQaNvPnQ/Kj4=
 github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f/go.mod h1:n8EtRihlYzcb/YXzRDNqL2lYo3Vi7kprJ5NeU41jQGQ=
 github.com/andybalholm/brotli v1.0.4 h1:V7DdXeJtZscaqfNuAdSRuRFzuiKlHSC/Zh3zl9qY3JY=

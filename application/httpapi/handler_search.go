@@ -15,6 +15,6 @@ var searchHandler haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	context.JSON(haruka.JSON{
 		"success": true,
-		"result":  content,
+		"result":  NewSearchResultTemplate(content),
 	})
 }

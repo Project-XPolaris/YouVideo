@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/compute v1.7.0 // indirect
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/allentom/haruka v0.0.0-20220527084807-cad00e6ff194
-	github.com/allentom/harukap v0.0.0-20220709035720-2e12822f8825
+	github.com/allentom/harukap v0.0.0-20221028020855-87dec0269c43
 	github.com/allentom/transcoder v1.1.2-0.20210207075745-3d4e07ccb84f
 	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/asticode/go-astisub v0.21.0
@@ -20,7 +20,6 @@ require (
 	github.com/hashicorp/serf v0.9.8 // indirect
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/meilisearch/meilisearch-go v0.21.0 // indirect
-	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pelletier/go-toml/v2 v2.0.2 // indirect
 	github.com/project-xpolaris/youplustoolkit v0.0.0-20220331083706-51df568cbf83
 	github.com/rs/cors v1.8.2
@@ -42,7 +41,4 @@ require (
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/vansante/go-ffprobe.v2 v2.0.3
 	gorm.io/gorm v1.22.0
-)
-replace (
-	github.com/allentom/harukap => /Users/duzhengheng/ProjectXPolaris/harukap
 )

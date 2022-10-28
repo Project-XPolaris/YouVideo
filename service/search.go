@@ -29,7 +29,7 @@ func SearchWithMeiliSearch(searchKey string, uid string) (*SearchHit, error) {
 		videoId := uint(id)
 		videoIdToSearch = append(videoIdToSearch, videoId)
 	}
-	var videos []database.Video
+	var videos []*database.Video
 	err = database.Instance.Where("id in (?)", videoIdToSearch).
 		Preload("Files").Preload("Infos").Preload("Files.Subtitles").
 		Find(&videos).Error
@@ -43,7 +43,7 @@ func SearchWithMeiliSearch(searchKey string, uid string) (*SearchHit, error) {
 		entityId := uint(id)
 		entityIdToSearch = append(entityIdToSearch, entityId)
 	}
-	var entities []database.Entity
+	var entities []*database.Entity
 	err = database.Instance.Where("id in (?)", entityIdToSearch).Find(&entities).Error
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func SearchWithDatabase(searchKey string, uid string) (*SearchHit, error) {
 	for _, library := range accessibleDatabase {
 		libraryIds = append(libraryIds, library.ID)
 	}
-	var videos []database.Video
+	var videos []*database.Video
 	err = database.Instance.Where("library_id in (?)", libraryIds).
 		Where("name like ?", "%"+searchKey+"%").
 		Preload("Files").Preload("Infos").Preload("Files.Subtitles").
@@ -70,7 +70,7 @@ func SearchWithDatabase(searchKey string, uid string) (*SearchHit, error) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []database.Entity
+	var entities []*database.Entity
 	err = database.Instance.Where("library_id in (?)", libraryIds).
 		Where("name like ?", "%"+searchKey+"%").
 		Or("summary like ?", "%"+searchKey+"%").

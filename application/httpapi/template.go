@@ -482,3 +482,26 @@ func NewSearchTvInformationTemplates(ms []*service.SearchTVResult, source string
 	}
 	return templates
 }
+
+type SearchResultTemplate struct {
+	Videos   []*BaseVideoTemplate  `json:"videos"`
+	Entities []*BaseEntityTemplate `json:"entities"`
+}
+
+func NewSearchResultTemplate(result *service.SearchHit) *SearchResultTemplate {
+	template := &SearchResultTemplate{
+		Videos:   make([]*BaseVideoTemplate, 0),
+		Entities: make([]*BaseEntityTemplate, 0),
+	}
+	for _, video := range result.Videos {
+		videoTemplate := BaseVideoTemplate{}
+		videoTemplate.Serializer(video, map[string]interface{}{})
+		template.Videos = append(template.Videos, &videoTemplate)
+	}
+	for _, entity := range result.Entities {
+		entityTemplate := BaseEntityTemplate{}
+		entityTemplate.Serializer(entity, map[string]interface{}{})
+		template.Entities = append(template.Entities, &entityTemplate)
+	}
+	return template
+}

@@ -17,7 +17,6 @@ FROM ubuntu
 COPY --from=builder /usr/local/lib /usr/local/lib
 COPY --from=builder /etc/ssl/certs /etc/ssl/certs
 
-RUN apt update && apt install -y ffmpeg
 COPY --from=builder /go/bin/youvideo /usr/local/bin/youvideo
 
 ENTRYPOINT ["/usr/local/bin/youvideo","run"]

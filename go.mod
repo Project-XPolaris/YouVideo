@@ -1,6 +1,6 @@
 module github.com/projectxpolaris/youvideo
 
-go 1.13
+go 1.18
 
 require (
 	cloud.google.com/go v0.103.0 // indirect

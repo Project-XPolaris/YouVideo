@@ -154,3 +154,54 @@ var updateEntityHandler haruka.RequestHandler = func(context *haruka.Context) {
 	template.Serializer(entity, map[string]interface{}{})
 	context.JSON(template)
 }
+
+type AppendEntityFromSourceRequestBody struct {
+	Source   string `json:"source"`
+	SourceId string `json:"sourceId"`
+}
+
+var applyEntityInfoFromSource = func(context *haruka.Context) {
+	id, err := context.GetPathParameterAsInt("id")
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	requestBody := AppendEntityFromSourceRequestBody{}
+	err = context.ParseJson(&requestBody)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	entity, err := service.ApplyEntityInfoFromSource(uint(id), requestBody.Source, requestBody.SourceId)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	template := BaseEntityTemplate{}
+	template.Serializer(entity, map[string]interface{}{})
+	context.JSON(template)
+}
+
+type BatchEntityRequestBody struct {
+	DeleteIds []uint `json:"deleteIds"`
+}
+
+var BatchEntityHandler haruka.RequestHandler = func(context *haruka.Context) {
+	requestBody := BatchEntityRequestBody{}
+	err := context.ParseJson(&requestBody)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	if requestBody.DeleteIds != nil {
+		err = service.DeleteEntitiesByTags(context.Param["uid"].(string), requestBody.DeleteIds)
+		if err != nil {
+			AbortError(context, err, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	context.JSON(haruka.JSON{
+		"success": true,
+	})
+}

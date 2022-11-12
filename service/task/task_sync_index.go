@@ -57,7 +57,7 @@ func CreateSyncIndexTask(option CreateSyncIndexTaskOption) (*SyncIndexTask, erro
 	}
 	output := &SyncTaskOutput{}
 	task := &SyncIndexTask{
-		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeScanLibrary], option.Uid, TaskStatusNameMapping[TaskStatusRunning]),
+		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeSyncIndex], option.Uid, TaskStatusNameMapping[TaskStatusRunning]),
 		TaskOutput: output,
 		Library:    &library,
 		Option:     &option,

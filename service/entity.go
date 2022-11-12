@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/plugin"
@@ -191,4 +192,47 @@ func ParseEntityMetaFile(entity *database.Entity, metaPath string) error {
 		}
 	}
 	return nil
+}
+
+func ApplyEntityInfoFromSource(entityId uint, source string, sourceId string) (*database.Entity, error) {
+	var entity database.Entity
+	err := database.Instance.Where("id = ?", entityId).First(&entity).Error
+	if err != nil {
+		return nil, err
+	}
+	switch source {
+	case "bangumi":
+		if bangumiInfoSource == nil {
+			return nil, errors.New("bangumi source not found")
+		}
+		err = bangumiInfoSource.ApplyEntityById(&entity, sourceId)
+		if err != nil {
+			return nil, err
+		}
+		err = database.Instance.Save(&entity).Error
+		if err != nil {
+			return nil, err
+		}
+		return GetEntityById(entityId)
+	}
+	return nil, errors.New(fmt.Sprintf("source %s not found", source))
+
+}
+
+func DeleteEntitiesByTags(uid string, ids []uint) error {
+	// check access
+	var library []database.Library
+	err := database.Instance.Where("uid = ?", uid).Find(&library).Error
+	if err != nil {
+		return err
+	}
+	libraryIds := make([]uint, 0)
+	for _, lib := range library {
+		libraryIds = append(libraryIds, lib.ID)
+	}
+	return database.Instance.Unscoped().
+		Where("id IN (?)", ids).
+		Where("library_id IN (?)", libraryIds).
+		Delete(&database.Entity{}).
+		Error
 }

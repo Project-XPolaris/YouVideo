@@ -122,8 +122,10 @@ type GetSubjectResult struct {
 }
 
 func NewBangumiClient() *BangumiClient {
+	client := resty.New()
+	client.SetHeader("User-Agent", "allentom/YouVideo (https://github.com/Project-XPolaris/YouVideo)")
 	return &BangumiClient{
-		client: resty.New(),
+		client: client,
 	}
 }
 func (c *BangumiClient) SearchSubject(keyword string, option *SearchObjectOption) (*SearchSubjectResult, error) {

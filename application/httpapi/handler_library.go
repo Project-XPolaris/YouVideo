@@ -366,12 +366,6 @@ var newSyncIndexTask haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	var requestBody MatchEntityTaskRequestBody
-	err = context.ParseJson(&requestBody)
-	if err != nil {
-		AbortError(context, err, http.StatusBadRequest)
-		return
-	}
 	task, err := taskService.CreateSyncIndexTask(taskService.CreateSyncIndexTaskOption{
 		LibraryId: uint(id),
 		Uid:       uid,

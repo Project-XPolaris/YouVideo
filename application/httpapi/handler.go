@@ -11,6 +11,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"path/filepath"
 )
 
 var readDirectoryHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -29,10 +30,11 @@ var readDirectoryHandler haruka.RequestHandler = func(context *haruka.Context) {
 			data = append(data, template)
 		}
 		context.JSON(haruka.JSON{
-			"success": true,
-			"path":    rootPath,
-			"sep":     "/",
-			"files":   data,
+			"success":  true,
+			"path":     rootPath,
+			"sep":      "/",
+			"files":    data,
+			"backPath": filepath.Dir(rootPath),
 		})
 		return
 	} else {
@@ -56,10 +58,11 @@ var readDirectoryHandler haruka.RequestHandler = func(context *haruka.Context) {
 			data = append(data, template)
 		}
 		context.JSON(haruka.JSON{
-			"success": true,
-			"path":    rootPath,
-			"sep":     string(os.PathSeparator),
-			"files":   data,
+			"success":  true,
+			"path":     rootPath,
+			"sep":      string(os.PathSeparator),
+			"files":    data,
+			"backPath": filepath.Dir(rootPath),
 		})
 	}
 }

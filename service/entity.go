@@ -222,7 +222,12 @@ func ApplyEntityInfoFromSource(entityId uint, source string, sourceId string) (*
 func DeleteEntitiesByTags(uid string, ids []uint) error {
 	// check access
 	var library []database.Library
-	err := database.Instance.Where("uid = ?", uid).Find(&library).Error
+	err := database.Instance.
+		Joins("left join library_users on library_users.library_id = libraries.id").
+		Joins("left join users on library_users.user_id = users.id").
+		Where("users.uid = ?", uid).
+		Find(&library).
+		Error
 	if err != nil {
 		return err
 	}

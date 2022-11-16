@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/allentom/harukap/plugins/youauth"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/plugin"
@@ -31,6 +32,16 @@ func GenerateYouAuthToken(code string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
+	return LinkUserWithYouAuthToken(tokens)
+}
+func LoginWithYouAuth(username string, password string) (string, string, error) {
+	tokens, err := plugin.DefaultYouAuthOauthPlugin.Client.GrantWithPassword(username, password)
+	if err != nil {
+		return "", "", err
+	}
+	return LinkUserWithYouAuthToken(tokens)
+}
+func LinkUserWithYouAuthToken(tokens *youauth.GenerateTokenResponse) (string, string, error) {
 	currentUserResponse, err := plugin.DefaultYouAuthOauthPlugin.Client.GetCurrentUser(tokens.AccessToken)
 	if err != nil {
 		return "", "", err
@@ -68,7 +79,6 @@ func GenerateYouAuthToken(code string) (string, string, error) {
 	}
 	return tokens.AccessToken, currentUserResponse.Username, nil
 }
-
 func refreshToken(accessToken string) (string, error) {
 	tokenRecord := database.Oauth{}
 	err := database.Instance.Where("access_token = ?", accessToken).First(&tokenRecord).Error

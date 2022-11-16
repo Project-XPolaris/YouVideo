@@ -69,6 +69,7 @@ func GetEngine() *haruka.Engine {
 	e.Router.GET("/user/auth", youPlusTokenHandler)
 	e.Router.GET("/folders", getFolderListHandler)
 	e.Router.GET("/oauth/youauth", generateAccessCodeWithYouAuthHandler)
+	e.Router.POST("/oauth/youauth/password", generateAccessCodeWithYouAuthPasswordHandler)
 	e.Router.POST("/oauth/youplus", youPlusLoginHandler)
 	e.Router.GET("/search", searchHandler)
 	e.Router.AddHandler("/notification", module.Notification.NotificationSocketHandler)

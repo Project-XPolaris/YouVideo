@@ -61,3 +61,24 @@ var generateAccessCodeWithYouAuthHandler haruka.RequestHandler = func(context *h
 		},
 	})
 }
+
+var generateAccessCodeWithYouAuthPasswordHandler haruka.RequestHandler = func(context *haruka.Context) {
+	var requestBody UserAuthRequestBody
+	err := context.ParseJson(&requestBody)
+	if err != nil {
+		AbortError(context, err, http.StatusBadRequest)
+		return
+	}
+	accessToken, username, err := service.LoginWithYouAuth(requestBody.Username, requestBody.Password)
+	if err != nil {
+		AbortError(context, err, http.StatusInternalServerError)
+		return
+	}
+	context.JSON(haruka.JSON{
+		"success": true,
+		"data": haruka.JSON{
+			"accessToken": accessToken,
+			"username":    username,
+		},
+	})
+}

@@ -74,7 +74,7 @@ var getVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 			template.Subject = &response.Data
 		}
 	}
-	context.JSON(template)
+	SendSuccessResponse(context, template)
 }
 
 var deleteVideoHandler haruka.RequestHandler = func(context *haruka.Context) {

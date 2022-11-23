@@ -37,3 +37,13 @@ func BindingOrRaiseError(ctx *haruka.Context, target interface{}) bool {
 	}
 	return true
 }
+
+func SendSuccessResponse(ctx *haruka.Context, data interface{}) {
+	respData := haruka.JSON{
+		"success": true,
+	}
+	if data != nil {
+		respData["data"] = data
+	}
+	ctx.JSON(respData)
+}

@@ -75,6 +75,7 @@ func (e *EntityQueryBuilder) Query() ([]*database.Entity, int64, error) {
 	err := query.
 		Preload("Videos").
 		Preload("Videos.Files").
+		Preload("Videos.Files.Subtitles").
 		Preload("Videos.Infos").
 		Preload("Tags").
 		Offset((e.Page - 1) * e.PageSize).

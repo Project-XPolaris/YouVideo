@@ -36,7 +36,7 @@ func GetEngine() *haruka.Engine {
 	e.Router.POST("/video/{id:[0-9]+}/move", moveVideoHandler)
 	e.Router.POST("/video/{id:[0-9]+}/trans", transcodeHandler)
 	e.Router.POST("/video/{id:[0-9]+}/refresh", refreshVideoHandler)
-	e.Router.GET("/link/{id:[0-9]+}/{type}/{token}/{any}", playLinkHandler)
+	e.Router.AddHandler("/link/{id:[0-9]+}/{type}/{token}/{any}", playLinkHandler)
 	e.Router.POST("/video/match", matchVideoInformationHandler)
 	e.Router.GET("/meta", getMetaListHandler)
 	e.Router.GET("/info/movie/search", searchMovieInformationHandler)

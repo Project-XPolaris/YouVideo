@@ -14,7 +14,7 @@ type CreateHistoryResponseBody struct {
 
 var createHistoryHandler haruka.RequestHandler = func(context *haruka.Context) {
 	var body CreateHistoryResponseBody
-	err := context.JSON(&body)
+	err := context.ParseJson(&body)
 	if err != nil {
 		AbortError(context, err, http.StatusBadRequest)
 		return

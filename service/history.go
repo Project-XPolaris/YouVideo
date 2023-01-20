@@ -9,6 +9,7 @@ import (
 
 // create new play history
 func CreateHistory(videoId uint, uid string) error {
+	// not public
 	if uid == PublicUid {
 		return nil
 	}

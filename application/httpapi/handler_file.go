@@ -211,6 +211,7 @@ var playLinkHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
+	context.Writer.Header().Set("Accept-Ranges", "bytes")
 	switch sourcesType {
 	case "video":
 		http.ServeFile(context.Writer, context.Request, file.Path)

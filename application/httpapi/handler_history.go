@@ -25,9 +25,7 @@ var createHistoryHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }
 var getHistoryListHandler haruka.RequestHandler = func(context *haruka.Context) {
 	var option service.HistoryQueryOption
@@ -41,8 +39,7 @@ var getHistoryListHandler haruka.RequestHandler = func(context *haruka.Context) 
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success":  true,
+	SendSuccessResponse(context, haruka.JSON{
 		"count":    count,
 		"page":     option.Page,
 		"pageSize": option.PageSize,

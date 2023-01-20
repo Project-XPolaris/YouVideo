@@ -42,8 +42,7 @@ var readVideoList haruka.RequestHandler = func(context *haruka.Context) {
 		template.Assign(video)
 		data = append(data, template)
 	}
-	context.JSON(haruka.JSON{
-		"success":  true,
+	SendSuccessResponse(context, haruka.JSON{
 		"count":    count,
 		"page":     queryBuilder.Page,
 		"pageSize": queryBuilder.PageSize,
@@ -91,9 +90,7 @@ var deleteVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }
 
 type MoveVideoRequest struct {
@@ -131,7 +128,7 @@ var moveVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 
 	template := BaseVideoTemplate{}
 	template.Assign(video)
-	context.JSON(template)
+	SendSuccessResponse(context, template)
 }
 
 type VideoTranscodeRequest struct {
@@ -160,9 +157,7 @@ var transcodeHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }
 
 type AddVideoMetaRequestBody struct {
@@ -191,9 +186,7 @@ var addVideoMetaHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }
 
 func removeVideoMetaHandler(context *haruka.Context) {
@@ -207,9 +200,7 @@ func removeVideoMetaHandler(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }
 
 type UpdateVideoRequestBody struct {
@@ -258,10 +249,7 @@ var updateVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	template := BaseVideoTemplate{}
 	template.Assign(newVideo)
-	context.JSON(haruka.JSON{
-		"success": true,
-		"data":    template,
-	})
+	SendSuccessResponse(context, template)
 }
 
 var getMetaListHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -276,8 +264,7 @@ var getMetaListHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success":  true,
+	SendSuccessResponse(context, haruka.JSON{
 		"count":    count,
 		"page":     queryBuilder.Page,
 		"pageSize": queryBuilder.PageSize,
@@ -296,7 +283,5 @@ var refreshVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }

@@ -55,7 +55,7 @@ var createLibraryHandler haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	template := BaseLibraryTemplate{}
 	template.Assign(library)
-	context.JSON(template)
+	SendSuccessResponse(context, template)
 }
 
 var readLibraryList haruka.RequestHandler = func(context *haruka.Context) {
@@ -81,8 +81,7 @@ var readLibraryList haruka.RequestHandler = func(context *haruka.Context) {
 		template.Assign(&library)
 		data = append(data, template)
 	}
-	context.JSON(haruka.JSON{
-		"success":  true,
+	SendSuccessResponse(context, haruka.JSON{
 		"count":    count,
 		"page":     page,
 		"pageSize": pageSize,
@@ -107,9 +106,7 @@ var deleteLibrary haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }
 
 type ScanLibraryRequestBody struct {
@@ -185,10 +182,7 @@ var scanLibrary haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	go task.Start()
 	data := NewTaskTemplate(task)
-	context.JSON(haruka.JSON{
-		"success": true,
-		"task":    data,
-	})
+	SendSuccessResponse(context, data)
 }
 var newRemoveLibraryTask haruka.RequestHandler = func(context *haruka.Context) {
 	rawId := context.Parameters["id"]
@@ -231,10 +225,8 @@ var newRemoveLibraryTask haruka.RequestHandler = func(context *haruka.Context) {
 		return
 	}
 	go task.Start()
-	context.JSON(haruka.JSON{
-		"success": true,
-		"task":    NewTaskTemplate(task),
-	})
+	data := NewTaskTemplate(task)
+	SendSuccessResponse(context, data)
 }
 var readMetaTask haruka.RequestHandler = func(context *haruka.Context) {
 	rawId := context.Parameters["id"]
@@ -285,9 +277,8 @@ var readMetaTask haruka.RequestHandler = func(context *haruka.Context) {
 		return
 	}
 	go task.Start()
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	data := NewTaskTemplate(task)
+	SendSuccessResponse(context, data)
 }
 
 type MatchEntityTaskRequestBody struct {
@@ -344,9 +335,8 @@ var newMatchEntityTask haruka.RequestHandler = func(context *haruka.Context) {
 		return
 	}
 	go task.Start()
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	data := NewTaskTemplate(task)
+	SendSuccessResponse(context, data)
 }
 
 type SyncIndexTaskRequestBody struct {
@@ -375,7 +365,6 @@ var newSyncIndexTask haruka.RequestHandler = func(context *haruka.Context) {
 		return
 	}
 	go task.Start()
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	data := NewTaskTemplate(task)
+	SendSuccessResponse(context, data)
 }

@@ -13,8 +13,6 @@ var searchHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-		"result":  NewSearchResultTemplate(content),
-	})
+	SendSuccessResponse(context, NewSearchResultTemplate(content))
+
 }

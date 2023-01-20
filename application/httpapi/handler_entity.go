@@ -33,7 +33,7 @@ var createEntityHandler haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	template := BaseEntityTemplate{}
 	template.Serializer(entity, map[string]interface{}{})
-	context.JSON(template)
+	SendSuccessResponse(context, template)
 }
 
 var getEntitiesHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -51,8 +51,7 @@ var getEntitiesHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success":  true,
+	SendSuccessResponse(context, haruka.JSON{
 		"count":    total,
 		"page":     queryBuilder.Page,
 		"pageSize": queryBuilder.PageSize,
@@ -81,9 +80,7 @@ var addVideoToEntityHandler haruka.RequestHandler = func(context *haruka.Context
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 
 }
 
@@ -126,7 +123,7 @@ var getEntityHandler haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	template := BaseEntityTemplate{}
 	template.Serializer(entity, map[string]interface{}{})
-	context.JSON(template)
+	SendSuccessResponse(context, template)
 }
 
 var updateEntityValidKeys = []string{
@@ -152,7 +149,7 @@ var updateEntityHandler haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	template := BaseEntityTemplate{}
 	template.Serializer(entity, map[string]interface{}{})
-	context.JSON(template)
+	SendSuccessResponse(context, template)
 }
 
 type AppendEntityFromSourceRequestBody struct {
@@ -179,7 +176,7 @@ var applyEntityInfoFromSource = func(context *haruka.Context) {
 	}
 	template := BaseEntityTemplate{}
 	template.Serializer(entity, map[string]interface{}{})
-	context.JSON(template)
+	SendSuccessResponse(context, template)
 }
 
 type BatchEntityRequestBody struct {
@@ -201,7 +198,5 @@ var BatchEntityHandler haruka.RequestHandler = func(context *haruka.Context) {
 		}
 	}
 
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }

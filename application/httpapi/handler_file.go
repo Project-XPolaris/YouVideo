@@ -99,9 +99,7 @@ var removeFileHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }
 
 type RenameFileRequestBody struct {
@@ -136,9 +134,7 @@ var renameFileHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }
 
 var fileCoverHandler haruka.RequestHandler = func(context *haruka.Context) {

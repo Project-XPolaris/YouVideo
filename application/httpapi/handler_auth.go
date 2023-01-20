@@ -25,12 +25,9 @@ var youPlusLoginHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-		"data": haruka.JSON{
-			"accessToken": oauthToken.AccessToken,
-			"username":    oauthToken.User.Uid,
-		},
+	SendSuccessResponse(context, haruka.JSON{
+		"accessToken": oauthToken.AccessToken,
+		"username":    oauthToken.User.Uid,
 	})
 }
 
@@ -42,9 +39,7 @@ var youPlusTokenHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }
 var generateAccessCodeWithYouAuthHandler haruka.RequestHandler = func(context *haruka.Context) {
 	code := context.GetQueryString("code")
@@ -53,12 +48,9 @@ var generateAccessCodeWithYouAuthHandler haruka.RequestHandler = func(context *h
 		youlink.AbortErrorWithStatus(err, context, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-		"data": haruka.JSON{
-			"accessToken": accessToken,
-			"username":    username,
-		},
+	SendSuccessResponse(context, haruka.JSON{
+		"accessToken": accessToken,
+		"username":    username,
 	})
 }
 
@@ -74,11 +66,8 @@ var generateAccessCodeWithYouAuthPasswordHandler haruka.RequestHandler = func(co
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-		"data": haruka.JSON{
-			"accessToken": accessToken,
-			"username":    username,
-		},
+	SendSuccessResponse(context, haruka.JSON{
+		"accessToken": accessToken,
+		"username":    username,
 	})
 }

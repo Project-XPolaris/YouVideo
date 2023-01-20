@@ -38,7 +38,7 @@ var createTagHandler haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	template := &BaseTagTemplate{}
 	template.Serializer(tag, map[string]interface{}{})
-	context.JSON(template)
+	SendSuccessResponse(context, template)
 }
 
 var getTagListHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -58,8 +58,7 @@ var getTagListHandler haruka.RequestHandler = func(context *haruka.Context) {
 		template.Serializer(tag, map[string]interface{}{})
 		data = append(data, template)
 	}
-	context.JSON(haruka.JSON{
-		"success":  true,
+	SendSuccessResponse(context, haruka.JSON{
 		"count":    count,
 		"page":     queryBuilder.Page,
 		"pageSize": queryBuilder.PageSize,
@@ -89,9 +88,7 @@ var removeTagHandler haruka.RequestHandler = func(context *haruka.Context) {
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }
 
 var updateTagHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -127,7 +124,7 @@ var updateTagHandler haruka.RequestHandler = func(context *haruka.Context) {
 	rawTag, err := tagModel.UpdateById(uint(id), body)
 	template := BaseTagTemplate{}
 	template.Serializer(rawTag, map[string]interface{}{})
-	context.JSON(template)
+	SendSuccessResponse(context, template)
 }
 
 type TagVideoBatchRequestBody struct {
@@ -158,9 +155,7 @@ var addVideoToTagHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }
 
 var removeVideoFromTagHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -187,9 +182,7 @@ var removeVideoFromTagHandler haruka.RequestHandler = func(context *haruka.Conte
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }
 
 type TagVideosRequestBody struct {
@@ -209,7 +202,5 @@ var tagVideosBatchHandler haruka.RequestHandler = func(context *haruka.Context) 
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	context.JSON(haruka.JSON{
-		"success": true,
-	})
+	SendSuccessResponse(context, nil)
 }

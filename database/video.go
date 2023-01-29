@@ -20,4 +20,6 @@ type Video struct {
 	SubjectId *uint
 	Release   *time.Time
 	EntityID  *uint
+	Episode   string
+	Order     uint
 }

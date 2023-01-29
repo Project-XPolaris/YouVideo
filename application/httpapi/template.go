@@ -106,6 +106,8 @@ type BaseVideoTemplate struct {
 	Subject   *youlibrary.Subject     `json:"subject,omitempty"`
 	Release   string                  `json:"release,omitempty"`
 	EntityId  *uint                   `json:"entityId,omitempty"`
+	Order     uint                    `json:"order,omitempty"`
+	EP        string                  `json:"ep,omitempty"`
 }
 
 func (t *BaseVideoTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
@@ -122,6 +124,8 @@ func (t *BaseVideoTemplate) Assign(video *database.Video) {
 	t.LibraryId = video.LibraryId
 	t.Type = video.Type
 	t.EntityId = video.EntityID
+	t.EP = video.Episode
+	t.Order = video.Order
 	if video.Release != nil {
 		t.Release = video.Release.Format(formatDate)
 	}
@@ -332,6 +336,7 @@ func (t *BaseEntityTemplate) Serializer(dataModel interface{}, context map[strin
 			hasCover = true
 		}
 		infos := make([]*database.VideoMetaItem, 0)
+		// sort
 		for _, video := range model.Videos {
 			videoTemplate := BaseVideoTemplate{}
 			videoTemplate.Serializer(video, map[string]interface{}{})
@@ -350,7 +355,6 @@ func (t *BaseEntityTemplate) Serializer(dataModel interface{}, context map[strin
 					}
 				}
 			}
-
 			if video.Infos != nil {
 				if video.Release != nil {
 					if release == nil {

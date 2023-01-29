@@ -206,6 +206,8 @@ func removeVideoMetaHandler(context *haruka.Context) {
 type UpdateVideoRequestBody struct {
 	Release  string `json:"release"`
 	EntityId uint   `json:"entityId"`
+	Episode  string `json:"episode"`
+	Order    uint   `json:"order"`
 }
 
 var updateVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -235,7 +237,12 @@ var updateVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 	if body.EntityId != 0 {
 		updateData["entity_id"] = body.EntityId
 	}
-
+	if len(body.Episode) > 0 {
+		updateData["episode"] = body.Episode
+	}
+	if body.Order > 0 {
+		updateData["order"] = body.Order
+	}
 	err = service.UpdateVideo(uint(rawId), updateData)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)

@@ -9,6 +9,7 @@ import (
 	"gopkg.in/vansante/go-ffprobe.v2"
 	"io/ioutil"
 	"os"
+	"os/exec"
 )
 import (
 	"fmt"
@@ -30,7 +31,6 @@ func NewTranscoder() transcoder.Transcoder {
 	return trans
 }
 func GetShotByFile(path string, output string) error {
-
 	trans := NewTranscoder()
 	trans.Input(path).Input(path)
 	meta, err := trans.GetMetadata()
@@ -42,7 +42,6 @@ func GetShotByFile(path string, output string) error {
 		return err
 	}
 	outputTempPath := filepath.Join(config.Instance.TempStore, filepath.Base(output))
-
 	err = ffmpeg_go.
 		Input(
 			path,
@@ -165,4 +164,20 @@ func (b *FormatsQueryBuilder) Query() ([]ffmpeg.SupportFormat, error) {
 		return nil, err
 	}
 	return formats, nil
+}
+
+func InitCheckFfmpeg() error {
+	logger := plugin.DefaultYouLogPlugin.Logger.NewScope("ffmpeg startup")
+	// try to exec
+	_, err := exec.Command(config.Instance.FfmpegBin, "-version").Output()
+	if err != nil {
+		return err
+	}
+	logger.Info("ffmpeg check success")
+	_, err = exec.Command(config.Instance.FfprobeBin, "-version").Output()
+	if err != nil {
+		return err
+	}
+	logger.Info("ffprobe check success")
+	return nil
 }

@@ -23,7 +23,7 @@ func main() {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-
+	logger := plugin.DefaultYouLogPlugin.Logger.NewScope("main")
 	appEngine := harukap.NewHarukaAppEngine()
 	appEngine.ConfigProvider = config.DefaultConfigProvider
 	appEngine.LoggerPlugin = plugin.DefaultYouLogPlugin
@@ -38,6 +38,7 @@ func main() {
 	// init auth
 	rawAuth := config.DefaultConfigProvider.Manager.GetStringMap("auth")
 	for key, _ := range rawAuth {
+		logger.Info(fmt.Sprintf("init auth %s", key))
 		rawAuthContent := config.DefaultConfigProvider.Manager.GetString(fmt.Sprintf("auth.%s.type", key))
 		if rawAuthContent == "youauth" {
 			plugin.CreateYouAuthPlugin()
@@ -45,23 +46,30 @@ func main() {
 			appEngine.UsePlugin(plugin.DefaultYouAuthOauthPlugin)
 		}
 	}
+	logger.Info("init auth module")
 	module.CreateAuthModule()
 	err = module.CreateNotificationModule()
 	if err != nil {
-		logrus.Fatal(err)
+		logger.Fatal(err)
 	}
+	logger.Info("init auth complete")
 	module.CreateTaskModule()
 	appEngine.HttpService = httpapi.GetEngine()
 	if err != nil {
-		logrus.Fatal(err)
+		logger.Fatal(err)
 	}
 	service.InitTMDB()
 	service.InitBangumiInfoSource()
 	appEngine.OnPluginInitComplete = func() {
 		err = service.InitMeiliSearch()
 		if err != nil {
-			logrus.Fatal(err)
+			logger.Fatal(err)
 		}
+	}
+	logger.Info("init ffmpeg and ffprobe")
+	err = service.InitCheckFfmpeg()
+	if err != nil {
+		logger.Fatal(err)
 	}
 	if config.Instance.YouLibraryConfig.Enable {
 		service.DefaultVideoInformationMatchService.Init()
@@ -69,7 +77,7 @@ func main() {
 	}
 	appWrap, err := cli.NewWrapper(appEngine)
 	if err != nil {
-		logrus.Fatal(err)
+		logger.Fatal(err)
 	}
 	appWrap.RunApp()
 }

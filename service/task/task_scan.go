@@ -124,7 +124,6 @@ func (t *ScanTask) Start() error {
 	}
 	if service.DefaultMeilisearchEngine.Enable {
 		service.DefaultMeilisearchEngine.Sync(t.Library.ID)
-
 	}
 	t.BaseTask.Status = TaskStatusNameMapping[TaskStatusDone]
 	if t.Option.OnComplete != nil {

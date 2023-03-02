@@ -100,6 +100,8 @@ type VideoQueryBuilder struct {
 	InfoId           uint       `hsource:"query" hname:"info"`
 	ReleaseStart     *time.Time `hsource:"query" hname:"releaseStart" format:"2006-01-02"`
 	ReleaseEnd       *time.Time `hsource:"query" hname:"releaseEnd" format:"2006-01-02"`
+	MaxDuration      int        `hsource:"query" hname:"maxDuration"`
+	MinDuration      int        `hsource:"query" hname:"minDuration"`
 }
 
 func (v *VideoQueryBuilder) Query() (int64, []*database.Video, error) {
@@ -161,6 +163,16 @@ func (v *VideoQueryBuilder) Query() (int64, []*database.Video, error) {
 	if v.ReleaseEnd != nil {
 		query = query.Where("release < ?", v.ReleaseEnd)
 	}
+	if v.MaxDuration > 0 || v.MinDuration > 0 {
+		query = query.Joins("left join files on files.video_id = videos.id")
+		if v.MaxDuration > 0 {
+			query = query.Where("files.duration <= ?", v.MaxDuration)
+		}
+		if v.MinDuration > 0 {
+			query = query.Where("files.duration >= ?", v.MinDuration)
+		}
+	}
+
 	models := make([]*database.Video, 0)
 	var count int64
 	err := query.Model(&database.Video{}).
@@ -258,7 +270,6 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 	DefaultVideoMetaAnalyzer.In <- VideoMetaAnalyzerInput{
 		File: file,
 	}
-
 	return &video, err
 }
 func RefreshVideo(videoId uint) error {

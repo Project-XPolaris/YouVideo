@@ -100,11 +100,10 @@ func (a *VideoCoverMetaAnalyzer) Run() {
 			}
 			// if cover is same as old, skip
 			if file.CoverFileMd5 == md5 {
-				//continue
+				continue
 			}
 			file.CoverFileMd5 = md5
 		}
-
 		// use video shot
 		if len(coverFilePath) == 0 {
 			coverPath, err := GenerateVideoCover(file.Path)

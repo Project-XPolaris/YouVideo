@@ -208,6 +208,7 @@ type UpdateVideoRequestBody struct {
 	EntityId uint   `json:"entityId"`
 	Episode  string `json:"episode"`
 	Order    uint   `json:"order"`
+	Name     string `json:"name"`
 }
 
 var updateVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
@@ -242,6 +243,9 @@ var updateVideoHandler haruka.RequestHandler = func(context *haruka.Context) {
 	}
 	if body.Order > 0 {
 		updateData["order"] = body.Order
+	}
+	if len(body.Name) > 0 {
+		updateData["name"] = body.Name
 	}
 	err = service.UpdateVideo(uint(rawId), updateData)
 	if err != nil {

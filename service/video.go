@@ -372,12 +372,19 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 					switch predictions.Classname {
 					case "Hentai":
 						video.Hentai = true
+						break
 					case "Porn":
 						video.Porn = true
+						break
 					case "Sexy":
 						video.Sexy = true
+						break
 					}
 				}
+			}
+			err = database.Instance.Save(video).Error
+			if err != nil {
+				return nil, err
 			}
 		}
 	}

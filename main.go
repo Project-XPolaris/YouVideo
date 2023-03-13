@@ -35,6 +35,7 @@ func main() {
 	appEngine.UsePlugin(plugin.StorageEnginePlugin)
 	appEngine.UsePlugin(plugin.DefaultThumbnailPlugin)
 	appEngine.UsePlugin(plugin.DefaultMeiliSearchPlugin)
+	appEngine.UsePlugin(plugin.DefaultNSFWCheckPlugin)
 	// init auth
 	rawAuth := config.DefaultConfigProvider.Manager.GetStringMap("auth")
 	for key, _ := range rawAuth {

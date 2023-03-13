@@ -110,9 +110,10 @@ var deleteLibrary haruka.RequestHandler = func(context *haruka.Context) {
 }
 
 type ScanLibraryRequestBody struct {
-	MatchSubject  bool     `json:"matchSubject"`
-	DirectoryMode bool     `json:"directoryMode"`
-	ExcludeDir    []string `json:"excludeDir"`
+	MatchSubject  bool                           `json:"matchSubject"`
+	DirectoryMode bool                           `json:"directoryMode"`
+	ExcludeDir    []string                       `json:"excludeDir"`
+	VideoOption   service.CreateVideoFileOptions `json:"videoOption"`
 }
 
 var scanLibrary haruka.RequestHandler = func(context *haruka.Context) {
@@ -149,6 +150,7 @@ var scanLibrary haruka.RequestHandler = func(context *haruka.Context) {
 		MatchSubject:   requestBody.MatchSubject,
 		DirectoryMode:  requestBody.DirectoryMode,
 		ExcludeDirList: requestBody.ExcludeDir,
+		CreateOption:   &requestBody.VideoOption,
 		OnFileComplete: func(task *taskService.ScanTask) {
 			module.Notification.Manager.SendJSONToUser(haruka.JSON{
 				"event": EventSyncTaskFileComplete,

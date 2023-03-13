@@ -35,6 +35,9 @@ type TMdbConfig struct {
 type BangumiConfig struct {
 	Enable bool
 }
+type NSFWCheckConfig struct {
+	Slice int
+}
 type Config struct {
 	CoversStore      string `json:"covers_store"`
 	TempStore        string `json:"temp_store"`
@@ -46,7 +49,8 @@ type Config struct {
 	YouLibraryConfig YouLibraryConfig
 	TMdbConfig       TMdbConfig
 	BangumiConfig    BangumiConfig
-	SearchEngine     string `json:"search_engine"`
+	SearchEngine     string          `json:"search_engine"`
+	NSFWCheckConfig  NSFWCheckConfig `json:"nsfw_check_config"`
 }
 
 func ReadConfig(provider *config.Provider) {
@@ -69,6 +73,7 @@ func ReadConfig(provider *config.Provider) {
 	configer.SetDefault("youlog.rpc_addr", "")
 	configer.SetDefault("tmdb.enable", false)
 	configer.SetDefault("bangumi.enable", false)
+	configer.SetDefault("nsfwcheck.slice", 5)
 	Instance = Config{
 		CoversStore:     configer.GetString("cover_store"),
 		FfmpegBin:       configer.GetString("ffmpeg_bin"),
@@ -90,5 +95,8 @@ func ReadConfig(provider *config.Provider) {
 			Enable: configer.GetBool("bangumi.enable"),
 		},
 		SearchEngine: configer.GetString("search_engine"),
+		NSFWCheckConfig: NSFWCheckConfig{
+			Slice: configer.GetInt("nsfwcheck.slice"),
+		},
 	}
 }

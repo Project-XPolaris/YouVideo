@@ -22,4 +22,7 @@ type Video struct {
 	EntityID  *uint
 	Episode   string
 	Order     uint
+	Hentai    bool `gorm:"default:false"`
+	Sexy      bool `gorm:"default:false"`
+	Porn      bool `gorm:"default:false"`
 }

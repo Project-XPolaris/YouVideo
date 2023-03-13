@@ -24,6 +24,7 @@ func (t *ScanTask) Stop() error {
 }
 
 func (t *ScanTask) Start() error {
+
 	t.logger.Info("task start")
 	// lock library
 	if !service.DefaultLibraryLockManager.TryToLock(t.Library.ID) {
@@ -31,7 +32,7 @@ func (t *ScanTask) Start() error {
 	}
 	defer service.DefaultLibraryLockManager.UnlockLibrary(t.Library.ID)
 	// remove file where is not found
-	err := service.CheckLibrary(t.Library.ID)
+	err := service.RemoveNotExistVideo(t.Library.ID)
 	if err != nil {
 		t.Err = err
 		if t.Option.OnError != nil {
@@ -52,7 +53,7 @@ func (t *ScanTask) Start() error {
 		t.TaskOutput.Current = int64(idx + 1)
 		t.TaskOutput.CurrentPath = path
 		t.TaskOutput.CurrentName = filepath.Base(path)
-		video, err := service.CreateVideoFile(path, t.Library.ID, t.Library.DefaultVideoType, t.Option.MatchSubject)
+		video, err := service.CreateVideoFile(path, t.Library.ID, t.Library.DefaultVideoType, t.Option.MatchSubject, t.Option.CreateOption)
 		if err != nil {
 			if t.Option.OnFileError != nil {
 				t.Option.OnFileError(t, err)
@@ -60,7 +61,6 @@ func (t *ScanTask) Start() error {
 			t.logger.Error(err)
 			continue
 		}
-
 		if t.Option.DirectoryMode {
 			parentDirName := filepath.Base(filepath.Dir(path))
 			// create entity
@@ -154,6 +154,7 @@ type CreateScanTaskOption struct {
 	OnFileError    func(task *ScanTask, err error)
 	OnError        func(task *ScanTask, err error)
 	OnComplete     func(task *ScanTask)
+	CreateOption   *service.CreateVideoFileOptions
 }
 
 func CreateSyncLibraryTask(option CreateScanTaskOption) (*ScanTask, error) {

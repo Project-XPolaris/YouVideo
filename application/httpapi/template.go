@@ -108,6 +108,9 @@ type BaseVideoTemplate struct {
 	EntityId  *uint                   `json:"entityId,omitempty"`
 	Order     uint                    `json:"order,omitempty"`
 	EP        string                  `json:"ep,omitempty"`
+	Hentai    bool                    `json:"hentai"`
+	Porn      bool                    `json:"porn"`
+	Sexy      bool                    `json:"sexy"`
 }
 
 func (t *BaseVideoTemplate) Serializer(dataModel interface{}, context map[string]interface{}) error {
@@ -126,6 +129,9 @@ func (t *BaseVideoTemplate) Assign(video *database.Video) {
 	t.EntityId = video.EntityID
 	t.EP = video.Episode
 	t.Order = video.Order
+	t.Hentai = video.Hentai
+	t.Porn = video.Porn
+	t.Sexy = video.Sexy
 	if video.Release != nil {
 		t.Release = video.Release.Format(formatDate)
 	}

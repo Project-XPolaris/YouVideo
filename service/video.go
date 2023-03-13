@@ -4,12 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"github.com/allentom/haruka/gormh"
+	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
+	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/util"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -18,7 +22,7 @@ var VideoLogger = logrus.New().WithFields(logrus.Fields{
 	"scope": "Service.Video",
 })
 
-func CheckLibrary(libraryId uint) error {
+func RemoveNotExistVideo(libraryId uint) error {
 	library, err := GetLibraryById(libraryId, "Videos.Files")
 	if err != nil {
 		return err
@@ -40,7 +44,6 @@ func CheckLibrary(libraryId uint) error {
 				return err
 			}
 		}
-
 	}
 	return nil
 }
@@ -102,6 +105,7 @@ type VideoQueryBuilder struct {
 	ReleaseEnd       *time.Time `hsource:"query" hname:"releaseEnd" format:"2006-01-02"`
 	MaxDuration      int        `hsource:"query" hname:"maxDuration"`
 	MinDuration      int        `hsource:"query" hname:"minDuration"`
+	NSFW             string     `hsource:"query" hname:"nsfw"`
 }
 
 func (v *VideoQueryBuilder) Query() (int64, []*database.Video, error) {
@@ -173,6 +177,25 @@ func (v *VideoQueryBuilder) Query() (int64, []*database.Video, error) {
 		}
 	}
 
+	switch v.NSFW {
+	case "only":
+		query = query.Where(
+			database.Instance.Or("hentai = ?", true).
+				Or("porn = ?", true).
+				Or("sexy = ?", true),
+		)
+	case "exclude":
+		query = query.Where("hentai = ?", false).
+			Where("porn = ?", false).
+			Where("sexy = ?", false)
+	case "hentai":
+		query = query.Where("hentai = ?", true)
+	case "sexy":
+		query = query.Where("sexy = ?", true)
+	case "porn":
+		query = query.Where("porn = ?", true)
+	}
+
 	models := make([]*database.Video, 0)
 	var count int64
 	err := query.Model(&database.Video{}).
@@ -187,28 +210,46 @@ func (v *VideoQueryBuilder) Query() (int64, []*database.Video, error) {
 		Error
 	return count, models, err
 }
-func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject bool) (*database.Video, error) {
-	// check if video file exist
+
+type CreateVideoFileOptions struct {
+	ForceNSFWCheck bool `json:"ForceNSFWCheck"`
+}
+
+func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject bool, option *CreateVideoFileOptions) (*database.Video, error) {
+	if option == nil {
+		option = &CreateVideoFileOptions{}
+	}
 	file, err := GetFileByPath(path)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
-	fileExt := filepath.Ext(path)
-	videoName := strings.TrimSuffix(filepath.Base(path), fileExt)
-	baseDir := filepath.Dir(path)
 	// create file if not exist
 	if file == nil {
 		file = &database.File{}
 	}
+
+	// check if file is updated
+	fileCheckSum, err := util.MD5Checksum(path)
+	if err != nil {
+		return nil, err
+	}
+	isUpdate := fileCheckSum != file.Checksum
+	file.Checksum = fileCheckSum
+
+	// check if video file exist
 	file.Path = path
 
-	// save folder
+	// save folder index
+	baseDir := filepath.Dir(path)
 	var folder database.Folder
 	err = database.Instance.FirstOrCreate(&folder, database.Folder{Path: baseDir, LibraryId: libraryId}).Error
 	if err != nil {
 		return nil, err
 	}
 
+	// get or create video
+	fileExt := filepath.Ext(path)
+	videoName := strings.TrimSuffix(filepath.Base(path), fileExt)
 	var video database.Video
 	err = database.Instance.Model(&database.Video{}).Where("name = ?", videoName).Where("base_dir = ?", baseDir).First(&video).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -225,15 +266,15 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 		}
 		VideoLogger.WithFields(logrus.Fields{
 			"name": videoName,
-		}).Warn("video not exist,try to create")
+		}).Info("video not exist,try to create")
 		err = database.Instance.Create(&video).Error
 		if err != nil {
 			return nil, err
 		}
-		// match subject
-		if matchSubject {
-			DefaultVideoInformationMatchService.In <- NewVideoInformationMatchInput(&video)
-		}
+	}
+	// match subject
+	if matchSubject && isUpdate {
+		DefaultVideoInformationMatchService.In <- NewVideoInformationMatchInput(&video)
 	}
 	if *video.FolderID != folder.ID {
 		video.FolderID = &folder.ID
@@ -254,22 +295,93 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 		return nil, err
 	}
 
-	items, err := os.ReadDir(baseDir)
-	if err != nil {
-		return nil, err
-	}
-	for _, item := range items {
-		if util.IsSubtitlesFile(item.Name()) && strings.HasPrefix(item.Name(), videoName+".") {
-			_, err = database.ReadOrCreateSubtitles(filepath.Join(baseDir, item.Name()), file.ID)
-			if err != nil {
-				return nil, err
+	// read subtitles
+	if isUpdate {
+		items, err := os.ReadDir(baseDir)
+		if err != nil {
+			return nil, err
+		}
+		for _, item := range items {
+			if util.IsSubtitlesFile(item.Name()) && strings.HasPrefix(item.Name(), videoName+".") {
+				_, err = database.ReadOrCreateSubtitles(filepath.Join(baseDir, item.Name()), file.ID)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
-	// analyze video meta
-	DefaultVideoMetaAnalyzer.In <- VideoMetaAnalyzerInput{
-		File: file,
+
+	if isUpdate {
+		meta, err := GetVideoFileMeta(file.Path)
+		if err != nil {
+			VideoLogger.Error(err)
+		}
+		file.Duration = meta.Format.DurationSeconds
+		size, err := strconv.ParseInt(meta.Format.Size, 10, 64)
+		if err != nil {
+			VideoLogger.Error(err)
+		} else {
+			file.Size = size
+		}
+		bitrate, err := strconv.ParseInt(meta.Format.BitRate, 10, 64)
+		if err != nil {
+			VideoLogger.Error(err)
+		} else {
+			file.Bitrate = bitrate
+		}
+
+		// parse stream
+		for _, stream := range meta.Streams {
+			if stream.CodecType == "video" && len(file.MainVideoCodec) == 0 {
+				file.MainVideoCodec = stream.CodecName
+				continue
+			}
+			if stream.CodecType == "audio" && len(file.MainAudioCodec) == 0 {
+				file.MainAudioCodec = stream.CodecName
+			}
+		}
+
+		err = database.Instance.Save(file).Error
+		if err != nil {
+			return nil, err
+		}
 	}
+
+	// analyze nsfw content
+	if (isUpdate || option.ForceNSFWCheck) && plugin.DefaultNSFWCheckPlugin.Enable {
+		outChan := make(chan io.Reader)
+		go func() {
+			err := util.ExtractNShotFromVideoPipe(file.Path, config.Instance.NSFWCheckConfig.Slice, outChan)
+			if err != nil {
+				VideoLogger.WithFields(logrus.Fields{
+					"error": err,
+				}).Error("extract frame error")
+			}
+		}()
+
+		for shot := range outChan {
+			result, err := plugin.DefaultNSFWCheckPlugin.Client.Predict(shot)
+			if err != nil {
+				VideoLogger.WithFields(logrus.Fields{
+					"error": err,
+				}).Error("nsfw check error")
+				continue
+			}
+			for _, predictions := range result {
+				if predictions.Probability > 0.5 {
+					switch predictions.Classname {
+					case "Hentai":
+						video.Hentai = true
+					case "Porn":
+						video.Porn = true
+					case "Sexy":
+						video.Sexy = true
+					}
+				}
+			}
+		}
+	}
+
 	return &video, err
 }
 func RefreshVideo(videoId uint) error {
@@ -279,7 +391,7 @@ func RefreshVideo(videoId uint) error {
 		return err
 	}
 	for _, file := range video.Files {
-		_, err = CreateVideoFile(file.Path, video.LibraryId, video.Type, false)
+		_, err = CreateVideoFile(file.Path, video.LibraryId, video.Type, false, nil)
 		if err != nil {
 			return err
 		}

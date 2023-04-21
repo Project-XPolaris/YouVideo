@@ -50,11 +50,12 @@ func (t *CreateVideoTask) Start() error {
 		return t.AbortError(err)
 	}
 	// create file if not exist
+	isUpdate := false
 	if file == nil {
 		file = &database.File{}
+		isUpdate = true
 	}
 
-	isUpdate := false
 	// check if file is updated
 	if option.CheckMD5 {
 		md5Task := CreateMD5Task(MD5Option{
@@ -70,7 +71,6 @@ func (t *CreateVideoTask) Start() error {
 		fileCheckSum := md5Task.CheckSum
 		file.Checksum = fileCheckSum
 		isUpdate = fileCheckSum != file.Checksum
-
 	}
 
 	// check if video file exist

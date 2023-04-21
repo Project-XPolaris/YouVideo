@@ -214,6 +214,7 @@ func (v *VideoQueryBuilder) Query() (int64, []*database.Video, error) {
 type CreateVideoFileOptions struct {
 	ForceNSFWCheck  bool `json:"forceNSFWCheck"`
 	EnableNSFWCheck bool `json:"enableNSFWCheck"`
+	CheckMD5        bool `json:"checkMD5"`
 }
 
 func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject bool, option *CreateVideoFileOptions) (*database.Video, error) {

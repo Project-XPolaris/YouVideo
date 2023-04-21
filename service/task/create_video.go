@@ -54,20 +54,24 @@ func (t *CreateVideoTask) Start() error {
 		file = &database.File{}
 	}
 
+	isUpdate := false
 	// check if file is updated
-	md5Task := CreateMD5Task(MD5Option{
-		Uid:          t.option.Uid,
-		FilePath:     t.option.FilePath,
-		ParentTaskId: t.Id,
-	})
-	t.SubTaskList = append(t.SubTaskList, md5Task)
-	err = task.RunTask(md5Task)
-	if err != nil {
-		return t.AbortError(err)
+	if option.CheckMD5 {
+		md5Task := CreateMD5Task(MD5Option{
+			Uid:          t.option.Uid,
+			FilePath:     t.option.FilePath,
+			ParentTaskId: t.Id,
+		})
+		t.SubTaskList = append(t.SubTaskList, md5Task)
+		err = task.RunTask(md5Task)
+		if err != nil {
+			return t.AbortError(err)
+		}
+		fileCheckSum := md5Task.CheckSum
+		file.Checksum = fileCheckSum
+		isUpdate = fileCheckSum != file.Checksum
+
 	}
-	fileCheckSum := md5Task.CheckSum
-	isUpdate := fileCheckSum != file.Checksum
-	file.Checksum = fileCheckSum
 
 	// check if video file exist
 	file.Path = t.option.FilePath

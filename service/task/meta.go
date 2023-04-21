@@ -52,7 +52,7 @@ func (t *GenerateVideoMetaTask) Start() error {
 	if t.Option.OnComplete != nil {
 		t.Option.OnComplete(t)
 	}
-	t.BaseTask.Status = TaskStatusNameMapping[TaskStatusDone]
+	t.Done()
 	service.DefaultLibraryLockManager.UnlockLibrary(t.Library.ID)
 	return nil
 }
@@ -79,7 +79,7 @@ type CreateGenerateMetaOption struct {
 }
 
 func CreateGenerateVideoMetaTask(option CreateGenerateMetaOption) (*GenerateVideoMetaTask, error) {
-	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeMeta], TaskStatusNameMapping[TaskStatusRunning])
+	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeMeta], task.GetStatusText(nil, task.StatusRunning))
 	if existRunningTask != nil {
 		return existRunningTask.(*GenerateVideoMetaTask), nil
 	}
@@ -90,7 +90,7 @@ func CreateGenerateVideoMetaTask(option CreateGenerateMetaOption) (*GenerateVide
 		Id: option.LibraryId,
 	}
 	task := &GenerateVideoMetaTask{
-		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeMeta], option.Uid, TaskStatusNameMapping[TaskStatusRunning]),
+		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeMeta], option.Uid, task.GetStatusText(nil, task.StatusRunning)),
 		TaskOutput: output,
 		Option:     &option,
 	}

@@ -78,7 +78,7 @@ func (t *MatchEntityTask) Start() error {
 	if t.Option.OnComplete != nil {
 		t.Option.OnComplete(t)
 	}
-	t.BaseTask.Status = TaskStatusNameMapping[TaskStatusDone]
+	t.Done()
 	service.DefaultLibraryLockManager.UnlockLibrary(t.Library.ID)
 	return nil
 }
@@ -104,7 +104,7 @@ type MatchEntityOption struct {
 }
 
 func CreateMatchEntityTask(option MatchEntityOption) (*MatchEntityTask, error) {
-	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeMatchEntity], TaskStatusNameMapping[TaskStatusRunning])
+	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeMatchEntity], task.GetStatusText(nil, task.StatusRunning))
 	if existRunningTask != nil {
 		return existRunningTask.(*MatchEntityTask), nil
 	}
@@ -116,7 +116,7 @@ func CreateMatchEntityTask(option MatchEntityOption) (*MatchEntityTask, error) {
 	}
 
 	task := &MatchEntityTask{
-		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeMatchEntity], option.Uid, TaskStatusNameMapping[TaskStatusRunning]),
+		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeMatchEntity], option.Uid, task.GetStatusText(nil, task.StatusRunning)),
 		TaskOutput: output,
 		Option:     &option,
 	}

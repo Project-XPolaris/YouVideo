@@ -35,7 +35,7 @@ func (t *SyncIndexTask) Start() error {
 	default:
 
 	}
-	t.BaseTask.Status = TaskStatusNameMapping[TaskStatusDone]
+	t.Done()
 	return nil
 }
 
@@ -43,7 +43,7 @@ func (t *SyncIndexTask) Output() (interface{}, error) {
 	return t.TaskOutput, nil
 }
 func CreateSyncIndexTask(option CreateSyncIndexTaskOption) (*SyncIndexTask, error) {
-	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeSyncIndex], TaskStatusNameMapping[TaskStatusRunning])
+	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeSyncIndex], task.GetStatusText(nil, task.StatusRunning))
 	if existRunningTask != nil {
 		return existRunningTask.(*SyncIndexTask), nil
 	}
@@ -57,7 +57,7 @@ func CreateSyncIndexTask(option CreateSyncIndexTaskOption) (*SyncIndexTask, erro
 	}
 	output := &SyncTaskOutput{}
 	task := &SyncIndexTask{
-		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeSyncIndex], option.Uid, TaskStatusNameMapping[TaskStatusRunning]),
+		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeSyncIndex], option.Uid, task.GetStatusText(nil, task.StatusRunning)),
 		TaskOutput: output,
 		Library:    &library,
 		Option:     &option,

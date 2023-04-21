@@ -47,12 +47,12 @@ func RemoveNotExistVideo(libraryId uint) error {
 	}
 	return nil
 }
-func ScanVideo(library *database.Library, excludeDir []string) ([]string, error) {
+func ScanVideo(libraryPath string, excludeDir []string) ([]string, error) {
 	targetExtensions := []string{
 		"mp4", "mkv", "avi", "rmvb", "flv", "wmv", "mov", "3gp", "m4v", "mpg", "mpeg", "mpe", "mpv", "m2v", "m4v", "m4p", "m4b", "m4r", "m4v", "m4a", "m4p", "m4b", "m4r", "m4v", "m4a", "m4p", "m4b", "m4r", "m4v", "m4a",
 	}
 	target := make([]string, 0)
-	err := filepath.Walk(library.Path, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(libraryPath, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			isExclude := false
 			for _, dir := range excludeDir {
@@ -212,7 +212,8 @@ func (v *VideoQueryBuilder) Query() (int64, []*database.Video, error) {
 }
 
 type CreateVideoFileOptions struct {
-	ForceNSFWCheck bool `json:"ForceNSFWCheck"`
+	ForceNSFWCheck  bool `json:"forceNSFWCheck"`
+	EnableNSFWCheck bool `json:"enableNSFWCheck"`
 }
 
 func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject bool, option *CreateVideoFileOptions) (*database.Video, error) {
@@ -348,7 +349,7 @@ func CreateVideoFile(path string, libraryId uint, videoType string, matchSubject
 	}
 
 	// analyze nsfw content
-	if (isUpdate || option.ForceNSFWCheck) && plugin.DefaultNSFWCheckPlugin.Enable {
+	if (isUpdate || option.ForceNSFWCheck) && plugin.DefaultNSFWCheckPlugin.Enable && option.EnableNSFWCheck {
 		outChan := make(chan io.Reader)
 		go func() {
 			err := util.ExtractNShotFromVideoPipe(file.Path, config.Instance.NSFWCheckConfig.Slice, outChan)

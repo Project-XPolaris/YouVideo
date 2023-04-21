@@ -24,7 +24,6 @@ func (t *ScanTask) Stop() error {
 }
 
 func (t *ScanTask) Start() error {
-
 	t.logger.Info("task start")
 	// lock library
 	if !service.DefaultLibraryLockManager.TryToLock(t.Library.ID) {
@@ -32,35 +31,56 @@ func (t *ScanTask) Start() error {
 	}
 	defer service.DefaultLibraryLockManager.UnlockLibrary(t.Library.ID)
 	// remove file where is not found
-	err := service.RemoveNotExistVideo(t.Library.ID)
+	removeNotExistVideoTask := NewRemoveNotExistVideoTask(&RemoveNotExistVideoTaskOption{
+		libraryId:    t.Library.ID,
+		Uid:          t.Option.Uid,
+		ParentTaskId: t.Id,
+	})
+	t.SubTaskList = append(t.SubTaskList, removeNotExistVideoTask)
+	err := task.RunTask(removeNotExistVideoTask)
+	if err != nil {
+		if t.Option.OnError != nil {
+			t.Option.OnError(t, err)
+		}
+		return err
+	}
+	scanFileTask := NewScanVideoTask(&ScanVideoTaskOption{
+		Uid:            t.Option.Uid,
+		LibraryPath:    t.Library.Path,
+		ExcludeDirList: t.Option.ExcludeDirList,
+	})
+	t.SubTaskList = append(t.SubTaskList, scanFileTask)
+	err = task.RunTask(scanFileTask)
 	if err != nil {
 		t.Err = err
 		if t.Option.OnError != nil {
 			t.Option.OnError(t, err)
 		}
-		return nil
+		return err
 	}
-	pathList, err := service.ScanVideo(&t.Library, t.Option.ExcludeDirList)
-	if err != nil {
-		t.Err = err
-		if t.Option.OnError != nil {
-			t.Option.OnError(t, err)
-		}
-		return nil
-	}
+	pathList := scanFileTask.PathList
 	t.TaskOutput.Total = int64(len(pathList))
 	for idx, path := range pathList {
 		t.TaskOutput.Current = int64(idx + 1)
 		t.TaskOutput.CurrentPath = path
 		t.TaskOutput.CurrentName = filepath.Base(path)
-		video, err := service.CreateVideoFile(path, t.Library.ID, t.Library.DefaultVideoType, t.Option.MatchSubject, t.Option.CreateOption)
+		createVideoTask := NewCreateVideoTask(&CreateVideoTaskOption{
+			Uid:          t.Option.Uid,
+			FilePath:     path,
+			libraryId:    t.Option.LibraryId,
+			CreateOption: t.Option.CreateOption,
+			ParentTaskId: t.Id,
+		})
+		t.SubTaskList = append(t.SubTaskList, createVideoTask)
+		err = task.RunTask(createVideoTask)
 		if err != nil {
-			if t.Option.OnFileError != nil {
-				t.Option.OnFileError(t, err)
+			if t.Option.OnError != nil {
+				t.Option.OnError(t, err)
 			}
 			t.logger.Error(err)
 			continue
 		}
+		video := createVideoTask.video
 		if t.Option.DirectoryMode {
 			parentDirName := filepath.Base(filepath.Dir(path))
 			// create entity
@@ -98,7 +118,13 @@ func (t *ScanTask) Start() error {
 					}
 				}
 				if len(metaPath) != 0 {
-					err = service.ParseEntityMetaFile(entity, metaPath)
+					parseEntityMetaTask := NewParseEntityMetaTask(&ParseEntityMetaTaskOption{
+						Uid:          t.Option.Uid,
+						Entity:       entity,
+						ParentTaskId: t.Id,
+					})
+					t.SubTaskList = append(t.SubTaskList, parseEntityMetaTask)
+					err = task.RunTask(parseEntityMetaTask)
 					if err != nil {
 						if t.Option.OnFileError != nil {
 							t.Option.OnFileError(t, err)
@@ -125,10 +151,10 @@ func (t *ScanTask) Start() error {
 	if service.DefaultMeilisearchEngine.Enable {
 		service.DefaultMeilisearchEngine.Sync(t.Library.ID)
 	}
-	t.BaseTask.Status = TaskStatusNameMapping[TaskStatusDone]
 	if t.Option.OnComplete != nil {
 		t.Option.OnComplete(t)
 	}
+	t.Done()
 	return nil
 }
 
@@ -158,7 +184,7 @@ type CreateScanTaskOption struct {
 }
 
 func CreateSyncLibraryTask(option CreateScanTaskOption) (*ScanTask, error) {
-	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeScanLibrary], TaskStatusNameMapping[TaskStatusRunning])
+	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeScanLibrary], task.GetStatusText(nil, task.StatusRunning))
 	if existRunningTask != nil {
 		return existRunningTask.(*ScanTask), nil
 	}
@@ -178,7 +204,7 @@ func CreateSyncLibraryTask(option CreateScanTaskOption) (*ScanTask, error) {
 		option.ExcludeDirList = []string{}
 	}
 	task := &ScanTask{
-		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeScanLibrary], option.Uid, TaskStatusNameMapping[TaskStatusRunning]),
+		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeScanLibrary], option.Uid, task.GetStatusText(nil, task.StatusRunning)),
 		TaskOutput: output,
 		Library:    library,
 		Option:     &option,

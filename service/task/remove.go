@@ -97,7 +97,7 @@ func (t *RemoveLibraryTask) Start() error {
 			return nil
 		}
 	}
-	t.BaseTask.Status = TaskStatusNameMapping[TaskStatusDone]
+	t.Done()
 	if t.Option.OnComplete != nil {
 		t.Option.OnComplete(t)
 	}
@@ -120,7 +120,7 @@ type RemoveLibraryOption struct {
 }
 
 func CreateRemoveLibraryTask(option RemoveLibraryOption) (*RemoveLibraryTask, error) {
-	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeRemove], TaskStatusNameMapping[TaskStatusRunning])
+	existRunningTask := module.TaskModule.Pool.GetTaskWithStatus(TaskTypeNameMapping[TaskTypeRemove], task.GetStatusText(nil, task.StatusRunning))
 	if existRunningTask != nil {
 		return existRunningTask.(*RemoveLibraryTask), nil
 	}
@@ -137,7 +137,7 @@ func CreateRemoveLibraryTask(option RemoveLibraryOption) (*RemoveLibraryTask, er
 		Path: library.Path,
 	}
 	task := &RemoveLibraryTask{
-		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeRemove], option.Uid, TaskStatusNameMapping[TaskStatusRunning]),
+		BaseTask:   *task.NewBaseTask(TaskTypeNameMapping[TaskTypeRemove], option.Uid, task.GetStatusText(nil, task.StatusRunning)),
 		TaskOutput: output,
 		Library:    library,
 		Option:     &option,

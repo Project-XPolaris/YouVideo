@@ -3,6 +3,7 @@ package httpapi
 import (
 	"github.com/allentom/haruka"
 	"github.com/allentom/haruka/validator"
+	task2 "github.com/allentom/harukap/module/task"
 	"github.com/projectxpolaris/youvideo/commons"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/module"
@@ -182,7 +183,7 @@ var scanLibrary haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	go task.Start()
+	go task2.RunTask(task)
 	data := NewTaskTemplate(task)
 	SendSuccessResponse(context, data)
 }

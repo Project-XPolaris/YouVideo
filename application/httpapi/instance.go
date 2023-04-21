@@ -60,6 +60,7 @@ func GetEngine() *haruka.Engine {
 	e.Router.GET("/ffmpeg/formats", getFormatsHandler)
 	e.Router.GET("/files", readDirectoryHandler)
 	e.Router.GET("/task", module.TaskModule.ListHandler)
+	e.Router.GET("/task/object", module.TaskModule.GetTaskByIdHandler)
 	e.Router.GET("/info", serviceInfoHandler)
 	e.Router.DELETE("/file/{id:[0-9]+}", removeFileHandler)
 	e.Router.POST("/file/{id:[0-9]+}/rename", renameFileHandler)

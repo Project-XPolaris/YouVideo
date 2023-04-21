@@ -127,3 +127,5 @@ require (
 	gorm.io/driver/mysql v1.1.3 // indirect
 	gorm.io/driver/sqlite v1.2.3 // indirect
 )
+
+replace github.com/allentom/harukap => /Users/duzhengheng/ProjectXPolaris/harukap

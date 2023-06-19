@@ -51,7 +51,7 @@ func (t *CreateVideoTask) Start() error {
 	}
 	// create file if not exist
 	isUpdate := false
-	if file == nil {
+	if file.Model.ID == 0 {
 		file = &database.File{}
 		isUpdate = true
 	}
@@ -112,6 +112,7 @@ func (t *CreateVideoTask) Start() error {
 	//if t.option.CreateOption.matchSubject && isUpdate {
 	//	DefaultVideoInformationMatchService.In <- NewVideoInformationMatchInput(&video)
 	//}
+	// save folder
 	if *video.FolderID != folder.ID {
 		video.FolderID = &folder.ID
 		err = database.Instance.Save(video).Error
@@ -141,7 +142,7 @@ func (t *CreateVideoTask) Start() error {
 	}
 
 	// read subtitles
-	if isUpdate {
+	if isUpdate || option.ForceRefreshSub {
 		items, err := os.ReadDir(baseDir)
 		if err != nil {
 			return t.AbortError(err)
@@ -156,7 +157,7 @@ func (t *CreateVideoTask) Start() error {
 		}
 	}
 
-	if isUpdate {
+	if isUpdate || option.ForceRefreshMeta {
 		analyzeFileMetaTask := NewAnalyzeFileMetaTask(&AnalyzeFileMetaTaskOption{
 			Uid:          t.option.Uid,
 			path:         t.option.FilePath,

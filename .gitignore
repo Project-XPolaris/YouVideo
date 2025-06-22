@@ -7,3 +7,8 @@ local_*_test.go
 depoly/
 reg.yml
 local_*_config.yml
+/data
+/temp
+
+main
+.vscode

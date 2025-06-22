@@ -1,23 +1,22 @@
-ARG GOLANG_VERSION=1.19
-FROM golang:${GOLANG_VERSION}-buster as builder
+ARG GOLANG_VERSION=1.24-alpine
+FROM golang:${GOLANG_VERSION} as builder
+
 ARG GOPROXY=https://goproxy.cn
-WORKDIR ${GOPATH}/src/github.com/projectxpolaris/youvideo
+ENV GOPROXY=${GOPROXY}
+ENV CGO_ENABLED=0
 
-COPY go.mod .
-COPY go.sum .
+WORKDIR /app
 
-RUN go mod download
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 COPY . .
+RUN --mount=type=cache,target=/go/pkg/mod go build -ldflags="-s -w" -o /youvideo ./main.go
 
-RUN go build -o ${GOPATH}/bin/youvideo ./main.go
+FROM alpine:latest
+RUN apk --no-cache add ffmpeg ca-certificates
 
-FROM ubuntu
+WORKDIR /app
+COPY --from=builder /youvideo .
 
-COPY --from=builder /usr/local/lib /usr/local/lib
-COPY --from=builder /etc/ssl/certs /etc/ssl/certs
-
-RUN apt update && apt install -y ffmpeg
-COPY --from=builder /go/bin/youvideo /usr/local/bin/youvideo
-
-ENTRYPOINT ["/usr/local/bin/youvideo","run"]
+ENTRYPOINT ["/app/youvideo", "run"]

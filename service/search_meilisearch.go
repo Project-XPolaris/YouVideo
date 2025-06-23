@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+
 	"github.com/meilisearch/meilisearch-go"
 	"github.com/project-xpolaris/youplustoolkit/youlog"
 	"github.com/projectxpolaris/youvideo/database"
@@ -11,7 +12,7 @@ import (
 var DefaultMeilisearchEngine = &MeilisearchEngine{}
 
 type MeilisearchEngine struct {
-	client *meilisearch.Client
+	client meilisearch.ServiceManager
 	logger *youlog.Scope
 	Enable bool
 }
@@ -52,7 +53,7 @@ func InitMeiliSearch() error {
 	client := plugin.DefaultMeiliSearchPlugin.Client
 	DefaultMeilisearchEngine.client = client
 	logger.Info("check videos index")
-	queryIndexResponse, err := client.GetIndexes(&meilisearch.IndexesQuery{
+	queryIndexResponse, err := client.GetRawIndexes(&meilisearch.IndexesQuery{
 		Limit:  0,
 		Offset: 0,
 	})
@@ -60,10 +61,26 @@ func InitMeiliSearch() error {
 		return err
 	}
 	missIndexs := make([]SearchIndex, 0)
+	rawResults, ok := queryIndexResponse["results"]
+	if !ok {
+		return fmt.Errorf("key 'results' not found in meilisearch response")
+	}
+	results, ok := rawResults.([]interface{})
+	if !ok {
+		return fmt.Errorf("meilisearch 'results' is not a slice")
+	}
 	for _, index := range Indexes {
 		isExist := false
-		for _, existIndex := range queryIndexResponse.Results {
-			if existIndex.UID == index.Name {
+		for _, existIndex := range results {
+			indexMap, ok := existIndex.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			uid, ok := indexMap["uid"].(string)
+			if !ok {
+				continue
+			}
+			if uid == index.Name {
 				isExist = true
 				break
 			}

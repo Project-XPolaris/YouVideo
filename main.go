@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/allentom/harukap"
 	"github.com/allentom/harukap/cli"
+	"github.com/allentom/harukap/plugins/nacos"
 	"github.com/projectxpolaris/youvideo/application/httpapi"
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
@@ -36,6 +38,14 @@ func main() {
 	appEngine.UsePlugin(plugin.DefaultThumbnailPlugin)
 	appEngine.UsePlugin(plugin.DefaultMeiliSearchPlugin)
 	appEngine.UsePlugin(plugin.DefaultNSFWCheckPlugin)
+	// init nacos (optional)
+	nacosPlugin, err := nacos.NewNacosPluginFromYAML(appEngine.ConfigProvider, appEngine.ConfigProvider.Manager.GetString("application"), 7600)
+	if err == nil && nacosPlugin != nil {
+		plugin.DefaultNacosPlugin = nacosPlugin
+		appEngine.UsePlugin(nacosPlugin)
+	} else if err != nil {
+		logger.Info(fmt.Sprintf("init nacos plugin failed: %v", err))
+	}
 	// init auth
 	rawAuth := config.DefaultConfigProvider.Manager.GetStringMap("auth")
 	for key, _ := range rawAuth {

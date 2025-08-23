@@ -1,5 +1,5 @@
 ARG GOLANG_VERSION=1.24-alpine
-FROM golang:${GOLANG_VERSION} as builder
+FROM dockerproxy.com/library/golang:${GOLANG_VERSION} as builder
 
 ARG GOPROXY=https://goproxy.cn
 ENV GOPROXY=${GOPROXY}
@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY . .
 RUN --mount=type=cache,target=/go/pkg/mod go build -ldflags="-s -w" -o /youvideo ./main.go
 
-FROM alpine:latest
+FROM dockerproxy.com/library/alpine:3.19
 RUN apk --no-cache add ffmpeg ca-certificates
 
 WORKDIR /app

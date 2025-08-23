@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+
 	"github.com/projectxpolaris/youvideo/database"
 	"github.com/projectxpolaris/youvideo/plugin"
 	"github.com/projectxpolaris/youvideo/util"
 	"gorm.io/gorm"
-	"os"
 )
 
 func CreateEntity(name string, libraryId uint) (*database.Entity, error) {
@@ -49,8 +50,8 @@ func (e *EntityQueryBuilder) Query() ([]*database.Entity, int64, error) {
 		e.PageSize = 10
 	}
 	if e.Search != "" {
-		query = query.Where("name LIKE ?", "%"+e.Search+"%")
-
+		like := "%" + e.Search + "%"
+		query = query.Where("name LIKE ? OR summary LIKE ?", like, like)
 	}
 	if e.Name != "" {
 		query = query.Where("name = ?", e.Name)

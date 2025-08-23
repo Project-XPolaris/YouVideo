@@ -43,6 +43,7 @@ type InfoQueryBuilder struct {
 	Dist     string `hsource:"query" hname:"dist"`
 	Page     int    `hsource:"query" hname:"page"`
 	PageSize int    `hsource:"query" hname:"pageSize"`
+	Search   string `hsource:"query" hname:"search"`
 }
 
 func (e *InfoQueryBuilder) Query() ([]*database.VideoMetaItem, int64, error) {
@@ -63,6 +64,10 @@ func (e *InfoQueryBuilder) Query() ([]*database.VideoMetaItem, int64, error) {
 	}
 	if e.Value != "" {
 		query = query.Where("value = ?", e.Value)
+	}
+	if e.Search != "" {
+		like := "%" + e.Search + "%"
+		query = query.Where("video_meta_items.key LIKE ? OR value LIKE ?", like, like)
 	}
 	err := query.
 		Offset((e.Page - 1) * e.PageSize).

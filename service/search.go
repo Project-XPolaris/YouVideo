@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+
 	"github.com/projectxpolaris/youvideo/config"
 	"github.com/projectxpolaris/youvideo/database"
 )
@@ -88,7 +89,11 @@ func SearchWithDatabase(searchKey string, uid string) (*SearchHit, error) {
 func SearchData(searchKey string, uid string) (*SearchHit, error) {
 	switch config.Instance.SearchEngine {
 	case "meilisearch":
-		return SearchWithMeiliSearch(searchKey, uid)
+		result, err := SearchWithMeiliSearch(searchKey, uid)
+		if err != nil {
+			return SearchWithDatabase(searchKey, uid)
+		}
+		return result, nil
 	default:
 		return SearchWithDatabase(searchKey, uid)
 	}
